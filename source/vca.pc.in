@@ -1,0 +1,11 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/@LIB_INSTALL_DIR@
+includedir=${prefix}/include
+
+Name: @CMAKE_PROJECT_NAME@
+Description: Video Complexity Analyzer
+Version: @VCA_LATEST_TAG@
+Libs: -L${libdir} -lvca
+Libs.private: @PRIVATE_LIBS@
+Cflags: -I${includedir}

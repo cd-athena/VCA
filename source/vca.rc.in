@@ -1,0 +1,32 @@
+#include <winresrc.h>
+
+VS_VERSION_INFO VERSIONINFO
+  FILEVERSION    @VCA_VERSION_MAJOR@,@VCA_VERSION_MINOR@,@VCA_BRANCH_ID@,@VCA_TAG_DISTANCE@
+  PRODUCTVERSION @VCA_VERSION_MAJOR@,@VCA_VERSION_MINOR@,@VCA_BRANCH_ID@,@VCA_TAG_DISTANCE@
+  FILEFLAGSMASK  VS_FFI_FILEFLAGSMASK
+  FILEOS         VOS_NT_WINDOWS32
+#ifdef OPENOBEX_EXPORTS
+  FILETYPE       VFT_DLL
+#else
+  FILETYPE       VFT_STATIC_LIB
+#endif
+  FILESUBTYPE    VFT2_UNKNOWN
+  BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+      BLOCK "04090000"
+      BEGIN
+        VALUE "FileDescription",  "Video Complexity Analyzer"
+        VALUE "FileVersion",      "@VCA_VERSION@"
+        VALUE "InternalName",     "vca"
+        VALUE "LegalCopyright",   "Christian Doppler Laboratory ATHENA: GPLv2"
+        VALUE "OriginalFilename", "libvca.dll"
+        VALUE "ProductName",      "vca"
+        VALUE "ProductVersion",   "@VCA_VERSION@"
+      END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+      VALUE "Translation", 0x409, 1200
+    END
+END
