@@ -38,6 +38,17 @@ typedef struct vca_encoder vca_encoder;
  *      opaque handler for PicYuv */
 typedef struct vca_picyuv vca_picyuv;
 
+/* Application developers planning to link against a shared library version of
+ * libvca from a Microsoft Visual Studio or similar development environment
+ * will need to define VCA_API_IMPORTS before including this header.
+ * This clause does not apply to MinGW, similar development environments, or non
+ * Windows platforms. */
+#ifdef VCA_API_IMPORTS
+#define VCA_API __declspec(dllimport)
+#else
+#define VCA_API
+#endif
+
 typedef struct vca_frame_texture_t
 {
     int32_t* m_ctuAbsoluteEnergy;
@@ -231,6 +242,10 @@ typedef struct vca_param
 
 #define VCA_PARAM_BAD_NAME  (-1)
 #define VCA_PARAM_BAD_VALUE (-2)
+
+VCA_API extern const int vca_max_bit_depth;
+VCA_API extern const char *vca_version_str;
+VCA_API extern const char *vca_build_info_str;
 
 #define VCA_MAJOR_VERSION 1
 

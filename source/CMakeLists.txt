@@ -344,7 +344,17 @@ else(HIGH_BIT_DEPTH)
     add_definitions(-DHIGH_BIT_DEPTH=0 -DVCA_DEPTH=8)
 endif(HIGH_BIT_DEPTH)
 
-set(VCA_NS vca)
+# this option can only be used when linking multiple libx265 libraries
+# together, and some alternate API access method is implemented.
+option(EXPORT_C_API "Implement public C programming interface" ON)
+mark_as_advanced(EXPORT_C_API)
+if(EXPORT_C_API)
+    set(VCA_NS vca)
+    add_definitions(-DEXPORT_C_API=1)
+else()
+    set(VCA_NS vca)
+    add_definitions(-DEXPORT_C_API=0)
+endif()
 add_definitions(-DVCA_NS=${VCA_NS})
 
 option(WARNINGS_AS_ERRORS "Stop compiles on first warning" OFF)
@@ -454,7 +464,6 @@ if(CMAKE_RC_COMPILER)
     # often breaks them
     string(REPLACE "<FLAGS>" "" CMAKE_RC_COMPILE_OBJECT "${CMAKE_RC_COMPILE_OBJECT}")
     string(REPLACE "<DEFINES>" "" CMAKE_RC_COMPILE_OBJECT "${CMAKE_RC_COMPILE_OBJECT}")
-    set(VCA_BRANCH_ID 0) # TODO: 0 - stable, 1 - default or other
     set(VCA_RC_FILE "${CMAKE_CURRENT_BINARY_DIR}/vca.rc")
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/vca.rc.in" "${VCA_RC_FILE}" @ONLY)
 endif()
