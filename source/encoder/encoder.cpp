@@ -143,13 +143,23 @@ vca_encoder* encoder_open(vca_param *p)
 
     encoder->create();
 
-    /* Try to open CSV file handle */
-    if (encoder->m_param->csvfn)
+    /* Try to open complexity CSV file handle */
+    if (encoder->m_param->csv_E_h_fn)
     {
-        encoder->m_param->csvfpt = csvlog_open(encoder->m_param);
-        if (!encoder->m_param->csvfpt)
+        encoder->m_param->csv_E_h_fpt = csv_E_h_log_open(encoder->m_param);
+        if (!encoder->m_param->csv_E_h_fpt)
         {
-            vca_log(encoder->m_param, VCA_LOG_ERROR, "Unable to open CSV log file <%s>, aborting\n", encoder->m_param->csvfn);
+            vca_log(encoder->m_param, VCA_LOG_ERROR, "Unable to open complexity CSV log file <%s>, aborting\n", encoder->m_param->csv_E_h_fn);
+            encoder->m_aborted = true;
+        }
+    }
+    /* Try to open shot detection CSV file handle */
+    if (encoder->m_param->csv_shot_fn)
+    {
+        encoder->m_param->csv_shot_fpt = csv_shot_log_open(encoder->m_param);
+        if (!encoder->m_param->csv_shot_fpt)
+        {
+            vca_log(encoder->m_param, VCA_LOG_ERROR, "Unable to open shot detection CSV log file <%s>, aborting\n", encoder->m_param->csv_shot_fn);
             encoder->m_aborted = true;
         }
     }
@@ -191,7 +201,7 @@ int encoder_encode(vca_encoder *enc, vca_picture *pic_in)
     {
         numEncoded = encoder->encode(pic_in);
         if (numEncoded)
-            csvlog_frame(encoder->m_param, pic_in);
+            csv_E_h_log_frame(encoder->m_param, pic_in);
     } while (numEncoded == 0 && !pic_in);
 
     if (numEncoded < 0)
@@ -266,10 +276,26 @@ void encoder_shot_print(vca_encoder *enc)
 {
     Encoder *encoder = static_cast<Encoder*>(enc);
     int numFrames = encoder->m_param->totalFrames;
+    int shot_count = 1;
     for (int i = 0; i < numFrames; i++)
     {
-        if(encoder->isNewShot[i] == VCA_NEW_SHOT)
+        if (encoder->isNewShot[i] == VCA_NEW_SHOT)
+        {
+            if (encoder->m_param->csv_shot_fpt)
+            {
+                if (i)
+                    fprintf(encoder->m_param->csv_shot_fpt, "%d,\n", i-1);
+                fprintf(encoder->m_param->csv_shot_fpt, "%d, %d,", shot_count, i);
+                shot_count++;
+                fflush(stderr);
+            }
             vca_log(encoder->m_param, VCA_LOG_INFO, "IDR at POC %d\n", i);
+        }
+        if (encoder->m_param->csv_shot_fpt)
+        {
+            if (i == (numFrames - 1))
+                fprintf(encoder->m_param->csv_shot_fpt, "%d,\n", numFrames - 1);
+        }
     }
 }
 
@@ -290,36 +316,62 @@ void picture_free(vca_picture *p)
     return vca_free(p);
 }
 
-FILE* csvlog_open(const vca_param* param)
+FILE* csv_E_h_log_open(const vca_param* param)
 {
-    FILE *csvfp = vca_fopen(param->csvfn, "r");
+    FILE *csvfp = vca_fopen(param->csv_E_h_fn, "r");
     if (csvfp)
     {
         /* file already exists, re-open for append */
         fclose(csvfp);
-        return vca_fopen(param->csvfn, "ab");
+        return vca_fopen(param->csv_E_h_fn, "ab");
     }
     else
     {
         /* new CSV file, write header */
-        csvfp = vca_fopen(param->csvfn, "wb");
+        csvfp = vca_fopen(param->csv_E_h_fn, "wb");
         if (csvfp)
         {
-            fprintf(csvfp, "POC, E, h, epsilon, ");
+            fprintf(csvfp, "POC, E, h,");
+            if (param->bEnableShotdetect)
+                fprintf(csvfp, "epsilon,");
             fprintf(csvfp, "\n");
         }
         return csvfp;
     }
 }
 
-void csvlog_frame(const vca_param* param, const vca_picture* pic)
+FILE* csv_shot_log_open(const vca_param* param)
 {
-    if (!param->csvfpt)
+    FILE *csvfp = vca_fopen(param->csv_shot_fn, "r");
+    if (csvfp)
+    {
+        /* file already exists, re-open for append */
+        fclose(csvfp);
+        return vca_fopen(param->csv_shot_fn, "ab");
+    }
+    else
+    {
+        /* new CSV file, write header */
+        csvfp = vca_fopen(param->csv_shot_fn, "wb");
+        if (csvfp)
+        {
+            fprintf(csvfp, "Shot ID, Start POC, End POC, ");
+            fprintf(csvfp, "\n");
+        }
+        return csvfp;
+    }
+}
+
+void csv_E_h_log_frame(const vca_param* param, const vca_picture* pic)
+{
+    if (!param->csv_E_h_fpt)
         return;
 
     const vca_frame_stats* frameStats = &pic->frameData;
-    fprintf(param->csvfpt, "%d, %d, %f, %f,", frameStats->poc, frameStats->e_value, frameStats->h_value, frameStats->epsilon);
-    fprintf(param->csvfpt, "\n");
+    fprintf(param->csv_E_h_fpt, "%d, %d, %f,", frameStats->poc, frameStats->e_value, frameStats->h_value);
+    if(param->bEnableShotdetect)
+        fprintf(param->csv_E_h_fpt, "%f,", frameStats->epsilon);
+    fprintf(param->csv_E_h_fpt, "\n");
     fflush(stderr);
 }
 
@@ -571,9 +623,12 @@ void Encoder::destroy()
     VCA_FREE(prevShotDist);
     if (m_param)
     {
-        if (m_param->csvfpt)
-            fclose(m_param->csvfpt);
-        free((char*)m_param->csvfn);
+        if (m_param->csv_E_h_fpt)
+            fclose(m_param->csv_E_h_fpt);
+        free((char*)m_param->csv_E_h_fn);
+        if (m_param->csv_shot_fpt)
+            fclose(m_param->csv_shot_fpt);
+        free((char*)m_param->csv_shot_fn);
         param_free(m_param);
     }
 }
@@ -630,6 +685,11 @@ int Encoder::encode(const vca_picture* pic_in)
 void Encoder::configure(vca_param *p)
 {
     this->m_param = p;
+    if (!p->bEnableShotdetect && p->csv_shot_fn)
+    {
+        p->bEnableShotdetect = 1;
+        vca_log(p, VCA_LOG_WARNING, "Shot detection csv works only if shot detection enabled. Enabling shot detection!\n");
+    }
 }
 
 /* The dithering algorithm is based on Sierra-2-4A error diffusion.
@@ -754,6 +814,10 @@ int check_params(vca_param* param)
         "frameNumThreads (--frame-threads) must be [0 .. VCA_MAX_FRAME_THREADS)");
     CHECK(param->bEnableShotdetect < 0 || param->bEnableShotdetect > 1,
         "bEnableShotdetect (--shot-detect) must be 0 or 1");
+    CHECK(param->minThresh < 0.0 || param->maxThresh < 0.0,
+        "minimum and maximum thresholds for shot detection should be greater than zero");
+    CHECK(param->minThresh > param->maxThresh,
+        "minimum threshold for shot detection should be greater than maximum threshold");
     return check_failed;
 }
 
@@ -836,10 +900,16 @@ void print_params(vca_param* param)
         return;
 
     vca_log(param, VCA_LOG_INFO, "DCT energy block size : %d x %d\n", param->maxCUSize, param->maxCUSize);
+    if (param->csv_E_h_fn)
+        vca_log(param, VCA_LOG_INFO, "Complexity CSV file : %s\n", param->csv_E_h_fn);
     vca_log(param, VCA_LOG_INFO, "Shot detection algorithm : %s\n", param->bEnableShotdetect ? "enabled":"disabled");
-    if(param->bEnableShotdetect)
+    if (param->bEnableShotdetect)
+    {
         vca_log(param, VCA_LOG_INFO, "Shot detection Max/Min threshold : %f/ %f\n", param->maxThresh, param->minThresh);
-    vca_log(param, VCA_LOG_INFO, "CSV file : %s\n", param->csvfn);
+        if (param->csv_shot_fn)
+            vca_log(param, VCA_LOG_INFO, "Shot detection CSV file : %s\n", param->csv_shot_fn);
+    }
+
     fflush(stderr);
 }
 
@@ -875,8 +945,10 @@ void param_default(vca_param* param)
     param->maxCUSize = 64;
     param->maxLog2CUSize = 6;
     param->bLowPassDct = 0;
-    param->csvfn = NULL;
-    param->csvfpt = NULL;
+    param->csv_E_h_fn = NULL;
+    param->csv_E_h_fpt = NULL;
+    param->csv_shot_fn = NULL;
+    param->csv_shot_fpt = NULL;
 
     param->maxThresh = 50;
     param->minThresh = 10;
@@ -975,7 +1047,8 @@ int param_parse(vca_param* p, const char* name, const char* value)
     OPT("total-frames") p->totalFrames = atoi(value);
     OPT("input-res") bError |= sscanf(value, "%dx%d", &p->sourceWidth, &p->sourceHeight) != 2;
     OPT("input-csp") p->internalCsp = parseName(value, vca_source_csp_names, bError);
-    OPT("csv") p->csvfn = strdup(value);
+    OPT("complexity-csv") p->csv_E_h_fn = strdup(value);
+    OPT("shot-csv") p->csv_shot_fn = strdup(value);
     OPT("shot-detect") p->bEnableShotdetect = atoi(value);
     OPT("max-thresh") p->maxThresh = atof(value);
     OPT("min-thresh") p->minThresh = atof(value);

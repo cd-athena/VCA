@@ -45,7 +45,8 @@ static const struct option long_options[] =
     { "seek",           required_argument, NULL, 0 },
     { "frame-skip",     required_argument, NULL, 0 },
     { "frames",         required_argument, NULL, 'f' },
-    { "csv",            required_argument, NULL, 0 },
+    { "complexity-csv", required_argument, NULL, 0 },
+    { "shot-csv",       required_argument, NULL, 0 },
     { "shot-detect",    required_argument, NULL, 0 },
     { "max-thresh",     required_argument, NULL, 0 },
     { "min-thresh",     required_argument, NULL, 0 },
@@ -84,7 +85,8 @@ static void showHelp(vca_param *param)
     H0("-f/--frames <integer>            Maximum number of frames to encode. Default all\n");
     H0("   --seek <integer>              First frame to encode\n");
     H0("   --[no-]asm <bool|int|string>  Override CPU detection. Default: auto\n");
-    H0("   --csv <filename>              Comma separated log file\n");
+    H0("   --complexity-csv <filename>   Comma separated complexity log file\n");
+    H0("   --shot-csv <filename>         Comma separated shot detection log file\n");
     H0("   --shot-detect                 Enable shot detection algorithm\n");
     H0("   --max-thresh <float>          Maximum threshold of epsilon in shot detection\n");
     H0("   --min-thresh <float>          Minimum threshold of epsilon in shot detection\n");

@@ -242,8 +242,10 @@ typedef struct vca_param
     uint16_t         maxLuma;                /* Maximum luma level of input source picture */
     uint32_t         maxLog2CUSize;          /* Log of maximum CTU size */
     int              bLowPassDct;            /* Use low-pass subband dct approximation */
-    const char*      csvfn;                  /* filename of CSV log */
-    FILE*            csvfpt;                 /* File pointer for csv log */
+    const char*      csv_E_h_fn;             /* filename of E-h metrics CSV log */
+    FILE*            csv_E_h_fpt;            /* File pointer for E-h metrics csv log */
+    const char*      csv_shot_fn;             /* filename of E-h metrics CSV log */
+    FILE*            csv_shot_fpt;            /* File pointer for E-h metrics csv log */
 
     double           minThresh;              /* Minimum threshold for epsilon in shot detection */
     double           maxThresh;              /* Maximum threshold for epsilon in shot detection */
@@ -266,8 +268,9 @@ void             encoder_parameters(vca_encoder*, vca_param*);
 int              encoder_encode(vca_encoder*, vca_picture*);
 void             encoder_close(vca_encoder*);
 void             dither_image(vca_picture*, int, int, int16_t*, int);
-FILE*            csvlog_open(const vca_param* param);
-void             csvlog_frame(const vca_param* param, const vca_picture* pic);
+FILE*            csv_E_h_log_open(const vca_param* param);
+FILE*            csv_shot_log_open(const vca_param* param);
+void             csv_E_h_log_frame(const vca_param* param, const vca_picture* pic);
 void             encoder_shot_detect(vca_encoder*);
 void             encoder_shot_print(vca_encoder*);
 
