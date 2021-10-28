@@ -29,6 +29,61 @@
 #include "cpu.h"
 
 extern "C" {
+    #include "dct8.h"
+}
+
+#define ALL_LUMA_TU_TYPED_S(prim, fncdef, fname, cpu) \
+    p.cu[BLOCK_4x4].prim   = fncdef vca_ ## fname ## 4_ ## cpu; \
+    p.cu[BLOCK_8x8].prim   = fncdef vca_ ## fname ## 8_ ## cpu; \
+    p.cu[BLOCK_16x16].prim = fncdef vca_ ## fname ## 16_ ## cpu; \
+    p.cu[BLOCK_32x32].prim = fncdef vca_ ## fname ## 32_ ## cpu
+
+#define ALL_LUMA_TU_S(prim, fname, cpu)    ALL_LUMA_TU_TYPED_S(prim, , fname, cpu)
+
+namespace VCA_NS {
+
+#if HIGH_BIT_DEPTH
+    void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
+    {
+        if (cpuMask & VCA_CPU_SSE2)
+        {
+            p.cu[BLOCK_4x4].dct = vca_dct4_sse2;
+            p.cu[BLOCK_8x8].dct = vca_dct8_sse2;
+        }
+        if (cpuMask & VCA_CPU_SSE4)
+        {
+            p.cu[BLOCK_8x8].dct = vca_dct8_sse4;
+        }
+#if X86_64
+        if (cpuMask & VCA_CPU_AVX2)
+        {
+            ALL_LUMA_TU_S(dct, dct, avx2);
+        }
+#endif
+    }
+#else
+    void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
+    {
+        if (cpuMask & VCA_CPU_SSE2)
+        {
+            p.cu[BLOCK_4x4].dct = vca_dct4_sse2;
+            p.cu[BLOCK_8x8].dct = vca_dct8_sse2;
+        }
+        if (cpuMask & VCA_CPU_SSE4)
+        {
+            p.cu[BLOCK_8x8].dct = vca_dct8_sse4;
+        }
+#if X86_64
+        if (cpuMask & VCA_CPU_AVX2)
+        {
+            ALL_LUMA_TU_S(dct, dct, avx2);
+        }
+#endif
+    }
+#endif
+}
+
+extern "C" {
 #ifdef __INTEL_COMPILER
 
 /* Agner's patch to Intel's CPU dispatcher from pages 131-132 of

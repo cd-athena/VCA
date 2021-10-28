@@ -55,8 +55,8 @@ if(ENABLE_ASSEMBLY AND X86)
     set(VEC_PRIMITIVES vec/vec-primitives.cpp ${PRIMITIVES})
     source_group(Intrinsics FILES ${VEC_PRIMITIVES})
 	
-	set(C_SRCS asm-primitives.cpp)
-    set(A_SRCS const-a.asm cpu-a.asm)
+	set(C_SRCS asm-primitives.cpp dct8.h)
+    set(A_SRCS const-a.asm cpu-a.asm dct8.asm)
 	
 	if(MSVC_IDE OR XCODE)
     # MSVC requires custom build rules in the main cmake script for nasm
