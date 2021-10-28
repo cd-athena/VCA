@@ -86,17 +86,6 @@ void vca_free(void *ptr)
 
 #endif // if _WIN32
 
-/* Not a general-purpose function; multiplies input by -1/6 to convert
- * qp to qscale. */
-int vca_exp2fix8(double x)
-{
-    int i = (int)(x * (-64.f / 6.f) + 512.5f);
-
-    if (i < 0) return 0;
-    if (i > 1023) return 0xffff;
-    return (vca_exp2_lut[i & 63] + 256) << (i >> 6) >> 8;
-}
-
 void general_log(const vca_param* param, const char* caller, int level, const char* fmt, ...)
 {
     if (param && level > param->logLevel)
@@ -201,50 +190,7 @@ FILE* vca_fopen(const char* fileName, const char* mode)
     return NULL;
 }
 
-int vca_unlink(const char* fileName)
-{
-    wchar_t buf_utf16[MAX_PATH * 2];
-
-    if (MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, fileName, -1, buf_utf16, sizeof(buf_utf16)/sizeof(wchar_t)))
-        return _wunlink(buf_utf16);
-
-    return -1;
-}
-
-int vca_rename(const char* oldName, const char* newName)
-{
-    wchar_t old_utf16[MAX_PATH * 2], new_utf16[MAX_PATH * 2];
-
-    if (MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, oldName, -1, old_utf16, sizeof(old_utf16)/sizeof(wchar_t)) &&
-        MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, newName, -1, new_utf16, sizeof(new_utf16)/sizeof(wchar_t)))
-    {
-        return _wrename(old_utf16, new_utf16);
-    }
-    return -1;
-}
 #endif
-
-double vca_ssim2dB(double ssim)
-{
-    double inv_ssim = 1 - ssim;
-
-    if (inv_ssim <= 0.0000000001) /* Max 100dB */
-        return 100;
-
-    return -10.0 * log10(inv_ssim);
-}
-
-/* The qscale - qp conversion is specified in the standards.
- * Approx qscale increases by 12%  with every qp increment */
-double vca_qScale2qp(double qScale)
-{
-    return 12.0 + 6.0 * (double)VCA_LOG2(qScale / 0.85);
-}
-
-double vca_qp2qScale(double qp)
-{
-    return 0.85 * pow(2.0, (qp - 12.0) / 6.0);
-}
 
 uint32_t vca_picturePlaneSize(int csp, int width, int height, int plane)
 {
@@ -253,52 +199,5 @@ uint32_t vca_picturePlaneSize(int csp, int width, int height, int plane)
     return size;
 }
 
-char* vca_slurp_file(const char *filename)
-{
-    if (!filename)
-        return NULL;
-
-    int bError = 0;
-    size_t fSize;
-    char *buf = NULL;
-
-    FILE *fh = vca_fopen(filename, "rb");
-    if (!fh)
-    {
-        vca_log_file(NULL, VCA_LOG_ERROR, "unable to open file %s\n", filename);
-        return NULL;
-    }
-
-    bError |= fseek(fh, 0, SEEK_END) < 0;
-    bError |= (fSize = ftell(fh)) <= 0;
-    bError |= fseek(fh, 0, SEEK_SET) < 0;
-    if (bError)
-        goto error;
-
-    buf = VCA_MALLOC(char, fSize + 2);
-    if (!buf)
-    {
-        vca_log(NULL, VCA_LOG_ERROR, "unable to allocate memory\n");
-        goto error;
-    }
-
-    bError |= fread(buf, 1, fSize, fh) != fSize;
-    if (buf[fSize - 1] != '\n')
-        buf[fSize++] = '\n';
-    buf[fSize] = 0;
-    fclose(fh);
-
-    if (bError)
-    {
-        vca_log(NULL, VCA_LOG_ERROR, "unable to read the file\n");
-        VCA_FREE(buf);
-        buf = NULL;
-    }
-    return buf;
-
-error:
-    fclose(fh);
-    return NULL;
-}
 
 }
