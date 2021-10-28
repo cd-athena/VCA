@@ -311,6 +311,19 @@ if(GCC)
     execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE CC_VERSION)
 endif(GCC)
 
+find_package(Nasm)
+if(NASM_FOUND AND X86)
+    if (NASM_VERSION_STRING VERSION_LESS "2.09.0")
+        message(STATUS "Nasm version ${NASM_VERSION_STRING} is too old. 2.09.0 or later required")
+        option(ENABLE_ASSEMBLY "Enable use of assembly coded primitives" OFF)
+    else()
+        message(STATUS "Found Nasm ${NASM_VERSION_STRING} to build assembly primitives")
+        option(ENABLE_ASSEMBLY "Enable use of assembly coded primitives" ON)
+    endif()
+else()
+    option(ENABLE_ASSEMBLY "Enable use of assembly coded primitives" OFF)
+endif()
+
 option(CHECKED_BUILD "Enable run-time sanity checks (debugging)" OFF)
 if(CHECKED_BUILD)
     add_definitions(-DCHECKED_BUILD=1)
@@ -386,7 +399,31 @@ endif(ENABLE_VTUNE)
 add_subdirectory(encoder)
 add_subdirectory(common)
 
-add_library(vca-static STATIC $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
+if((MSVC_IDE OR XCODE OR GCC) AND ENABLE_ASSEMBLY)
+    # this is required because of this cmake bug
+    # http://www.cmake.org/Bug/print_bug_page.php?bug_id=8170
+    if(WIN32)
+        set(SUFFIX obj)
+    else()
+        set(SUFFIX o)
+    endif()
+
+    if(X86)
+    # compile X86 arch asm files here
+        foreach(ASM ${MSVC_ASMS})
+            set(ASM_SRC ${CMAKE_CURRENT_SOURCE_DIR}/common/x86/${ASM})
+            list(APPEND ASM_SRCS ${ASM_SRC})
+            list(APPEND ASM_OBJS ${ASM}.${SUFFIX})
+            add_custom_command(
+                OUTPUT ${ASM}.${SUFFIX}
+                COMMAND ${NASM_EXECUTABLE} ARGS ${NASM_FLAGS} ${ASM_SRC} -o ${ASM}.${SUFFIX}
+                DEPENDS ${ASM_SRC})
+        endforeach()
+    endif()
+endif()
+source_group(ASM FILES ${ASM_SRCS})
+
+add_library(vca-static STATIC $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${ASM_OBJS})
 
 if(NOT MSVC)
     set_target_properties(vca-static PROPERTIES OUTPUT_NAME vca)
@@ -428,7 +465,7 @@ endif()
 option(ENABLE_SHARED "Build shared library" ON)
 if(ENABLE_SHARED)
     add_library(vca-shared SHARED
-                ${VCA_RC_FILE} $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
+                ${ASM_OBJS} ${VCA_RC_FILE} $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
     if(EXTRA_LIB)
         target_link_libraries(vca-shared ${EXTRA_LIB})
     endif()
@@ -515,7 +552,7 @@ if(ENABLE_CLI)
         # Xcode seems unable to link the CLI with libs, so link as one target
         add_executable(cli ../COPYING ${InputFiles} ${GETOPT}
                     vca.cpp vca.h vcacli.h
-                    $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
+                    $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${ASM_OBJS})
     else()
         add_executable(cli ../COPYING ${InputFiles} ${GETOPT} ${VCA_RC_FILE}
                        vca.cpp vca.h vcacli.h)

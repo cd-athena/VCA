@@ -74,9 +74,31 @@ void vca_report_simd(vca_param* param)
 {
     if (param->logLevel >= VCA_LOG_INFO)
     {
+        int cpuid = param->cpuid;
         char buf[1000];
         char *p = buf + sprintf(buf, "using cpu capabilities:");
         char *none = p;
+        for (int i = 0; VCA_NS::cpu_names[i].flags; i++)
+        {
+            if (!strcmp(VCA_NS::cpu_names[i].name, "SSE")
+                && (cpuid & VCA_CPU_SSE2))
+                continue;
+            if (!strcmp(VCA_NS::cpu_names[i].name, "SSE2")
+                && (cpuid & (VCA_CPU_SSE2_IS_FAST | VCA_CPU_SSE2_IS_SLOW)))
+                continue;
+            if (!strcmp(VCA_NS::cpu_names[i].name, "SSE3")
+                && (cpuid & VCA_CPU_SSSE3 || !(cpuid & VCA_CPU_CACHELINE_64)))
+                continue;
+            if (!strcmp(VCA_NS::cpu_names[i].name, "SSE4.1")
+                && (cpuid & VCA_CPU_SSE42))
+                continue;
+            if (!strcmp(VCA_NS::cpu_names[i].name, "BMI1")
+                && (cpuid & VCA_CPU_BMI2))
+                continue;
+            if ((cpuid & VCA_NS::cpu_names[i].flags) == VCA_NS::cpu_names[i].flags
+                && (!i || VCA_NS::cpu_names[i].flags != VCA_NS::cpu_names[i - 1].flags))
+                p += sprintf(p, " %s", VCA_NS::cpu_names[i].name);
+        }
         if (p == none)
             sprintf(p, " none!");
         vca_log(param, VCA_LOG_INFO, "%s\n", buf);
@@ -90,7 +112,9 @@ void vca_setup_primitives(vca_param *param)
         setupCPrimitives(primitives);
 
 #if ENABLE_ASSEMBLY
-        setupAssemblyPrimitives(primitives, param->cpuid);
+#if VCA_ARCH_X86
+        setupInstrinsicPrimitives(primitives, param->cpuid);
+#endif
 #endif
         if (param->bLowPassDct)
         {

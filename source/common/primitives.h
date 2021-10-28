@@ -22,6 +22,7 @@
 #define VCA_PRIMITIVES_H
 
 #include "common.h"
+#include "cpu.h"
 
 namespace VCA_NS {
 
@@ -84,6 +85,7 @@ struct EncoderPrimitives
 extern EncoderPrimitives primitives;
 
 void setupCPrimitives(EncoderPrimitives &p);
+void setupInstrinsicPrimitives(EncoderPrimitives &p, int cpuMask);
 
 }
 

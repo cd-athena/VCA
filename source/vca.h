@@ -98,6 +98,40 @@ typedef struct vca_picture
     int    height;
 } vca_picture;
 
+/* x86 CPU flags */
+#define VCA_CPU_MMX             (1 << 0)
+#define VCA_CPU_MMX2            (1 << 1)  /* MMX2 aka MMXEXT aka ISSE */
+#define VCA_CPU_MMXEXT          VCA_CPU_MMX2
+#define VCA_CPU_SSE             (1 << 2)
+#define VCA_CPU_SSE2            (1 << 3)
+#define VCA_CPU_LZCNT           (1 << 4)
+#define VCA_CPU_SSE3            (1 << 5)
+#define VCA_CPU_SSSE3           (1 << 6)
+#define VCA_CPU_SSE4            (1 << 7)  /* SSE4.1 */
+#define VCA_CPU_SSE42           (1 << 8)  /* SSE4.2 */
+#define VCA_CPU_AVX             (1 << 9)  /* Requires OS support even if YMM registers aren't used. */
+#define VCA_CPU_XOP             (1 << 10)  /* AMD XOP */
+#define VCA_CPU_FMA4            (1 << 11)  /* AMD FMA4 */
+#define VCA_CPU_FMA3            (1 << 12)  /* Intel FMA3 */
+#define VCA_CPU_BMI1            (1 << 13)  /* BMI1 */
+#define VCA_CPU_BMI2            (1 << 14)  /* BMI2 */
+#define VCA_CPU_AVX2            (1 << 15)  /* AVX2 */
+#define VCA_CPU_AVX512          (1 << 16)  /* AVX-512 {F, CD, BW, DQ, VL}, requires OS support */
+/* x86 modifiers */
+#define VCA_CPU_CACHELINE_32    (1 << 17)  /* avoid memory loads that span the border between two cachelines */
+#define VCA_CPU_CACHELINE_64    (1 << 18)  /* 32/64 is the size of a cacheline in bytes */
+#define VCA_CPU_SSE2_IS_SLOW    (1 << 19)  /* avoid most SSE2 functions on Athlon64 */
+#define VCA_CPU_SSE2_IS_FAST    (1 << 20)  /* a few functions are only faster on Core2 and Phenom */
+#define VCA_CPU_SLOW_SHUFFLE    (1 << 21)  /* The Conroe has a slow shuffle unit (relative to overall SSE performance) */
+#define VCA_CPU_STACK_MOD4      (1 << 22)  /* if stack is only mod4 and not mod16 */
+#define VCA_CPU_SLOW_ATOM       (1 << 23)  /* The Atom is terrible: slow SSE unaligned loads, slow
+                                             * SIMD multiplies, slow SIMD variable shifts, slow pshufb,
+                                             * cacheline split penalties -- gather everything here that
+                                             * isn't shared by other CPUs to avoid making half a dozen
+                                             * new SLOW flags. */
+#define VCA_CPU_SLOW_PSHUFB     (1 << 24)  /* such as on the Intel Atom */
+#define VCA_CPU_SLOW_PALIGNR    (1 << 25)  /* such as on the AMD Bobcat */
+
 /* Log level */
 #define VCA_LOG_NONE          (-1)
 #define VCA_LOG_ERROR          0

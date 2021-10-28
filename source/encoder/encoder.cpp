@@ -21,6 +21,7 @@
 #include "primitives.h"
 #include "threadpool.h"
 #include "encoder.h"
+#include "cpu.h"
 
 #if _MSC_VER
 #pragma warning(disable: 4996) // POSIX functions are just fine, thanks
@@ -30,6 +31,44 @@
 #if _WIN32
 #define strcasecmp _stricmp
 #endif
+
+#if !defined(HAVE_STRTOK_R)
+
+ /*
+  * adapted from public domain strtok_r() by Charlie Gordon
+  *
+  *   from comp.lang.c  9/14/2007
+  *
+  *      http://groups.google.com/group/comp.lang.c/msg/2ab1ecbb86646684
+  *
+  *     (Declaration that it's public domain):
+  *      http://groups.google.com/group/comp.lang.c/msg/7c7b39328fefab9c
+  */
+
+#undef strtok_r
+static char* strtok_r(char* str, const char* delim, char** nextp)
+{
+    if (!str)
+        str = *nextp;
+
+    str += strspn(str, delim);
+
+    if (!*str)
+        return NULL;
+
+    char *ret = str;
+
+    str += strcspn(str, delim);
+
+    if (*str)
+        *str++ = '\0';
+
+    *nextp = str;
+
+    return ret;
+}
+
+#endif // if !defined(HAVE_STRTOK_R)
 
 static const double weights_dct8[64] = {
 0.000000, 0.000000, 0.368689, 0.369319, 0.370132, 0.371127, 0.372307, 0.373673,
@@ -841,6 +880,49 @@ double vca_atof(const char* str, bool& bError)
     return v;
 }
 
+/* cpu name can be:
+ *   auto || true - vca::cpu_detect()
+ *   false || no  - disabled
+ *   integer bitmap value
+ *   comma separated list of SIMD names, eg: SSE4.1,XOP */
+int parseCpuName(const char* value, bool& bError)
+{
+    if (!value)
+    {
+        bError = 1;
+        return 0;
+    }
+    int cpu;
+    if (isdigit(value[0]))
+        cpu = vca_atoi(value, bError);
+    else
+        cpu = !strcmp(value, "auto") || vca_atobool(value, bError) ? VCA_NS::cpu_detect() : 0;
+
+    if (bError)
+    {
+        char *buf = strdup(value);
+        char *tok, *saveptr = NULL, *init;
+        bError = 0;
+        cpu = 0;
+        for (init = buf; (tok = strtok_r(init, ",", &saveptr)); init = NULL)
+        {
+            int i;
+            for (i = 0; VCA_NS::cpu_names[i].flags && strcasecmp(tok, VCA_NS::cpu_names[i].name); i++)
+            {
+            }
+
+            cpu |= VCA_NS::cpu_names[i].flags;
+            if (!VCA_NS::cpu_names[i].flags)
+                bError = 1;
+        }
+
+        free(buf);
+        if ((cpu & VCA_CPU_SSSE3) && !(cpu & VCA_CPU_SSE2_IS_SLOW))
+            cpu |= VCA_CPU_SSE2_IS_FAST;
+    }
+    return cpu;
+}
+
 static const int fixedRatios[][2] =
 {
     { 1,  1 },
@@ -928,7 +1010,7 @@ void param_default(vca_param* param)
     memset(param, 0, sizeof(vca_param));
 
     /* Applying default values to all elements in the param structure */
-    param->cpuid = 0;
+    param->cpuid = VCA_NS::cpu_detect();
     param->bEnableWavefront = 1;
     param->bEnableShotdetect = 0;
     param->frameNumThreads = 0;
@@ -1019,10 +1101,15 @@ int param_parse(vca_param* p, const char* name, const char* value)
     if (0);
     OPT("asm")
     {
+#if VCA_ARCH_X86
         if (bValueWasNull)
-            p->cpuid = 0;
+            p->cpuid = atobool(value);
         else
-            p->cpuid = 0;
+            p->cpuid = parseCpuName(value, bError);
+#else
+        p->cpuid = 0;
+
+#endif
     }
     OPT("fps")
     {
