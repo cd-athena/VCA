@@ -21,7 +21,6 @@
 #include "primitives.h"
 #include "threadpool.h"
 #include "encoder.h"
-#include "vca.h"
 
 #if _MSC_VER
 #pragma warning(disable: 4996) // POSIX functions are just fine, thanks
@@ -102,12 +101,8 @@ using namespace VCA_NS;
 Encoder::Encoder()
 {
     m_aborted = false;
-    m_reconfigure = false;
-    m_encodedFrameNum = 0;
-    m_pocLast = -1;
-    m_curEncoder = 0;
-    m_outputCount = 0;
     m_param = NULL;
+    epsilons = NULL;
 }
 
 vca_encoder* encoder_open(vca_param *p)
@@ -145,7 +140,6 @@ vca_encoder* encoder_open(vca_param *p)
 
     // may change params for auto-detect, etc
     encoder->configure(param);
-    // may change rate control and CPB params
 
     encoder->create();
 
@@ -213,6 +207,69 @@ void encoder_close(vca_encoder *enc)
         Encoder *encoder = static_cast<Encoder*>(enc);
         encoder->destroy();
         delete encoder;
+    }
+}
+
+void encoder_shot_detect(vca_encoder *enc)
+{
+    Encoder *encoder = static_cast<Encoder*>(enc);
+    int numFrames = encoder->m_param->totalFrames;
+
+    /* First pass */
+    encoder->isNewShot[0] = VCA_NEW_SHOT;
+    encoder->isNewShot[1] = VCA_NOT_NEW_SHOT;
+    encoder->prevShotPos = 0;
+    int not_sure_count = 0;
+    for (int i = 2, j = 0; i < numFrames; i++)
+    {
+        if (encoder->epsilons[i] > encoder->m_param->maxThresh)
+        {
+            encoder->isNewShot[i] = VCA_NEW_SHOT;
+            encoder->prevShotPos = i;
+        }
+        else if (encoder->epsilons[i] < encoder->m_param->minThresh)
+        {
+            encoder->isNewShot[i] = VCA_NOT_NEW_SHOT;
+        }
+        else
+        {
+            encoder->isNewShot[i] = VCA_NOTSURE_NEW_SHOT;
+            encoder->isNotSureShot[j] = i;
+            encoder->prevShotDist[j] = i - encoder->prevShotPos;
+            not_sure_count++;
+            j++;
+        }
+    }
+    /* If there are no VCA_NOTSURE_NEW_SHOT entries, shot detection has been completed */
+    vca_log(encoder->m_param, VCA_LOG_DEBUG, "First pass of shot detection complete!\n");
+    if (!not_sure_count)
+        return;
+
+
+    /* Second pass */
+    for (int j = 0; j < not_sure_count; j++)
+    {
+        int fps_value = encoder->m_param->fpsNum / encoder->m_param->fpsDenom;
+        if(encoder->prevShotDist[j] > fps_value && encoder->prevShotDist[j + 1] > fps_value)
+        {
+            encoder->isNewShot[encoder->isNotSureShot[j]] = VCA_NEW_SHOT;
+        }
+        else
+        {
+            encoder->isNewShot[encoder->isNotSureShot[j]] = VCA_NOT_NEW_SHOT;
+        }
+    }
+    vca_log(encoder->m_param, VCA_LOG_DEBUG, "Second pass of shot detection complete!\n");
+}
+
+void encoder_shot_print(vca_encoder *enc)
+{
+    Encoder *encoder = static_cast<Encoder*>(enc);
+    int numFrames = encoder->m_param->totalFrames;
+    for (int i = 0; i < numFrames; i++)
+    {
+        if(encoder->isNewShot[i] == VCA_NEW_SHOT)
+            vca_log(encoder->m_param, VCA_LOG_INFO, "IDR at POC %d\n", i);
     }
 }
 
@@ -462,6 +519,7 @@ void Encoder::compute_dct_texture_SAD(double *relNormalizedTextureSad, vca_pictu
     else
         pic->frameData.epsilon = 0;
 
+    epsilons[pic->poc] = pic->frameData.epsilon;
     /* store block-wise energy of previous frames for reference */
     memcpy(prev_texture->m_ctuAbsoluteEnergy, cur_texture->m_ctuAbsoluteEnergy, sizeof(int32_t) * numCuInFrame);
     prev_texture->m_avgEnergy = cur_texture->m_avgEnergy;
@@ -488,6 +546,10 @@ void Encoder::create()
     CHECKED_MALLOC(prev_texture->m_ctuAbsoluteEnergy, int32_t, numCuInFrame);
     CHECKED_MALLOC(prev_texture->m_ctuRelativeEnergy, double, numCuInFrame);
 
+    CHECKED_MALLOC(epsilons, double, m_param->totalFrames);
+    CHECKED_MALLOC(isNewShot, uint8_t, m_param->totalFrames);
+    CHECKED_MALLOC(isNotSureShot, int, m_param->totalFrames);
+    CHECKED_MALLOC(prevShotDist, int, m_param->totalFrames);
     m_encodeStartTime = vca_mdate();
     return;
 fail:
@@ -503,6 +565,10 @@ void Encoder::destroy()
     VCA_FREE(prev_texture->m_ctuAbsoluteEnergy);
     VCA_FREE(prev_texture->m_ctuRelativeEnergy);
     VCA_FREE(prev_texture);
+    VCA_FREE(epsilons);
+    VCA_FREE(isNewShot);
+    VCA_FREE(isNotSureShot);
+    VCA_FREE(prevShotDist);
     if (m_param)
     {
         if (m_param->csvfpt)
@@ -686,6 +752,8 @@ int check_params(vca_param* param)
         "Picture height must be an integer multiple of the specified chroma subsampling");
     CHECK(param->frameNumThreads < 0 || param->frameNumThreads > VCA_MAX_FRAME_THREADS,
         "frameNumThreads (--frame-threads) must be [0 .. VCA_MAX_FRAME_THREADS)");
+    CHECK(param->bEnableShotdetect < 0 || param->bEnableShotdetect > 1,
+        "bEnableShotdetect (--shot-detect) must be 0 or 1");
     return check_failed;
 }
 
@@ -768,6 +836,9 @@ void print_params(vca_param* param)
         return;
 
     vca_log(param, VCA_LOG_INFO, "DCT energy block size : %d x %d\n", param->maxCUSize, param->maxCUSize);
+    vca_log(param, VCA_LOG_INFO, "Shot detection algorithm : %s\n", param->bEnableShotdetect ? "enabled":"disabled");
+    if(param->bEnableShotdetect)
+        vca_log(param, VCA_LOG_INFO, "Shot detection Max/Min threshold : %f/ %f\n", param->maxThresh, param->minThresh);
     vca_log(param, VCA_LOG_INFO, "CSV file : %s\n", param->csvfn);
     fflush(stderr);
 }
@@ -789,6 +860,7 @@ void param_default(vca_param* param)
     /* Applying default values to all elements in the param structure */
     param->cpuid = 0;
     param->bEnableWavefront = 1;
+    param->bEnableShotdetect = 0;
     param->frameNumThreads = 0;
     param->logLevel = VCA_LOG_INFO;
 
@@ -805,6 +877,9 @@ void param_default(vca_param* param)
     param->bLowPassDct = 0;
     param->csvfn = NULL;
     param->csvfpt = NULL;
+
+    param->maxThresh = 50;
+    param->minThresh = 10;
 }
 
 static int parseName(const char* arg, const char* const* names, bool& bError)
@@ -901,6 +976,9 @@ int param_parse(vca_param* p, const char* name, const char* value)
     OPT("input-res") bError |= sscanf(value, "%dx%d", &p->sourceWidth, &p->sourceHeight) != 2;
     OPT("input-csp") p->internalCsp = parseName(value, vca_source_csp_names, bError);
     OPT("csv") p->csvfn = strdup(value);
+    OPT("shot-detect") p->bEnableShotdetect = atoi(value);
+    OPT("max-thresh") p->maxThresh = atof(value);
+    OPT("min-thresh") p->minThresh = atof(value);
     else
         bExtraParams = true;
 

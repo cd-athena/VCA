@@ -62,9 +62,6 @@
 #define PROFILE_RESUME()
 #endif
 
-#define FENC_STRIDE 64
-#define NUM_INTRA_MODE 35
-
 #if defined(__GNUC__)
 #define ALIGN_VAR_4(T, var)  T var __attribute__((aligned(4)))
 #define ALIGN_VAR_8(T, var)  T var __attribute__((aligned(8)))
@@ -132,12 +129,6 @@ typedef uint32_t pixel4;
 typedef int32_t  ssum2_t; // Signed sum
 #endif // if HIGH_BIT_DEPTH
 
-#if VCA_DEPTH < 10
-typedef uint32_t sse_t;
-#else
-typedef uint64_t sse_t;
-#endif
-
 #ifndef NULL
 #define NULL 0
 #endif
@@ -154,6 +145,9 @@ typedef uint64_t sse_t;
 #define MIN_QPSCALE     0.21249999999999999
 #define MAX_MAX_QPSCALE 615.46574234477100
 
+#define VCA_NEW_SHOT 255
+#define VCA_NOTSURE_NEW_SHOT 128
+#define VCA_NOT_NEW_SHOT 0
 
 template<typename T>
 inline T vca_min(T a, T b) { return a < b ? a : b; }

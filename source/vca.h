@@ -214,7 +214,7 @@ typedef struct vca_param
     int              frameNumThreads;
     const char*      numaPools;
     int              bEnableWavefront;       /* Enable wavefront parallel processing of DCT energies */
-
+    int              bEnableShotdetect;      /* Enable shot detection algorithm using epsilon feature */
     /*== Logging Feature ==*/
     int              logLevel;               /* The level of logging detail emitted by the encoder */
 
@@ -244,6 +244,9 @@ typedef struct vca_param
     int              bLowPassDct;            /* Use low-pass subband dct approximation */
     const char*      csvfn;                  /* filename of CSV log */
     FILE*            csvfpt;                 /* File pointer for csv log */
+
+    double           minThresh;              /* Minimum threshold for epsilon in shot detection */
+    double           maxThresh;              /* Maximum threshold for epsilon in shot detection */
 } vca_param;
 
 #define VCA_PARAM_BAD_NAME  (-1)
@@ -265,6 +268,8 @@ void             encoder_close(vca_encoder*);
 void             dither_image(vca_picture*, int, int, int16_t*, int);
 FILE*            csvlog_open(const vca_param* param);
 void             csvlog_frame(const vca_param* param, const vca_picture* pic);
+void             encoder_shot_detect(vca_encoder*);
+void             encoder_shot_print(vca_encoder*);
 
 int              check_params(vca_param *param);
 void             print_params(vca_param *param);

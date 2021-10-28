@@ -83,9 +83,6 @@ extern const uint8_t g_goRiceRange[5]; // maximum value coded with Rice codes
 extern const uint8_t g_lpsTable[64][4];
 extern const uint8_t vca_exp2_lut[64];
 
-// Intra tables
-extern const uint8_t g_intraFilterFlags[NUM_INTRA_MODE];
-
 extern const uint32_t g_depthScanIdx[8][8];
 
 extern const double g_YUVtoRGB_BT2020[3][3];

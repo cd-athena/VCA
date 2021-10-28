@@ -31,21 +31,21 @@ extern const char g_sliceTypeToChar[3];
 class Encoder : public vca_encoder
 {
 public:
-    int64_t            m_firstPts;
-    int64_t            m_encodeStartTime;
-    int                m_pocLast;         // time index (POC)
-    int                m_encodedFrameNum;
-    int                m_outputCount;
-    int                m_curEncoder;
-    vca_param*        m_param;
-    bool               m_aborted;          // fatal error detected
-    bool               m_reconfigure;      // Encoder reconfigure in progress
+    int64_t                m_encodeStartTime;
+    vca_param*             m_param;
+    bool                   m_aborted;          // fatal error detected
+
+    /* For DCT texture based complexity analysis */
+    vca_frame_texture_t    *cur_texture;
+    vca_frame_texture_t    *prev_texture;
 
     /* For DCT texture based scene-cut detection */
-    vca_frame_texture_t *cur_texture;
-    vca_frame_texture_t *prev_texture;
-    double             prev_norm_textureSad;
-
+    double                 prev_norm_textureSad;
+    double                 *epsilons;
+    uint8_t                *isNewShot;
+    int                    prevShotPos;
+    int                    *isNotSureShot;
+    int                    *prevShotDist;
     Encoder();
     ~Encoder()
     {

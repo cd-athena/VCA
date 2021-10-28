@@ -463,7 +463,7 @@ int main(int argc, char **argv)
         }
         outFrameCount += numEncoded;
         cliopt.printStatus(outFrameCount);
-     }
+    }
 
     /* Flush the encoder */
     while (!b_ctrl_c)
@@ -483,6 +483,13 @@ int main(int argc, char **argv)
     /* clear progress report */
     if (cliopt.bProgress)
         fprintf(stderr, "%*s\r", 80, " ");
+
+    /* Shot detection */
+    if (param->bEnableShotdetect)
+    {
+        encoder_shot_detect(encoder);
+        encoder_shot_print(encoder);
+    }
 
     encoder_close(encoder);
     cliopt.destroy();
