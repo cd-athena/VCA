@@ -247,6 +247,15 @@ VCA_API extern const int vca_max_bit_depth;
 VCA_API extern const char *vca_version_str;
 VCA_API extern const char *vca_build_info_str;
 
+/* Force a link error in the case of linking against an incompatible API version.
+ * Glue #defines exist to force correct macro expansion; the final output of the macro
+ * is x265_encoder_open_##X265_BUILD (for purposes of dlopen). */
+#define vca_encoder_glue1(x, y) x ## y
+#define vca_encoder_glue2(x, y) vca_encoder_glue1(x, y)
+#define vca_encoder_open vca_encoder_glue2(vca_encoder_open_, VCA_BUILD)
+
+vca_encoder* vca_encoder_open(vca_param *);
+
 #define VCA_MAJOR_VERSION 1
 
 vca_param*       param_alloc();
@@ -256,7 +265,6 @@ int              param_parse(vca_param*, const char*, const char*);
 vca_picture*     picture_alloc(void);
 void             picture_free(vca_picture*);
 void             picture_init(vca_param*, vca_picture*);
-vca_encoder*     encoder_open(vca_param*);
 void             encoder_parameters(vca_encoder*, vca_param*);
 int              encoder_encode(vca_encoder*, vca_picture*);
 void             encoder_close(vca_encoder*);
@@ -273,6 +281,46 @@ int              vca_atoi(const char *str, bool& bError);
 double           vca_atof(const char *str, bool& bError);
 void             setParamAspectRatio(vca_param *p, int width, int height);
 void             getParamAspectRatio(vca_param *p, int& width, int& height);
+
+/* === Multi-lib API === */
+
+typedef struct vca_api
+{
+    int           api_major_version;    /* VCA_MAJOR_VERSION */
+    int           api_build_number;     /* VCA_BUILD (soname) */
+    int           sizeof_param;         /* sizeof(vca_param) */
+    int           sizeof_picture;       /* sizeof(vca_picture) */
+
+    int           bit_depth;
+    const char*   version_str;
+    const char*   build_info_str;
+
+    /* libvca public API functions, documented above with vca_ prefixes */
+    vca_encoder* (*encoder_open)(vca_param*);
+    /* add new pointers to the end, or increment VCA_MAJOR_VERSION */
+} vca_api;
+
+#define vca_api_glue1(x, y) x ## y
+#define vca_api_glue2(x, y) vca_api_glue1(x, y)
+#define vca_api_get vca_api_glue2(vca_api_get_, VCA_BUILD)
+
+const vca_api* vca_api_get(int bitDepth);
+
+const vca_api* vca_api_query(int bitDepth, int apiVersion, int* err);
+
+#define VCA_API_QUERY_ERR_NONE           0 /* returned API pointer is non-NULL */
+#define VCA_API_QUERY_ERR_VER_REFUSED    1 /* incompatible version skew        */
+#define VCA_API_QUERY_ERR_LIB_NOT_FOUND  2 /* libvca_main10 not found, for ex */
+#define VCA_API_QUERY_ERR_FUNC_NOT_FOUND 3 /* unable to bind vca_api_query    */
+#define VCA_API_QUERY_ERR_WRONG_BITDEPTH 4 /* libvca_main10 not 10bit, for ex */
+
+static const char * const vca_api_query_errnames[] = {
+    "api queried from libvca",
+    "libvca version is not compatible with this application",
+    "unable to bind a libvca with requested bit depth",
+    "unable to bind vca_api_query from libvca",
+    "libvca has an invalid bitdepth"
+};
 
 #ifdef __cplusplus
 }

@@ -45,6 +45,7 @@ static const struct option long_options[] =
     { "seek",           required_argument, NULL, 0 },
     { "frame-skip",     required_argument, NULL, 0 },
     { "frames",         required_argument, NULL, 'f' },
+    { "max-blocksize",  required_argument, NULL, 0 },
     { "complexity-csv", required_argument, NULL, 0 },
     { "shot-csv",       required_argument, NULL, 0 },
     { "shot-detect",    required_argument, NULL, 0 },

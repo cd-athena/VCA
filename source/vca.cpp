@@ -69,6 +69,7 @@ static void printVersion(vca_param *param)
 
 struct CLIOptions
 {
+    const vca_api* api;
     InputFile* input;
     vca_param* param;
     bool bProgress;
@@ -85,6 +86,7 @@ struct CLIOptions
 
     CLIOptions()
     {
+        api = NULL;
         input = NULL;
         param = NULL;
         framesToBeEncoded = seek = 0;
@@ -157,6 +159,7 @@ bool CLIOptions::parse(int argc, char **argv)
             bShowHelp = true;
     }
 
+    api = vca_api_get(0);
     param = param_alloc();
     if (!param)
     {
@@ -367,7 +370,6 @@ static int get_argv_utf8(int *argc_ptr, char ***argv_ptr)
 }
 #endif
 
-
 /* CLI return codes:
  *
  * 0 - encode successful
@@ -402,7 +404,8 @@ int main(int argc, char **argv)
     }
 
     vca_param* param = cliopt.param;
-    vca_encoder *encoder = encoder_open(param);
+    const vca_api* api = cliopt.api;
+    vca_encoder *encoder = api->encoder_open(param);
     if (!encoder)
     {
         vca_log(param, VCA_LOG_ERROR, "failed to open encoder\n");

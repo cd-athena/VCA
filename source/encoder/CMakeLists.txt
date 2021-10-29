@@ -17,4 +17,4 @@ if(HAVE_STRTOK_R)
 endif()
 
 add_library(encoder OBJECT ../vca.h
-    encoder.cpp encoder.h)
+    encoder.cpp encoder.h api.cpp)

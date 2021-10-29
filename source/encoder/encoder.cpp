@@ -144,78 +144,6 @@ Encoder::Encoder()
     epsilons = NULL;
 }
 
-vca_encoder* encoder_open(vca_param *p)
-{
-    if (!p)
-        return NULL;
-
-#if _MSC_VER
-#pragma warning(disable: 4127) // conditional expression is constant, yes I know
-#endif
-
-#if HIGH_BIT_DEPTH
-    if (VCA_DEPTH != 10 && VCA_DEPTH != 12)
-#else
-    if (VCA_DEPTH != 8)
-#endif
-    {
-        vca_log(p, VCA_LOG_ERROR, "Build error, internal bit depth mismatch\n");
-        return NULL;
-    }
-
-    Encoder* encoder = NULL;
-    vca_param* param = param_alloc();
-    if (!param)
-        goto fail;
-
-    memcpy(param, p, sizeof(vca_param));
-
-    vca_setup_primitives(param);
-
-    if (check_params(param))
-        goto fail;
-
-    encoder = new Encoder;
-
-    // may change params for auto-detect, etc
-    encoder->configure(param);
-
-    encoder->create();
-
-    /* Try to open complexity CSV file handle */
-    if (encoder->m_param->csv_E_h_fn)
-    {
-        encoder->m_param->csv_E_h_fpt = csv_E_h_log_open(encoder->m_param);
-        if (!encoder->m_param->csv_E_h_fpt)
-        {
-            vca_log(encoder->m_param, VCA_LOG_ERROR, "Unable to open complexity CSV log file <%s>, aborting\n", encoder->m_param->csv_E_h_fn);
-            encoder->m_aborted = true;
-        }
-    }
-    /* Try to open shot detection CSV file handle */
-    if (encoder->m_param->csv_shot_fn)
-    {
-        encoder->m_param->csv_shot_fpt = csv_shot_log_open(encoder->m_param);
-        if (!encoder->m_param->csv_shot_fpt)
-        {
-            vca_log(encoder->m_param, VCA_LOG_ERROR, "Unable to open shot detection CSV log file <%s>, aborting\n", encoder->m_param->csv_shot_fn);
-            encoder->m_aborted = true;
-        }
-    }
-    encoder->m_param = param;
-    memcpy(encoder->m_param, param, sizeof(vca_param));
-    if (encoder->m_aborted)
-        goto fail;
-
-    print_params(param);
-    return encoder;
-
-fail:
-    delete encoder;
-    param_free(param);
-    return NULL;
-}
-
 void encoder_parameters(vca_encoder *enc, vca_param *out)
 {
     if (enc && out)
@@ -839,6 +767,8 @@ int check_params(vca_param* param)
     int check_failed = 0; /* abort if there is a fatal configuration problem */
     if (check_failed == 1)
         return check_failed;
+
+    param->maxLog2CUSize = (uint32_t)g_log2Size[param->maxCUSize];
     CHECK(param->fpsNum == 0 || param->fpsDenom == 0,
         "Frame rate numerator and denominator must be specified");
     CHECK(param->sourceWidth < (int)param->maxCUSize || param->sourceHeight < (int)param->maxCUSize,
@@ -857,6 +787,8 @@ int check_params(vca_param* param)
         "minimum and maximum thresholds for shot detection should be greater than zero");
     CHECK(param->minThresh > param->maxThresh,
         "minimum threshold for shot detection should be greater than maximum threshold");
+    CHECK(param->maxCUSize != 64 && param->maxCUSize != 32 && param->maxCUSize != 16,
+        "max cu size must be 16, 32, or 64");
     return check_failed;
 }
 
@@ -1134,6 +1066,7 @@ int param_parse(vca_param* p, const char* name, const char* value)
     OPT("total-frames") p->totalFrames = atoi(value);
     OPT("input-res") bError |= sscanf(value, "%dx%d", &p->sourceWidth, &p->sourceHeight) != 2;
     OPT("input-csp") p->internalCsp = parseName(value, vca_source_csp_names, bError);
+    OPT("max-blocksize") p->maxCUSize = atoi(value);
     OPT("complexity-csv") p->csv_E_h_fn = strdup(value);
     OPT("shot-csv") p->csv_shot_fn = strdup(value);
     OPT("shot-detect") p->bEnableShotdetect = atoi(value);

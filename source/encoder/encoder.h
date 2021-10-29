@@ -21,7 +21,7 @@
 #define VCA_ENCODER_H
 
 #include "common.h"
-#include "vca.h"
+#include "threading.h"
 
 struct vca_encoder {};
 namespace VCA_NS {
