@@ -17,7 +17,6 @@
  * along with this program.
  *****************************************************************************/
 
-#include "common.h"
 #include "encoder.h"
 
 #if EXPORT_C_API
@@ -70,7 +69,7 @@ namespace X265_NS {
         /* Try to open complexity CSV file handle */
         if (encoder->m_param->csv_E_h_fn)
         {
-            encoder->m_param->csv_E_h_fpt = csv_E_h_log_open(encoder->m_param);
+            encoder->m_param->csv_E_h_fpt = vca_csv_E_h_log_open(encoder->m_param);
             if (!encoder->m_param->csv_E_h_fpt)
             {
                 vca_log(encoder->m_param, VCA_LOG_ERROR, "Unable to open complexity CSV log file <%s>, aborting\n", encoder->m_param->csv_E_h_fn);
@@ -80,7 +79,7 @@ namespace X265_NS {
         /* Try to open shot detection CSV file handle */
         if (encoder->m_param->csv_shot_fn)
         {
-            encoder->m_param->csv_shot_fpt = csv_shot_log_open(encoder->m_param);
+            encoder->m_param->csv_shot_fpt = vca_csv_shot_log_open(encoder->m_param);
             if (!encoder->m_param->csv_shot_fpt)
             {
                 vca_log(encoder->m_param, VCA_LOG_ERROR, "Unable to open shot detection CSV log file <%s>, aborting\n", encoder->m_param->csv_shot_fn);
@@ -101,6 +100,204 @@ namespace X265_NS {
         return NULL;
     }
 
+    void vca_encoder_parameters(vca_encoder *enc, vca_param *out)
+    {
+        if (enc && out)
+        {
+            Encoder *encoder = static_cast<Encoder*>(enc);
+            memcpy(out, encoder->m_param, sizeof(vca_param));
+        }
+    }
+
+    int vca_encoder_encode(vca_encoder *enc, vca_picture *pic_in)
+    {
+        if (!enc)
+            return -1;
+
+        if (!pic_in)
+            return 0;
+
+        Encoder *encoder = static_cast<Encoder*>(enc);
+        int numEncoded;
+
+        do
+        {
+            numEncoded = encoder->encode(pic_in);
+            if (numEncoded)
+                vca_csv_E_h_log_frame(encoder->m_param, pic_in);
+        } while (numEncoded == 0 && !pic_in);
+
+        if (numEncoded < 0)
+            encoder->m_aborted = true;
+
+        return numEncoded;
+    }
+
+    void vca_encoder_close(vca_encoder *enc)
+    {
+        if (enc)
+        {
+            Encoder *encoder = static_cast<Encoder*>(enc);
+            encoder->destroy();
+            delete encoder;
+        }
+    }
+
+    void vca_encoder_shot_detect(vca_encoder *enc)
+    {
+        Encoder *encoder = static_cast<Encoder*>(enc);
+        int numFrames = encoder->m_param->totalFrames;
+
+        /* First pass */
+        encoder->isNewShot[0] = VCA_NEW_SHOT;
+        encoder->isNewShot[1] = VCA_NOT_NEW_SHOT;
+        encoder->prevShotPos = 0;
+        int not_sure_count = 0;
+        for (int i = 2, j = 0; i < numFrames; i++)
+        {
+            if (encoder->epsilons[i] > encoder->m_param->maxThresh)
+            {
+                encoder->isNewShot[i] = VCA_NEW_SHOT;
+                encoder->prevShotPos = i;
+            }
+            else if (encoder->epsilons[i] < encoder->m_param->minThresh)
+            {
+                encoder->isNewShot[i] = VCA_NOT_NEW_SHOT;
+            }
+            else
+            {
+                encoder->isNewShot[i] = VCA_NOTSURE_NEW_SHOT;
+                encoder->isNotSureShot[j] = i;
+                encoder->prevShotDist[j] = i - encoder->prevShotPos;
+                not_sure_count++;
+                j++;
+            }
+        }
+        /* If there are no VCA_NOTSURE_NEW_SHOT entries, shot detection has been completed */
+        vca_log(encoder->m_param, VCA_LOG_DEBUG, "First pass of shot detection complete!\n");
+        if (!not_sure_count)
+            return;
+
+
+        /* Second pass */
+        for (int j = 0; j < not_sure_count; j++)
+        {
+            int fps_value = encoder->m_param->fpsNum / encoder->m_param->fpsDenom;
+            if (encoder->prevShotDist[j] > fps_value && encoder->prevShotDist[j + 1] > fps_value)
+            {
+                encoder->isNewShot[encoder->isNotSureShot[j]] = VCA_NEW_SHOT;
+            }
+            else
+            {
+                encoder->isNewShot[encoder->isNotSureShot[j]] = VCA_NOT_NEW_SHOT;
+            }
+        }
+        vca_log(encoder->m_param, VCA_LOG_DEBUG, "Second pass of shot detection complete!\n");
+    }
+
+    void vca_encoder_shot_print(vca_encoder *enc)
+    {
+        Encoder *encoder = static_cast<Encoder*>(enc);
+        int numFrames = encoder->m_param->totalFrames;
+        int shot_count = 1;
+        for (int i = 0; i < numFrames; i++)
+        {
+            if (encoder->isNewShot[i] == VCA_NEW_SHOT)
+            {
+                if (encoder->m_param->csv_shot_fpt)
+                {
+                    if (i)
+                        fprintf(encoder->m_param->csv_shot_fpt, "%d,\n", i - 1);
+                    fprintf(encoder->m_param->csv_shot_fpt, "%d, %d,", shot_count, i);
+                    shot_count++;
+                    fflush(stderr);
+                }
+                vca_log(encoder->m_param, VCA_LOG_INFO, "IDR at POC %d\n", i);
+            }
+            if (encoder->m_param->csv_shot_fpt)
+            {
+                if (i == (numFrames - 1))
+                    fprintf(encoder->m_param->csv_shot_fpt, "%d,\n", numFrames - 1);
+            }
+        }
+    }
+
+    vca_picture *vca_picture_alloc()
+    {
+        return (vca_picture*)vca_malloc(sizeof(vca_picture));
+    }
+
+    void vca_picture_init(vca_param *param, vca_picture *pic)
+    {
+        memset(pic, 0, sizeof(vca_picture));
+        pic->bitDepth = param->internalBitDepth;
+        pic->colorSpace = param->internalCsp;
+    }
+
+    void vca_picture_free(vca_picture *p)
+    {
+        return vca_free(p);
+    }
+
+    FILE* vca_csv_E_h_log_open(const vca_param* param)
+    {
+        FILE *csvfp = vca_fopen(param->csv_E_h_fn, "r");
+        if (csvfp)
+        {
+            /* file already exists, re-open for append */
+            fclose(csvfp);
+            return vca_fopen(param->csv_E_h_fn, "ab");
+        }
+        else
+        {
+            /* new CSV file, write header */
+            csvfp = vca_fopen(param->csv_E_h_fn, "wb");
+            if (csvfp)
+            {
+                fprintf(csvfp, "POC, E, h,");
+                if (param->bEnableShotdetect)
+                    fprintf(csvfp, "epsilon,");
+                fprintf(csvfp, "\n");
+            }
+            return csvfp;
+        }
+    }
+
+    FILE* vca_csv_shot_log_open(const vca_param* param)
+    {
+        FILE *csvfp = vca_fopen(param->csv_shot_fn, "r");
+        if (csvfp)
+        {
+            /* file already exists, re-open for append */
+            fclose(csvfp);
+            return vca_fopen(param->csv_shot_fn, "ab");
+        }
+        else
+        {
+            /* new CSV file, write header */
+            csvfp = vca_fopen(param->csv_shot_fn, "wb");
+            if (csvfp)
+            {
+                fprintf(csvfp, "Shot ID, Start POC, End POC, ");
+                fprintf(csvfp, "\n");
+            }
+            return csvfp;
+        }
+    }
+
+    void vca_csv_E_h_log_frame(const vca_param* param, const vca_picture* pic)
+    {
+        if (!param->csv_E_h_fpt)
+            return;
+
+        const vca_frame_stats* frameStats = &pic->frameData;
+        fprintf(param->csv_E_h_fpt, "%d, %d, %f,", frameStats->poc, frameStats->e_value, frameStats->h_value);
+        if (param->bEnableShotdetect)
+            fprintf(param->csv_E_h_fpt, "%f,", frameStats->epsilon);
+        fprintf(param->csv_E_h_fpt, "\n");
+        fflush(stderr);
+    }
+
     static const vca_api libapi =
     {
         VCA_MAJOR_VERSION,
@@ -113,7 +310,17 @@ namespace X265_NS {
         vca_build_info_str,
 
         &vca_encoder_open,
-
+        &vca_encoder_parameters,
+        &vca_encoder_encode,
+        &vca_encoder_close,
+        &vca_encoder_shot_detect,
+        &vca_encoder_shot_print,
+        &vca_picture_alloc,
+        &vca_picture_init,
+        &vca_picture_free,
+        &vca_csv_E_h_log_open,
+        &vca_csv_shot_log_open,
+        &vca_csv_E_h_log_frame,
     };
 
     typedef const vca_api* (*api_get_func)(int bitDepth);

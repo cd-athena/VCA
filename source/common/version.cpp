@@ -18,7 +18,6 @@
  * along with this program.
  *****************************************************************************/
 
-#include "vca.h"
 #include "common.h"
 #include "primitives.h"
 

@@ -254,7 +254,18 @@ VCA_API extern const char *vca_build_info_str;
 #define vca_encoder_glue2(x, y) vca_encoder_glue1(x, y)
 #define vca_encoder_open vca_encoder_glue2(vca_encoder_open_, VCA_BUILD)
 
-vca_encoder* vca_encoder_open(vca_param *);
+vca_encoder*     vca_encoder_open(vca_param *);
+void             vca_encoder_parameters(vca_encoder *enc, vca_param *out);
+int              vca_encoder_encode(vca_encoder *enc, vca_picture *pic_in);
+void             vca_encoder_close(vca_encoder *enc);
+void             vca_encoder_shot_detect(vca_encoder *enc);
+void             vca_encoder_shot_print(vca_encoder *enc);
+vca_picture*     vca_picture_alloc();
+void             vca_picture_init(vca_param *param, vca_picture *pic);
+void             vca_picture_free(vca_picture *p);
+FILE*            vca_csv_E_h_log_open(const vca_param* param);
+FILE*            vca_csv_shot_log_open(const vca_param* param);
+void             vca_csv_E_h_log_frame(const vca_param* param, const vca_picture* pic);
 
 #define VCA_MAJOR_VERSION 1
 
@@ -262,18 +273,7 @@ vca_param*       param_alloc();
 void             param_free(vca_param*);
 void             param_default(vca_param*);
 int              param_parse(vca_param*, const char*, const char*);
-vca_picture*     picture_alloc(void);
-void             picture_free(vca_picture*);
-void             picture_init(vca_param*, vca_picture*);
-void             encoder_parameters(vca_encoder*, vca_param*);
-int              encoder_encode(vca_encoder*, vca_picture*);
-void             encoder_close(vca_encoder*);
 void             dither_image(vca_picture*, int, int, int16_t*, int);
-FILE*            csv_E_h_log_open(const vca_param* param);
-FILE*            csv_shot_log_open(const vca_param* param);
-void             csv_E_h_log_frame(const vca_param* param, const vca_picture* pic);
-void             encoder_shot_detect(vca_encoder*);
-void             encoder_shot_print(vca_encoder*);
 
 int              check_params(vca_param *param);
 void             print_params(vca_param *param);
@@ -296,7 +296,18 @@ typedef struct vca_api
     const char*   build_info_str;
 
     /* libvca public API functions, documented above with vca_ prefixes */
-    vca_encoder* (*encoder_open)(vca_param*);
+    vca_encoder*  (*encoder_open)(vca_param*);
+    void          (*encoder_parameters)(vca_encoder *enc, vca_param *out);
+    int           (*encoder_encode)(vca_encoder *enc, vca_picture *pic_in);
+    void          (*encoder_close)(vca_encoder *enc);
+    void          (*encoder_shot_detect)(vca_encoder *enc);
+    void          (*encoder_shot_print)(vca_encoder *enc);
+    vca_picture*  (*picture_alloc)();
+    void          (*picture_init)(vca_param *param, vca_picture *pic);
+    void          (*picture_free)(vca_picture *p);
+    FILE*         (*csv_E_h_log_open)(const vca_param* param);
+    FILE*         (*csv_shot_log_open)(const vca_param* param);
+    void          (*csv_E_h_log_frame)(const vca_param* param, const vca_picture* pic);
     /* add new pointers to the end, or increment VCA_MAJOR_VERSION */
 } vca_api;
 

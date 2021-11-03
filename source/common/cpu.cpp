@@ -21,7 +21,6 @@
  *****************************************************************************/
 
 #include "cpu.h"
-#include "common.h"
 
 #if MACOS || SYS_FREEBSD
 #include <sys/types.h>

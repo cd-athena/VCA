@@ -17,7 +17,6 @@
  * along with this program.
  *****************************************************************************/
 
-#include "common.h"
 #include "primitives.h"
 #include "threading.h"
 

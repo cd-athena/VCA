@@ -413,7 +413,7 @@ int main(int argc, char **argv)
         param_free(param);
         exit(2);
     }
-    encoder_parameters(encoder, param);
+    api->encoder_parameters(encoder, param);
 
      /* Control-C handler */
     if (signal(SIGINT, sigint_handler) == SIG_ERR)
@@ -426,7 +426,7 @@ int main(int argc, char **argv)
     int16_t *errorBuf = NULL;
     int ret = 0;
 
-    picture_init(param, pic_in);
+    api->picture_init(param, pic_in);
     if (cliopt.bDither)
     {
         errorBuf = VCA_MALLOC(int16_t, param->sourceWidth + 1);
@@ -457,7 +457,7 @@ int main(int argc, char **argv)
             /* Overwrite PTS */
             pic_in->pts = pic_in->poc;
         }
-        int numEncoded = encoder_encode(encoder, pic_in);
+        int numEncoded = api->encoder_encode(encoder, pic_in);
         if (numEncoded < 0)
         {
             b_ctrl_c = 1;
@@ -471,7 +471,7 @@ int main(int argc, char **argv)
     /* Flush the encoder */
     while (!b_ctrl_c)
     {
-        int numEncoded = encoder_encode(encoder, NULL);
+        int numEncoded = api->encoder_encode(encoder, NULL);
         if (numEncoded < 0)
         {
             ret = 4;
@@ -490,11 +490,11 @@ int main(int argc, char **argv)
     /* Shot detection */
     if (param->bEnableShotdetect)
     {
-        encoder_shot_detect(encoder);
-        encoder_shot_print(encoder);
+        api->encoder_shot_detect(encoder);
+        api->encoder_shot_print(encoder);
     }
 
-    encoder_close(encoder);
+    api->encoder_close(encoder);
     cliopt.destroy();
     param_free(param);
     VCA_FREE(errorBuf);

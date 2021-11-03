@@ -29,6 +29,8 @@ option(NATIVE_BUILD "Target the build CPU" OFF)
 option(STATIC_LINK_CRT "Statically link C runtime for release builds" OFF)
 mark_as_advanced(FPROFILE_USE FPROFILE_GENERATE NATIVE_BUILD)
 set(VCA_BUILD 1)
+configure_file("${PROJECT_SOURCE_DIR}/vca.def.in"
+               "${PROJECT_BINARY_DIR}/vca.def")
 configure_file("${PROJECT_SOURCE_DIR}/vca_config.h.in"
                "${PROJECT_BINARY_DIR}/vca_config.h")
 
@@ -473,7 +475,7 @@ if(NOT (MSVC_IDE OR XCODE))
 endif()
 option(ENABLE_SHARED "Build shared library" ON)
 if(ENABLE_SHARED)
-    add_library(vca-shared SHARED
+    add_library(vca-shared SHARED "${PROJECT_BINARY_DIR}/vca.def"
                 ${ASM_OBJS} ${VCA_RC_FILE} $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
     if(EXTRA_LIB)
         target_link_libraries(vca-shared ${EXTRA_LIB})
@@ -557,6 +559,9 @@ if(ENABLE_CLI)
         include_directories(compat/getopt)
         set(GETOPT compat/getopt/getopt.c compat/getopt/getopt.h)
     endif(NOT HAVE_GETOPT_H)
+	if(WIN32)
+        set(ExportDefs "${PROJECT_BINARY_DIR}/vca.def")
+    endif(WIN32)
     if(XCODE)
         # Xcode seems unable to link the CLI with libs, so link as one target
         add_executable(cli ../COPYING ${InputFiles} ${GETOPT}
@@ -564,7 +569,7 @@ if(ENABLE_CLI)
                     $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${ASM_OBJS})
     else()
         add_executable(cli ../COPYING ${InputFiles} ${GETOPT} ${VCA_RC_FILE}
-                       vca.cpp vca.h vcacli.h)
+                       ${ExportDefs} vca.cpp vca.h vcacli.h)
         if(WIN32 OR NOT ENABLE_SHARED OR INTEL_CXX)
             # The CLI cannot link to the shared library on Windows, it
             # requires internal APIs not exported from the DLL

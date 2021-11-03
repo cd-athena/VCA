@@ -18,10 +18,7 @@
  * along with this program.
  *****************************************************************************/
 
-#include "common.h"
 #include "primitives.h"
-#include "vca.h"
-
 #include <cstdlib> // abs()
 
 using namespace VCA_NS;

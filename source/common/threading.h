@@ -22,7 +22,6 @@
 #define VCA_THREADING_H
 
 #include "common.h"
-#include "vca.h"
 
 #ifdef _WIN32
 #include <windows.h>

@@ -17,7 +17,6 @@
  * along with this program.
  *****************************************************************************/
 
-#include "common.h"
 #include "constants.h"
 #include "threading.h"
 

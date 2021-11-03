@@ -21,7 +21,6 @@
 #ifndef VCA_PRIMITIVES_H
 #define VCA_PRIMITIVES_H
 
-#include "common.h"
 #include "cpu.h"
 
 namespace VCA_NS {

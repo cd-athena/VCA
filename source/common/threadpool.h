@@ -20,7 +20,6 @@
 #ifndef VCA_THREADPOOL_H
 #define VCA_THREADPOOL_H
 
-#include "common.h"
 #include "threading.h"
 
 namespace VCA_NS {

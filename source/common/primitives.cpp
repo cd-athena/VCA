@@ -17,7 +17,6 @@
  * along with this program.
  *****************************************************************************/
 
-#include "common.h"
 #include "primitives.h"
 
 namespace VCA_NS {
