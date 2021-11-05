@@ -30,9 +30,9 @@ extern "C" {
 #pragma warning(disable: 4201) // non-standard extension used (nameless struct/union)
 #endif
 
-/* vca_encoder:
- *      opaque handler for encoder */
-typedef struct vca_encoder vca_encoder;
+/* vca_analyzer:
+ *      opaque handler for analyzer */
+typedef struct vca_analyzer vca_analyzer;
 
 /* vca_picyuv:
  *      opaque handler for PicYuv */
@@ -66,8 +66,8 @@ typedef struct vca_frame_stats
     double           epsilon;
 } vca_frame_stats;
 
-/* Used to pass pictures into the encoder, and to get picture data back out of
- * the encoder.  The input and output semantics are different */
+/* Used to pass pictures into the analyzer, and to get picture data back out of
+ * the analyzer.  The input and output semantics are different */
 typedef struct vca_picture
 {
     /* presentation time stamp: user-specified, returned on output */
@@ -85,19 +85,19 @@ typedef struct vca_picture
     int     stride[3];
 
     /* Must be specified on input pictures. vca_picture_init() will set it to
-     * the encoder's internal bit depth, but this field must describe the depth
+     * the analyzer's internal bit depth, but this field must describe the depth
      * of the input pictures. Must be between 8 and 16. Values larger than 8
      * imply 16bits per input sample. If input bit depth is larger than the
-     * internal bit depth, the encoder will down-shift pixels. Input samples
+     * internal bit depth, the analyzer will down-shift pixels. Input samples
      * larger than 8bits will be masked to internal bit depth. On output the
-     * bitDepth will be the internal encoder bit depth */
+     * bitDepth will be the internal analyzer bit depth */
     int     bitDepth;
 
     /* Ignored on input, set to picture count, returned on output */
     int     poc;
 
     /* Must be specified on input pictures: VCA_CSP_I420 or other. It must
-     * match the internal color space of the encoder. vca_picture_init() will
+     * match the internal color space of the analyzer. vca_picture_init() will
      * initialize this value to the internal color space */
     int     colorSpace;
 
@@ -205,16 +205,16 @@ typedef struct vca_param
     int              bEnableWavefront;       /* Enable wavefront parallel processing of DCT energies */
     int              bEnableShotdetect;      /* Enable shot detection algorithm using epsilon feature */
     /*== Logging Feature ==*/
-    int              logLevel;               /* The level of logging detail emitted by the encoder */
+    int              logLevel;               /* The level of logging detail emitted by the analyzer */
 
     /*== Internal Picture Specification ==*/
-    int              internalBitDepth;       /* Internal encoder bit depth */
+    int              internalBitDepth;       /* Internal analyzer bit depth */
     int              internalCsp;            /* Color space of internal pictures */
     uint32_t         fpsNum;                 /* Numerator of frame rate */
     uint32_t         fpsDenom;               /* Denominator of frame rate */
     int              sourceWidth;            /* Width (in pixels) of the source pictures */
     int              sourceHeight;           /* Height (in pixels) of the source pictures */
-    int              totalFrames;            /* Total Number of frames to be encoded */
+    int              totalFrames;            /* Total Number of frames to be analyzed */
     uint32_t         maxCUSize;              /* Maximum CU width and height in pixels */
 
     /*== Video Usability Information ==*/
@@ -249,17 +249,17 @@ VCA_API extern const char *vca_build_info_str;
 
 /* Force a link error in the case of linking against an incompatible API version.
  * Glue #defines exist to force correct macro expansion; the final output of the macro
- * is x265_encoder_open_##X265_BUILD (for purposes of dlopen). */
-#define vca_encoder_glue1(x, y) x ## y
-#define vca_encoder_glue2(x, y) vca_encoder_glue1(x, y)
-#define vca_encoder_open vca_encoder_glue2(vca_encoder_open_, VCA_BUILD)
+ * is x265_analyzer_open_##X265_BUILD (for purposes of dlopen). */
+#define vca_analyzer_glue1(x, y) x ## y
+#define vca_analyzer_glue2(x, y) vca_analyzer_glue1(x, y)
+#define vca_analyzer_open vca_analyzer_glue2(vca_analyzer_open_, VCA_BUILD)
 
-vca_encoder*     vca_encoder_open(vca_param *);
-void             vca_encoder_parameters(vca_encoder *enc, vca_param *out);
-int              vca_encoder_encode(vca_encoder *enc, vca_picture *pic_in);
-void             vca_encoder_close(vca_encoder *enc);
-void             vca_encoder_shot_detect(vca_encoder *enc);
-void             vca_encoder_shot_print(vca_encoder *enc);
+vca_analyzer*     vca_analyzer_open(vca_param *);
+void             vca_analyzer_parameters(vca_analyzer *enc, vca_param *out);
+int              vca_analyzer_analyze(vca_analyzer *enc, vca_picture *pic_in);
+void             vca_analyzer_close(vca_analyzer *enc);
+void             vca_analyzer_shot_detect(vca_analyzer *enc);
+void             vca_analyzer_shot_print(vca_analyzer *enc);
 vca_picture*     vca_picture_alloc();
 void             vca_picture_init(vca_param *param, vca_picture *pic);
 void             vca_picture_free(vca_picture *p);
@@ -296,12 +296,12 @@ typedef struct vca_api
     const char*   build_info_str;
 
     /* libvca public API functions, documented above with vca_ prefixes */
-    vca_encoder*  (*encoder_open)(vca_param*);
-    void          (*encoder_parameters)(vca_encoder *enc, vca_param *out);
-    int           (*encoder_encode)(vca_encoder *enc, vca_picture *pic_in);
-    void          (*encoder_close)(vca_encoder *enc);
-    void          (*encoder_shot_detect)(vca_encoder *enc);
-    void          (*encoder_shot_print)(vca_encoder *enc);
+    vca_analyzer*  (*analyzer_open)(vca_param*);
+    void          (*analyzer_parameters)(vca_analyzer *enc, vca_param *out);
+    int           (*analyzer_analyze)(vca_analyzer *enc, vca_picture *pic_in);
+    void          (*analyzer_close)(vca_analyzer *enc);
+    void          (*analyzer_shot_detect)(vca_analyzer *enc);
+    void          (*analyzer_shot_print)(vca_analyzer *enc);
     vca_picture*  (*picture_alloc)();
     void          (*picture_init)(vca_param *param, vca_picture *pic);
     void          (*picture_free)(vca_picture *p);

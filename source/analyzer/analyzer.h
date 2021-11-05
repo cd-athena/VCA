@@ -23,15 +23,15 @@
 #include "common.h"
 #include "threading.h"
 
-struct vca_encoder {};
+struct vca_analyzer {};
 namespace VCA_NS {
 // private namespace
 extern const char g_sliceTypeToChar[3];
 
-class Encoder : public vca_encoder
+class Analyzer : public vca_analyzer
 {
 public:
-    int64_t                m_encodeStartTime;
+    int64_t                m_analyzeStartTime;
     vca_param*             m_param;
     bool                   m_aborted;          // fatal error detected
 
@@ -46,15 +46,15 @@ public:
     int                    prevShotPos;
     int                    *isNotSureShot;
     int                    *prevShotDist;
-    Encoder();
-    ~Encoder()
+    Analyzer();
+    ~Analyzer()
     {
     };
 
     void create();
     void destroy();
 
-    int encode(const vca_picture* pic);
+    int analyze(const vca_picture* pic);
     bool compute_weighted_DCT_energy(vca_picture *pic, vca_frame_texture_t *m_texture);
     void compute_dct_texture_SAD(double *normalizedTextureSad, vca_picture *pic);
     void configure(vca_param *param);

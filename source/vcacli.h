@@ -83,8 +83,8 @@ static void showHelp(vca_param *param)
     H1("                                 1 - i420 (4:2:0 default)\n");
     H1("                                 2 - i422 (4:2:2)\n");
     H1("                                 3 - i444 (4:4:4)\n");
-    H0("-f/--frames <integer>            Maximum number of frames to encode. Default all\n");
-    H0("   --seek <integer>              First frame to encode\n");
+    H0("-f/--frames <integer>            Maximum number of frames to analyze. Default all\n");
+    H0("   --seek <integer>              First frame to analyze\n");
     H0("   --[no-]asm <bool|int|string>  Override CPU detection. Default: auto\n");
     H0("   --complexity-csv <filename>   Comma separated complexity log file\n");
     H0("   --shot-csv <filename>         Comma separated shot detection log file\n");

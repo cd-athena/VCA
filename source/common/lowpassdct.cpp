@@ -109,7 +109,7 @@ static void lowPassDct32_c(const int16_t* src, int16_t* dst, intptr_t srcStride)
 namespace VCA_NS {
 // vca private namespace
 
-void setupLowPassPrimitives_c(EncoderPrimitives& p)
+void setupLowPassPrimitives_c(AnalyzerPrimitives& p)
 {
     s_dct4x4 = &(p.cu[BLOCK_4x4].standard_dct);
     s_dct8x8 = &(p.cu[BLOCK_8x8].standard_dct);

@@ -21,42 +21,21 @@
 
 namespace VCA_NS {
 
-extern const uint8_t lumaPartitionMapTable[] =
-{
-//  4          8          12          16          20  24          28  32          36  40  44  48          52  56  60  64
-    LUMA_4x4,  LUMA_4x8,  255,        LUMA_4x16,  255, 255,        255, 255,        255, 255, 255, 255,        255, 255, 255, 255,        // 4
-    LUMA_8x4,  LUMA_8x8,  255,        LUMA_8x16,  255, 255,        255, LUMA_8x32,  255, 255, 255, 255,        255, 255, 255, 255,        // 8
-    255,        255,      255,        LUMA_12x16, 255, 255,        255, 255,        255, 255, 255, 255,        255, 255, 255, 255,        // 12
-    LUMA_16x4, LUMA_16x8, LUMA_16x12, LUMA_16x16, 255, 255,        255, LUMA_16x32, 255, 255, 255, 255,        255, 255, 255, LUMA_16x64, // 16
-    255,        255,      255,        255,        255, 255,        255, 255,        255, 255, 255, 255,        255, 255, 255, 255,        // 20
-    255,        255,      255,        255,        255, 255,        255, LUMA_24x32, 255, 255, 255, 255,        255, 255, 255, 255,        // 24
-    255,        255,      255,        255,        255, 255,        255, 255,        255, 255, 255, 255,        255, 255, 255, 255,        // 28
-    255,        LUMA_32x8, 255,       LUMA_32x16, 255, LUMA_32x24, 255, LUMA_32x32, 255, 255, 255, 255,        255, 255, 255, LUMA_32x64, // 32
-    255,        255,      255,        255,        255, 255,        255, 255,        255, 255, 255, 255,        255, 255, 255, 255,        // 36
-    255,        255,      255,        255,        255, 255,        255, 255,        255, 255, 255, 255,        255, 255, 255, 255,        // 40
-    255,        255,      255,        255,        255, 255,        255, 255,        255, 255, 255, 255,        255, 255, 255, 255,        // 44
-    255,        255,      255,        255,        255, 255,        255, 255,        255, 255, 255, 255,        255, 255, 255, LUMA_48x64, // 48
-    255,        255,      255,        255,        255, 255,        255, 255,        255, 255, 255, 255,        255, 255, 255, 255,        // 52
-    255,        255,      255,        255,        255, 255,        255, 255,        255, 255, 255, 255,        255, 255, 255, 255,        // 56
-    255,        255,      255,        255,        255, 255,        255, 255,        255, 255, 255, 255,        255, 255, 255, 255,        // 60
-    255,        255,      255,        LUMA_64x16, 255, 255,        255, LUMA_64x32, 255, 255, 255, LUMA_64x48, 255, 255, 255, LUMA_64x64  // 64
-};
+/* the "authoritative" set of analyzer primitives */
+AnalyzerPrimitives primitives;
 
-/* the "authoritative" set of encoder primitives */
-EncoderPrimitives primitives;
+void setupPixelPrimitives_c(AnalyzerPrimitives &p);
+void setupDCTPrimitives_c(AnalyzerPrimitives &p);
+void setupLowPassPrimitives_c(AnalyzerPrimitives& p);
 
-void setupPixelPrimitives_c(EncoderPrimitives &p);
-void setupDCTPrimitives_c(EncoderPrimitives &p);
-void setupLowPassPrimitives_c(EncoderPrimitives& p);
-
-void setupCPrimitives(EncoderPrimitives &p)
+void setupCPrimitives(AnalyzerPrimitives &p)
 {
     setupPixelPrimitives_c(p);      // pixel.cpp
     setupDCTPrimitives_c(p);        // dct.cpp
     setupLowPassPrimitives_c(p);    // lowpassdct.cpp
 }
 
-void enableLowpassDCTPrimitives(EncoderPrimitives &p)
+void enableLowpassDCTPrimitives(AnalyzerPrimitives &p)
 {
     // update copies of the standard dct transform
     p.cu[BLOCK_4x4].standard_dct = p.cu[BLOCK_4x4].dct;

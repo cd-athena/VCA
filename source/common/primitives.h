@@ -25,22 +25,6 @@
 
 namespace VCA_NS {
 
-enum LumaPU
-{
-    // Square (the first 5 PUs match the block sizes)
-    LUMA_4x4,   LUMA_8x8,   LUMA_16x16, LUMA_32x32, LUMA_64x64,
-    // Rectangular
-    LUMA_8x4,   LUMA_4x8,
-    LUMA_16x8,  LUMA_8x16,
-    LUMA_32x16, LUMA_16x32,
-    LUMA_64x32, LUMA_32x64,
-    // Asymmetrical (0.75, 0.25)
-    LUMA_16x12, LUMA_12x16, LUMA_16x4,  LUMA_4x16,
-    LUMA_32x24, LUMA_24x32, LUMA_32x8,  LUMA_8x32,
-    LUMA_64x48, LUMA_48x64, LUMA_64x16, LUMA_16x64,
-    NUM_PU_SIZES
-};
-
 enum LumaCU // can be indexed using log2n(width)-2
 {
     BLOCK_4x4,
@@ -61,14 +45,14 @@ typedef void (*copy_ss_t)(int16_t* dst, intptr_t dstStride, const int16_t* src, 
 typedef void (*planecopy_cp_t) (const uint8_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift);
 typedef void (*planecopy_sp_t) (const uint16_t* src, intptr_t srcStride, pixel* dst, intptr_t dstStride, int width, int height, int shift, uint16_t mask);
 
-struct EncoderPrimitives
+struct AnalyzerPrimitives
 {
     struct CU
     {
-        dct_t           dct;    // active dct transformation
-        idct_t          idct;   // active idct transformation
-        dct_t           standard_dct;   // original dct function, used by lowpass_dct
-        dct_t           lowpass_dct;    // lowpass dct approximation
+        dct_t           dct;             // active dct transformation
+        idct_t          idct;            // active idct transformation
+        dct_t           standard_dct;    // original dct function, used by lowpass_dct
+        dct_t           lowpass_dct;     // lowpass dct approximation
         copy_ss_t       copy_ss;
     }
     cu[NUM_CU_SIZES];
@@ -80,11 +64,11 @@ struct EncoderPrimitives
     planecopy_sp_t        planecopy_sp_shl;
 };
 
-/* This copy of the table is what gets used by the encoder */
-extern EncoderPrimitives primitives;
+/* This copy of the table is what gets used by the analyzer */
+extern AnalyzerPrimitives primitives;
 
-void setupCPrimitives(EncoderPrimitives &p);
-void setupInstrinsicPrimitives(EncoderPrimitives &p, int cpuMask);
+void setupCPrimitives(AnalyzerPrimitives &p);
+void setupInstrinsicPrimitives(AnalyzerPrimitives &p, int cpuMask);
 
 }
 

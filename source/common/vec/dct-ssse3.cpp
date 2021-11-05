@@ -1109,7 +1109,7 @@ static void dct32(const int16_t *src, int16_t *dst, intptr_t stride)
 }
 
 namespace VCA_NS {
-void setupIntrinsicDCT_ssse3(EncoderPrimitives &p)
+void setupIntrinsicDCT_ssse3(AnalyzerPrimitives &p)
 {
     /* Note: We have AVX2 assembly for these two functions, but since AVX2 is
      * still somewhat rare on end-user PCs we still compile and link these SSSE3

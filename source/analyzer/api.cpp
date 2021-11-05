@@ -17,7 +17,7 @@
  * along with this program.
  *****************************************************************************/
 
-#include "encoder.h"
+#include "analyzer.h"
 
 #if EXPORT_C_API
 /* these functions are exported as C functions (default) */
@@ -28,7 +28,7 @@ extern "C" {
 namespace X265_NS {
 #endif
 
-    vca_encoder* vca_encoder_open(vca_param *p)
+    vca_analyzer* vca_analyzer_open(vca_param *p)
     {
         if (!p)
             return NULL;
@@ -47,7 +47,7 @@ namespace X265_NS {
             return NULL;
         }
 
-        Encoder* encoder = NULL;
+        Analyzer* analyzer = NULL;
         vca_param* param = param_alloc();
         if (!param)
             goto fail;
@@ -59,57 +59,57 @@ namespace X265_NS {
         if (check_params(param))
             goto fail;
 
-        encoder = new Encoder;
+        analyzer = new Analyzer;
 
         // may change params for auto-detect, etc
-        encoder->configure(param);
+        analyzer->configure(param);
 
-        encoder->create();
+        analyzer->create();
 
         /* Try to open complexity CSV file handle */
-        if (encoder->m_param->csv_E_h_fn)
+        if (analyzer->m_param->csv_E_h_fn)
         {
-            encoder->m_param->csv_E_h_fpt = vca_csv_E_h_log_open(encoder->m_param);
-            if (!encoder->m_param->csv_E_h_fpt)
+            analyzer->m_param->csv_E_h_fpt = vca_csv_E_h_log_open(analyzer->m_param);
+            if (!analyzer->m_param->csv_E_h_fpt)
             {
-                vca_log(encoder->m_param, VCA_LOG_ERROR, "Unable to open complexity CSV log file <%s>, aborting\n", encoder->m_param->csv_E_h_fn);
-                encoder->m_aborted = true;
+                vca_log(analyzer->m_param, VCA_LOG_ERROR, "Unable to open complexity CSV log file <%s>, aborting\n", analyzer->m_param->csv_E_h_fn);
+                analyzer->m_aborted = true;
             }
         }
         /* Try to open shot detection CSV file handle */
-        if (encoder->m_param->csv_shot_fn)
+        if (analyzer->m_param->csv_shot_fn)
         {
-            encoder->m_param->csv_shot_fpt = vca_csv_shot_log_open(encoder->m_param);
-            if (!encoder->m_param->csv_shot_fpt)
+            analyzer->m_param->csv_shot_fpt = vca_csv_shot_log_open(analyzer->m_param);
+            if (!analyzer->m_param->csv_shot_fpt)
             {
-                vca_log(encoder->m_param, VCA_LOG_ERROR, "Unable to open shot detection CSV log file <%s>, aborting\n", encoder->m_param->csv_shot_fn);
-                encoder->m_aborted = true;
+                vca_log(analyzer->m_param, VCA_LOG_ERROR, "Unable to open shot detection CSV log file <%s>, aborting\n", analyzer->m_param->csv_shot_fn);
+                analyzer->m_aborted = true;
             }
         }
-        encoder->m_param = param;
-        memcpy(encoder->m_param, param, sizeof(vca_param));
-        if (encoder->m_aborted)
+        analyzer->m_param = param;
+        memcpy(analyzer->m_param, param, sizeof(vca_param));
+        if (analyzer->m_aborted)
             goto fail;
 
         print_params(param);
-        return encoder;
+        return analyzer;
 
     fail:
-        delete encoder;
+        delete analyzer;
         param_free(param);
         return NULL;
     }
 
-    void vca_encoder_parameters(vca_encoder *enc, vca_param *out)
+    void vca_analyzer_parameters(vca_analyzer *enc, vca_param *out)
     {
         if (enc && out)
         {
-            Encoder *encoder = static_cast<Encoder*>(enc);
-            memcpy(out, encoder->m_param, sizeof(vca_param));
+            Analyzer *analyzer = static_cast<Analyzer*>(enc);
+            memcpy(out, analyzer->m_param, sizeof(vca_param));
         }
     }
 
-    int vca_encoder_encode(vca_encoder *enc, vca_picture *pic_in)
+    int vca_analyzer_analyze(vca_analyzer *enc, vca_picture *pic_in)
     {
         if (!enc)
             return -1;
@@ -117,64 +117,64 @@ namespace X265_NS {
         if (!pic_in)
             return 0;
 
-        Encoder *encoder = static_cast<Encoder*>(enc);
-        int numEncoded;
+        Analyzer *analyzer = static_cast<Analyzer*>(enc);
+        int numAnalyzed;
 
         do
         {
-            numEncoded = encoder->encode(pic_in);
-            if (numEncoded)
-                vca_csv_E_h_log_frame(encoder->m_param, pic_in);
-        } while (numEncoded == 0 && !pic_in);
+            numAnalyzed = analyzer->analyze(pic_in);
+            if (numAnalyzed)
+                vca_csv_E_h_log_frame(analyzer->m_param, pic_in);
+        } while (numAnalyzed == 0 && !pic_in);
 
-        if (numEncoded < 0)
-            encoder->m_aborted = true;
+        if (numAnalyzed < 0)
+            analyzer->m_aborted = true;
 
-        return numEncoded;
+        return numAnalyzed;
     }
 
-    void vca_encoder_close(vca_encoder *enc)
+    void vca_analyzer_close(vca_analyzer *enc)
     {
         if (enc)
         {
-            Encoder *encoder = static_cast<Encoder*>(enc);
-            encoder->destroy();
-            delete encoder;
+            Analyzer *analyzer = static_cast<Analyzer*>(enc);
+            analyzer->destroy();
+            delete analyzer;
         }
     }
 
-    void vca_encoder_shot_detect(vca_encoder *enc)
+    void vca_analyzer_shot_detect(vca_analyzer *enc)
     {
-        Encoder *encoder = static_cast<Encoder*>(enc);
-        int numFrames = encoder->m_param->totalFrames;
+        Analyzer *analyzer = static_cast<Analyzer*>(enc);
+        int numFrames = analyzer->m_param->totalFrames;
 
         /* First pass */
-        encoder->isNewShot[0] = VCA_NEW_SHOT;
-        encoder->isNewShot[1] = VCA_NOT_NEW_SHOT;
-        encoder->prevShotPos = 0;
+        analyzer->isNewShot[0] = VCA_NEW_SHOT;
+        analyzer->isNewShot[1] = VCA_NOT_NEW_SHOT;
+        analyzer->prevShotPos = 0;
         int not_sure_count = 0;
         for (int i = 2, j = 0; i < numFrames; i++)
         {
-            if (encoder->epsilons[i] > encoder->m_param->maxThresh)
+            if (analyzer->epsilons[i] > analyzer->m_param->maxThresh)
             {
-                encoder->isNewShot[i] = VCA_NEW_SHOT;
-                encoder->prevShotPos = i;
+                analyzer->isNewShot[i] = VCA_NEW_SHOT;
+                analyzer->prevShotPos = i;
             }
-            else if (encoder->epsilons[i] < encoder->m_param->minThresh)
+            else if (analyzer->epsilons[i] < analyzer->m_param->minThresh)
             {
-                encoder->isNewShot[i] = VCA_NOT_NEW_SHOT;
+                analyzer->isNewShot[i] = VCA_NOT_NEW_SHOT;
             }
             else
             {
-                encoder->isNewShot[i] = VCA_NOTSURE_NEW_SHOT;
-                encoder->isNotSureShot[j] = i;
-                encoder->prevShotDist[j] = i - encoder->prevShotPos;
+                analyzer->isNewShot[i] = VCA_NOTSURE_NEW_SHOT;
+                analyzer->isNotSureShot[j] = i;
+                analyzer->prevShotDist[j] = i - analyzer->prevShotPos;
                 not_sure_count++;
                 j++;
             }
         }
         /* If there are no VCA_NOTSURE_NEW_SHOT entries, shot detection has been completed */
-        vca_log(encoder->m_param, VCA_LOG_DEBUG, "First pass of shot detection complete!\n");
+        vca_log(analyzer->m_param, VCA_LOG_DEBUG, "First pass of shot detection complete!\n");
         if (!not_sure_count)
             return;
 
@@ -182,42 +182,42 @@ namespace X265_NS {
         /* Second pass */
         for (int j = 0; j < not_sure_count; j++)
         {
-            int fps_value = encoder->m_param->fpsNum / encoder->m_param->fpsDenom;
-            if (encoder->prevShotDist[j] > fps_value && encoder->prevShotDist[j + 1] > fps_value)
+            int fps_value = analyzer->m_param->fpsNum / analyzer->m_param->fpsDenom;
+            if (analyzer->prevShotDist[j] > fps_value && analyzer->prevShotDist[j + 1] > fps_value)
             {
-                encoder->isNewShot[encoder->isNotSureShot[j]] = VCA_NEW_SHOT;
+                analyzer->isNewShot[analyzer->isNotSureShot[j]] = VCA_NEW_SHOT;
             }
             else
             {
-                encoder->isNewShot[encoder->isNotSureShot[j]] = VCA_NOT_NEW_SHOT;
+                analyzer->isNewShot[analyzer->isNotSureShot[j]] = VCA_NOT_NEW_SHOT;
             }
         }
-        vca_log(encoder->m_param, VCA_LOG_DEBUG, "Second pass of shot detection complete!\n");
+        vca_log(analyzer->m_param, VCA_LOG_DEBUG, "Second pass of shot detection complete!\n");
     }
 
-    void vca_encoder_shot_print(vca_encoder *enc)
+    void vca_analyzer_shot_print(vca_analyzer *enc)
     {
-        Encoder *encoder = static_cast<Encoder*>(enc);
-        int numFrames = encoder->m_param->totalFrames;
+        Analyzer *analyzer = static_cast<Analyzer*>(enc);
+        int numFrames = analyzer->m_param->totalFrames;
         int shot_count = 1;
         for (int i = 0; i < numFrames; i++)
         {
-            if (encoder->isNewShot[i] == VCA_NEW_SHOT)
+            if (analyzer->isNewShot[i] == VCA_NEW_SHOT)
             {
-                if (encoder->m_param->csv_shot_fpt)
+                if (analyzer->m_param->csv_shot_fpt)
                 {
                     if (i)
-                        fprintf(encoder->m_param->csv_shot_fpt, "%d,\n", i - 1);
-                    fprintf(encoder->m_param->csv_shot_fpt, "%d, %d,", shot_count, i);
+                        fprintf(analyzer->m_param->csv_shot_fpt, "%d,\n", i - 1);
+                    fprintf(analyzer->m_param->csv_shot_fpt, "%d, %d,", shot_count, i);
                     shot_count++;
                     fflush(stderr);
                 }
-                vca_log(encoder->m_param, VCA_LOG_INFO, "IDR at POC %d\n", i);
+                vca_log(analyzer->m_param, VCA_LOG_INFO, "IDR at POC %d\n", i);
             }
-            if (encoder->m_param->csv_shot_fpt)
+            if (analyzer->m_param->csv_shot_fpt)
             {
                 if (i == (numFrames - 1))
-                    fprintf(encoder->m_param->csv_shot_fpt, "%d,\n", numFrames - 1);
+                    fprintf(analyzer->m_param->csv_shot_fpt, "%d,\n", numFrames - 1);
             }
         }
     }
@@ -309,12 +309,12 @@ namespace X265_NS {
         vca_version_str,
         vca_build_info_str,
 
-        &vca_encoder_open,
-        &vca_encoder_parameters,
-        &vca_encoder_encode,
-        &vca_encoder_close,
-        &vca_encoder_shot_detect,
-        &vca_encoder_shot_print,
+        &vca_analyzer_open,
+        &vca_analyzer_parameters,
+        &vca_analyzer_analyze,
+        &vca_analyzer_close,
+        &vca_analyzer_shot_detect,
+        &vca_analyzer_shot_print,
         &vca_picture_alloc,
         &vca_picture_init,
         &vca_picture_free,

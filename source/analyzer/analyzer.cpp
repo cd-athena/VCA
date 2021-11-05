@@ -20,7 +20,7 @@
 #include "common.h"
 #include "primitives.h"
 #include "threadpool.h"
-#include "encoder.h"
+#include "analyzer.h"
 #include "cpu.h"
 
 #if _MSC_VER
@@ -137,14 +137,14 @@ static const double weights_dct32[1024] = {
 
 using namespace VCA_NS;
 
-Encoder::Encoder()
+Analyzer::Analyzer()
 {
     m_aborted = false;
     m_param = NULL;
     epsilons = NULL;
 }
 
-bool Encoder::compute_weighted_DCT_energy(vca_picture *pic, vca_frame_texture_t *m_texture)
+bool Analyzer::compute_weighted_DCT_energy(vca_picture *pic, vca_frame_texture_t *m_texture)
 {
     pixel *src = NULL;
     if (pic->bitDepth == VCA_DEPTH)
@@ -304,7 +304,7 @@ bool Encoder::compute_weighted_DCT_energy(vca_picture *pic, vca_frame_texture_t 
     return true;
 }
 
-void Encoder::compute_dct_texture_SAD(double *relNormalizedTextureSad, vca_picture *pic)
+void Analyzer::compute_dct_texture_SAD(double *relNormalizedTextureSad, vca_picture *pic)
 {
     uint32_t maxBlockSize = m_param->maxCUSize;
     uint32_t numCuInWidth = (m_param->sourceWidth + maxBlockSize - 1) / maxBlockSize;
@@ -347,12 +347,12 @@ void Encoder::compute_dct_texture_SAD(double *relNormalizedTextureSad, vca_pictu
     prev_norm_textureSad = textureSad;
 }
 
-void Encoder::create()
+void Analyzer::create()
 {
     if (!primitives.cu[BLOCK_4x4].copy_ss)
     {
         // this should be an impossible condition when using our public API, and indicates a serious bug.
-        vca_log(m_param, VCA_LOG_ERROR, "Primitives must be initialized before encoder is created\n");
+        vca_log(m_param, VCA_LOG_ERROR, "Primitives must be initialized before analyzer is created\n");
         abort();
     }
 
@@ -371,14 +371,14 @@ void Encoder::create()
     CHECKED_MALLOC(isNewShot, uint8_t, m_param->totalFrames);
     CHECKED_MALLOC(isNotSureShot, int, m_param->totalFrames);
     CHECKED_MALLOC(prevShotDist, int, m_param->totalFrames);
-    m_encodeStartTime = vca_mdate();
+    m_analyzeStartTime = vca_mdate();
     return;
 fail:
     destroy();
     m_aborted = true;
 }
 
-void Encoder::destroy()
+void Analyzer::destroy()
 {
     VCA_FREE(cur_texture->m_ctuAbsoluteEnergy);
     VCA_FREE(cur_texture->m_ctuRelativeEnergy);
@@ -403,9 +403,9 @@ void Encoder::destroy()
 }
 
 /**
- * Feed one new input frame into the encoder, get one frame out. If pic_in is
+ * Feed one new input frame into the analyzer, get one frame out. If pic_in is
  * NULL, a flush condition is implied and pic_in must be NULL for all subsequent
- * calls for this encoder instance.
+ * calls for this analyzer instance.
  *
  * pic_in  input original YUV picture or NULL
  * pic_out pointer to reconstructed picture struct
@@ -413,12 +413,12 @@ void Encoder::destroy()
  * returns 0 if no frames are currently available for output
  *         1 if frame was output, m_nalList contains access unit
  *         negative on malloc error or abort */
-int Encoder::encode(const vca_picture* pic_in)
+int Analyzer::analyze(const vca_picture* pic_in)
 {
 #if CHECKED_BUILD || _DEBUG
     if (g_checkFailures)
     {
-        vca_log(m_param, VCA_LOG_ERROR, "encoder aborting because of internal error\n");
+        vca_log(m_param, VCA_LOG_ERROR, "analyzer aborting because of internal error\n");
         return -1;
     }
 #endif
@@ -451,7 +451,7 @@ int Encoder::encode(const vca_picture* pic_in)
 #pragma warning(disable: 4127) // conditional expression is constant
 #endif
 
-void Encoder::configure(vca_param *p)
+void Analyzer::configure(vca_param *p)
 {
     this->m_param = p;
     if (!p->bEnableShotdetect && p->csv_shot_fn)
@@ -513,7 +513,7 @@ void dither_image(vca_picture* picIn, int picWidth, int picHeight, int16_t *erro
 
     if (picIn->bitDepth == bitDepth)
     {
-        fprintf(stderr, "extras[error]: dither support enabled only if encoder depth is different from picture depth\n");
+        fprintf(stderr, "extras[error]: dither support enabled only if analyzer depth is different from picture depth\n");
         return;
     }
 

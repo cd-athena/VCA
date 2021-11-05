@@ -599,7 +599,7 @@ static void idct32_c(const int16_t* src, int16_t* dst, intptr_t dstStride)
 
 namespace VCA_NS {
 // vca private namespace
-void setupDCTPrimitives_c(EncoderPrimitives& p)
+void setupDCTPrimitives_c(AnalyzerPrimitives& p)
 {
     p.dst4x4 = dst4_c;
     p.cu[BLOCK_4x4].dct   = dct4_c;

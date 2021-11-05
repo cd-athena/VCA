@@ -43,7 +43,7 @@ extern "C" {
 namespace VCA_NS {
 
 #if HIGH_BIT_DEPTH
-    void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
+    void setupAssemblyPrimitives(AnalyzerPrimitives &p, int cpuMask)
     {
         if (cpuMask & VCA_CPU_SSE2)
         {
@@ -62,7 +62,7 @@ namespace VCA_NS {
 #endif
     }
 #else
-    void setupAssemblyPrimitives(EncoderPrimitives &p, int cpuMask)
+    void setupAssemblyPrimitives(AnalyzerPrimitives &p, int cpuMask)
     {
         if (cpuMask & VCA_CPU_SSE2)
         {

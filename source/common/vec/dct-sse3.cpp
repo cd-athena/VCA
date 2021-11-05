@@ -1410,7 +1410,7 @@ static void idct32(const int16_t *src, int16_t *dst, intptr_t stride)
 }
 
 namespace VCA_NS {
-void setupIntrinsicDCT_sse3(EncoderPrimitives &p)
+void setupIntrinsicDCT_sse3(AnalyzerPrimitives &p)
 {
     /* Note: We have AVX2 assembly for these functions, but since AVX2 is still
      * somewhat rare on end-user PCs we still compile and link these SSE3

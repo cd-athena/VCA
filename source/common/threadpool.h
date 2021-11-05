@@ -38,7 +38,7 @@ static const sleepbitmap_t ALL_POOL_THREADS = (sleepbitmap_t)-1;
 enum { MAX_POOL_THREADS = sizeof(sleepbitmap_t) * 8 };
 enum { INVALID_SLICE_PRIORITY = 10 }; // a value larger than any VCA_TYPE_* macro
 
-// Frame level job providers. FrameEncoder and Lookahead derive from
+// Frame level job providers. FrameAnalyzer and Lookahead derive from
 // this class and implement findJob()
 class JobProvider
 {
@@ -49,7 +49,7 @@ public:
     int           m_jpId;
     int           m_sliceType;
     bool          m_helpWanted;
-    bool          m_isFrameEncoder; /* rather ugly hack, but nothing better presents itself */
+    bool          m_isFrameAnalyzer; /* rather ugly hack, but nothing better presents itself */
 
     JobProvider()
         : m_pool(NULL)
@@ -57,7 +57,7 @@ public:
         , m_jpId(-1)
         , m_sliceType(INVALID_SLICE_PRIORITY)
         , m_helpWanted(false)
-        , m_isFrameEncoder(false)
+        , m_isFrameAnalyzer(false)
     {}
 
     virtual ~JobProvider() {}

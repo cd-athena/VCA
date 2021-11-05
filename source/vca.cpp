@@ -76,7 +76,7 @@ struct CLIOptions
     bool bForceY4m;
     bool bDither;
     uint32_t seek;              // number of frames to skip from the beginning
-    uint32_t framesToBeEncoded; // number of frames to encode
+    uint32_t framesToBeAnalyzed; // number of frames to analyze
     uint64_t totalbytes;
     int64_t startTime;
     int64_t prevUpdateTime;
@@ -89,7 +89,7 @@ struct CLIOptions
         api = NULL;
         input = NULL;
         param = NULL;
-        framesToBeEncoded = seek = 0;
+        framesToBeAnalyzed = seek = 0;
         totalbytes = 0;
         bProgress = true;
         bForceY4m = false;
@@ -120,9 +120,9 @@ void CLIOptions::printStatus(uint32_t frameNum)
 
     int64_t elapsed = time - startTime;
     double fps = elapsed > 0 ? frameNum * 1000000. / elapsed : 0;
-    if (framesToBeEncoded)
+    if (framesToBeAnalyzed)
     {
-        int eta = (int)(elapsed * (framesToBeEncoded - frameNum) / ((int64_t)frameNum * 1000000));
+        int eta = (int)(elapsed * (framesToBeAnalyzed - frameNum) / ((int64_t)frameNum * 1000000));
         sprintf(buf, "vca [%.1f%%] %d/%d frames, %.2f fps, eta %d:%02d:%02d",
             100. * frameNum / (param->totalFrames), frameNum, param->totalFrames, fps,
                 eta / 3600, (eta / 60) % 60, eta % 60);
@@ -223,7 +223,7 @@ bool CLIOptions::parse(int argc, char **argv)
 
             if (0) ;
             OPT2("frame-skip", "seek") this->seek = (uint32_t)vca_atoi(optarg, bError);
-            OPT("frames") this->framesToBeEncoded = (uint32_t)vca_atoi(optarg, bError);
+            OPT("frames") this->framesToBeAnalyzed = (uint32_t)vca_atoi(optarg, bError);
             OPT("no-progress") this->bProgress = false;
             OPT("input") inputfn = optarg;
             OPT("input-depth") inputBitDepth = (uint32_t)vca_atoi(optarg, bError);
@@ -307,9 +307,9 @@ bool CLIOptions::parse(int argc, char **argv)
     }
     if (!param->vui.aspectRatioIdc && info.sarWidth && info.sarHeight)
         setParamAspectRatio(param, info.sarWidth, info.sarHeight);
-    if (this->framesToBeEncoded == 0 && info.frameCount > (int)seek)
-        this->framesToBeEncoded = info.frameCount - seek;
-    param->totalFrames = this->framesToBeEncoded;
+    if (this->framesToBeAnalyzed == 0 && info.frameCount > (int)seek)
+        this->framesToBeAnalyzed = info.frameCount - seek;
+    param->totalFrames = this->framesToBeAnalyzed;
     
     /* Force CFR until we have support for VFR */
     info.timebaseNum = param->fpsDenom;
@@ -326,10 +326,10 @@ bool CLIOptions::parse(int argc, char **argv)
         if (width && height)
             p += sprintf(buf + p, " sar %d:%d", width, height);
 
-        if (framesToBeEncoded <= 0 || info.frameCount <= 0)
+        if (framesToBeAnalyzed <= 0 || info.frameCount <= 0)
             strcpy(buf + p, " unknown frame count");
         else
-            sprintf(buf + p, " frames %u - %d of %d", this->seek, this->seek + this->framesToBeEncoded - 1, info.frameCount);
+            sprintf(buf + p, " frames %u - %d of %d", this->seek, this->seek + this->framesToBeAnalyzed - 1, info.frameCount);
 
         general_log(param, input->getName(), VCA_LOG_INFO, "%s\n", buf);
     }
@@ -372,11 +372,11 @@ static int get_argv_utf8(int *argc_ptr, char ***argv_ptr)
 
 /* CLI return codes:
  *
- * 0 - encode successful
+ * 0 - analyze successful
  * 1 - unable to parse command line
- * 2 - unable to open encoder
+ * 2 - unable to open analyzer
  * 3 - unable to generate stream headers
- * 4 - encoder abort */
+ * 4 - analyzer abort */
 
 int main(int argc, char **argv)
 {
@@ -405,15 +405,15 @@ int main(int argc, char **argv)
 
     vca_param* param = cliopt.param;
     const vca_api* api = cliopt.api;
-    vca_encoder *encoder = api->encoder_open(param);
-    if (!encoder)
+    vca_analyzer *analyzer = api->analyzer_open(param);
+    if (!analyzer)
     {
-        vca_log(param, VCA_LOG_ERROR, "failed to open encoder\n");
+        vca_log(param, VCA_LOG_ERROR, "failed to open analyzer\n");
         cliopt.destroy();
         param_free(param);
         exit(2);
     }
-    api->encoder_parameters(encoder, param);
+    api->analyzer_parameters(analyzer, param);
 
      /* Control-C handler */
     if (signal(SIGINT, sigint_handler) == SIG_ERR)
@@ -436,11 +436,11 @@ int main(int argc, char **argv)
             cliopt.bDither = false;
     }
 
-    // main encoder loop
+    // main analyzer loop
     while (pic_in && !b_ctrl_c)
     {
         pic_orig.poc = inFrameCount;
-        if (cliopt.framesToBeEncoded && inFrameCount >= cliopt.framesToBeEncoded)
+        if (cliopt.framesToBeAnalyzed && inFrameCount >= cliopt.framesToBeAnalyzed)
             pic_in = NULL;
         else if (cliopt.input->readPicture(pic_orig))
             inFrameCount++;
@@ -457,29 +457,29 @@ int main(int argc, char **argv)
             /* Overwrite PTS */
             pic_in->pts = pic_in->poc;
         }
-        int numEncoded = api->encoder_encode(encoder, pic_in);
-        if (numEncoded < 0)
+        int numAnalyzed = api->analyzer_analyze(analyzer, pic_in);
+        if (numAnalyzed < 0)
         {
             b_ctrl_c = 1;
             ret = 4;
             break;
         }
-        outFrameCount += numEncoded;
+        outFrameCount += numAnalyzed;
         cliopt.printStatus(outFrameCount);
     }
 
-    /* Flush the encoder */
+    /* Flush the analyzer */
     while (!b_ctrl_c)
     {
-        int numEncoded = api->encoder_encode(encoder, NULL);
-        if (numEncoded < 0)
+        int numAnalyzed = api->analyzer_analyze(analyzer, NULL);
+        if (numAnalyzed < 0)
         {
             ret = 4;
             break;
         }
-        outFrameCount += numEncoded;
+        outFrameCount += numAnalyzed;
         cliopt.printStatus(outFrameCount);
-        if (!numEncoded)
+        if (!numAnalyzed)
             break;
     }
 
@@ -490,11 +490,11 @@ int main(int argc, char **argv)
     /* Shot detection */
     if (param->bEnableShotdetect)
     {
-        api->encoder_shot_detect(encoder);
-        api->encoder_shot_print(encoder);
+        api->analyzer_shot_detect(analyzer);
+        api->analyzer_shot_print(analyzer);
     }
 
-    api->encoder_close(encoder);
+    api->analyzer_close(analyzer);
     cliopt.destroy();
     param_free(param);
     VCA_FREE(errorBuf);

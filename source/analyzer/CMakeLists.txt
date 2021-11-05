@@ -13,8 +13,8 @@ endif()
 
 check_symbol_exists(strtok_r "string.h" HAVE_STRTOK_R)
 if(HAVE_STRTOK_R)
-    set_source_files_properties(encoder.cpp PROPERTIES COMPILE_FLAGS -DHAVE_STRTOK_R=1)
+    set_source_files_properties(analyzer.cpp PROPERTIES COMPILE_FLAGS -DHAVE_STRTOK_R=1)
 endif()
 
-add_library(encoder OBJECT ../vca.h
-    encoder.cpp encoder.h api.cpp)
+add_library(analyzer OBJECT ../vca.h
+    analyzer.cpp analyzer.h api.cpp)

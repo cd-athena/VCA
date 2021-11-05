@@ -81,7 +81,7 @@ namespace VCA_NS {
 // vca private namespace
 
 /* Initialize entries for pixel functions defined in this file */
-void setupPixelPrimitives_c(EncoderPrimitives &p)
+void setupPixelPrimitives_c(AnalyzerPrimitives &p)
 {
 #define LUMA_CU(W, H) \
     p.cu[BLOCK_ ## W ## x ## H].copy_ss       = blockcopy_ss_c<W, H>;

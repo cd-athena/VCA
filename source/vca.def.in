@@ -1,0 +1,15 @@
+EXPORTS
+vca_encoder_open_${VCA_BUILD}
+vca_encoder_parameters
+vca_encoder_encode
+vca_encoder_close
+vca_encoder_shot_detect
+vca_encoder_shot_print
+vca_picture_alloc
+vca_picture_init
+vca_picture_free
+vca_csv_E_h_log_open
+vca_csv_shot_log_open
+vca_csv_E_h_log_frame
+vca_api_get_${VCA_BUILD}
+vca_api_query

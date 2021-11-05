@@ -389,7 +389,7 @@ if(WIN32)
 endif()
 
 include(version) # determine VCA_VERSION and VCA_LATEST_TAG
-include_directories(. common encoder "${PROJECT_BINARY_DIR}")
+include_directories(. common analyzer "${PROJECT_BINARY_DIR}")
 
 option(ENABLE_VTUNE "Enable Vtune profiling instrumentation" OFF)
 if(ENABLE_VTUNE)
@@ -408,7 +408,7 @@ if(ENABLE_VTUNE)
     endif(VTUNE_FOUND)
 endif(ENABLE_VTUNE)
 
-add_subdirectory(encoder)
+add_subdirectory(analyzer)
 add_subdirectory(common)
 
 if((MSVC_IDE OR XCODE OR GCC) AND ENABLE_ASSEMBLY)
@@ -435,7 +435,7 @@ if((MSVC_IDE OR XCODE OR GCC) AND ENABLE_ASSEMBLY)
 endif()
 source_group(ASM FILES ${ASM_SRCS})
 
-add_library(vca-static STATIC $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${ASM_OBJS})
+add_library(vca-static STATIC $<TARGET_OBJECTS:analyzer> $<TARGET_OBJECTS:common> ${ASM_OBJS})
 
 if(NOT MSVC)
     set_target_properties(vca-static PROPERTIES OUTPUT_NAME vca)
@@ -476,7 +476,7 @@ endif()
 option(ENABLE_SHARED "Build shared library" ON)
 if(ENABLE_SHARED)
     add_library(vca-shared SHARED "${PROJECT_BINARY_DIR}/vca.def"
-                ${ASM_OBJS} ${VCA_RC_FILE} $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common>)
+                ${ASM_OBJS} ${VCA_RC_FILE} $<TARGET_OBJECTS:analyzer> $<TARGET_OBJECTS:common>)
     if(EXTRA_LIB)
         target_link_libraries(vca-shared ${EXTRA_LIB})
     endif()
@@ -566,7 +566,7 @@ if(ENABLE_CLI)
         # Xcode seems unable to link the CLI with libs, so link as one target
         add_executable(cli ../COPYING ${InputFiles} ${GETOPT}
                     vca.cpp vca.h vcacli.h
-                    $<TARGET_OBJECTS:encoder> $<TARGET_OBJECTS:common> ${ASM_OBJS})
+                    $<TARGET_OBJECTS:analyzer> $<TARGET_OBJECTS:common> ${ASM_OBJS})
     else()
         add_executable(cli ../COPYING ${InputFiles} ${GETOPT} ${VCA_RC_FILE}
                        ${ExportDefs} vca.cpp vca.h vcacli.h)

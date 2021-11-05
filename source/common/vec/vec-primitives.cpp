@@ -49,12 +49,12 @@
 
 namespace VCA_NS {
 
-void setupIntrinsicDCT_sse3(EncoderPrimitives&);
-void setupIntrinsicDCT_ssse3(EncoderPrimitives&);
-void setupIntrinsicDCT_sse41(EncoderPrimitives&);
+void setupIntrinsicDCT_sse3(AnalyzerPrimitives&);
+void setupIntrinsicDCT_ssse3(AnalyzerPrimitives&);
+void setupIntrinsicDCT_sse41(AnalyzerPrimitives&);
 
 /* Use primitives for the best available vector architecture */
-void setupInstrinsicPrimitives(EncoderPrimitives &p, int cpuMask)
+void setupInstrinsicPrimitives(AnalyzerPrimitives &p, int cpuMask)
 {
 #ifdef HAVE_SSE3
     if (cpuMask & VCA_CPU_SSE3)
