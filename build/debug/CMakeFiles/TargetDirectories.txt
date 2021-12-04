@@ -1,0 +1,5 @@
+D:/Projects/VCA/build/debug/CMakeFiles/INSTALL.dir
+D:/Projects/VCA/build/debug/CMakeFiles/ALL_BUILD.dir
+D:/Projects/VCA/build/debug/CMakeFiles/ZERO_CHECK.dir
+D:/Projects/VCA/build/debug/source/lib/CMakeFiles/vcaLib.dir
+D:/Projects/VCA/build/debug/source/lib/CMakeFiles/INSTALL.dir

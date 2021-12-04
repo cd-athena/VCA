@@ -1,0 +1,10 @@
+^D:\PROJECTS\VCA\BUILD\DEBUG\CMAKEFILES\4FF69E727D91A99ADA0347168552607D\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SD:/Projects/VCA -BD:/Projects/VCA/build/debug --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file D:/Projects/VCA/build/debug/vca.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
