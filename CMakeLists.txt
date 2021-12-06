@@ -4,10 +4,9 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set (CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "-Wall")
+set (CMAKE_CXX_STANDARD 17)
 
 project (vca)
 
 add_subdirectory(source/lib)
-#add_subdirectory(source/app)
+add_subdirectory(source/app)

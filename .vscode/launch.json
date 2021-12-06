@@ -9,7 +9,7 @@
             "name": "(Windows) Launch",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "enter program name, for example ${workspaceFolder}/a.exe",
+            "program": "${workspaceFolder}/build/debug/source/app/vca.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

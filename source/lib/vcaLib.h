@@ -2,12 +2,14 @@
 
 #pragma once
 
+#include "vcaColorSpace.h"
 #include <stdint.h>
 
+
 #if defined(_MSC_VER) && !defined(VCA_STATIC_BUILD)
-  #define DLL_PUBLIC __declspec(dllexport)
+#define DLL_PUBLIC __declspec(dllexport)
 #else
-  #define DLL_PUBLIC __attribute__((__visibility__("default")))
+#define DLL_PUBLIC __attribute__((__visibility__("default")))
 #endif
 
 extern "C" {
@@ -50,34 +52,31 @@ struct vca_frame_results
     vca_result_state state;
 
     // Todo - redo this
-    int complexity; 
+    int poc;
+    int complexity;
 };
 
-enum class vca_colorSpace
+struct vca_frame_info
 {
-    yuv400,
-    yuv420,
-    yuv422,
-    yuv444
+    unsigned width{};
+    unsigned height{};
+    unsigned bitDepth{8};
+    vca_colorSpace colorspace{vca_colorSpace::YUV420};
 };
 
 /* Used to pass pictures into the analyzer, and to get picture data back out of
  * the analyzer.  The input and output semantics are different */
-struct vca_picture
+struct vca_frame
 {
     /* Must be specified on input pictures, the number of planes is determined
      * by the colorSpace value */
-    void *planes[3];
+    void *planes[3]{nullptr, nullptr, nullptr};
 
     /* Stride is the number of bytes between row starts */
-    int stride[3];
+    int stride[3]{0, 0, 0};
 
-    /* Frame level statistics */
-    vca_frame_stats frameData;
-
-    uint64_t framesize;
-
-    int height;
+    vca_frame_stats stats;
+    vca_frame_info info;
 };
 
 /* vca input parameters
@@ -85,22 +84,15 @@ struct vca_picture
  */
 struct vca_param
 {
-    /*== Parallelism Features ==*/
-    int numThreads;
+    bool enableShotdetect{}; /* Enable shot detection algorithm using epsilon feature */
 
-    int bEnableShotdetect; /* Enable shot detection algorithm using epsilon feature */
-
-    /*== Logging Feature ==*/
-    int logLevel; /* The level of logging detail emitted by the analyzer */
+    bool enableASM{true};
 
     /*== Internal Picture Specification ==*/
-    int bitDepth;              /* The bit depth of the input. Must be between 8-16 bit. */
-    vca_colorSpace colorSpace; /* The colorspace of all pictures that will be pushed */
-    int sourceWidth;           /* Width (in pixels) of the source pictures */
-    int sourceHeight;          /* Height (in pixels) of the source pictures */
+    vca_frame_info frameInfo{};
 
-    double minThresh; /* Minimum threshold for epsilon in shot detection */
-    double maxThresh; /* Maximum threshold for epsilon in shot detection */
+    double minThresh{}; /* Minimum threshold for epsilon in shot detection */
+    double maxThresh{}; /* Maximum threshold for epsilon in shot detection */
 };
 
 /* Create a new analyzer or nullptr if the config is invalid.
@@ -115,7 +107,7 @@ enum class push_result
     ERROR,
     PULL_RESULTS_FIRST
 };
-DLL_PUBLIC push_result vca_analyzer_push(vca_analyzer *enc, vca_picture *pic_in);
+DLL_PUBLIC push_result vca_analyzer_push(vca_analyzer *enc, vca_frame *pic_in);
 
 DLL_PUBLIC vca_frame_results vca_analyzer_pull_frame_result(vca_analyzer *enc);
 
