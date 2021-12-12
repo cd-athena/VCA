@@ -5,7 +5,6 @@
 #include "vcaColorSpace.h"
 #include <stdint.h>
 
-
 #if defined(_MSC_VER) && !defined(VCA_STATIC_BUILD)
 #define DLL_PUBLIC __declspec(dllexport)
 #else
@@ -39,13 +38,12 @@ struct vca_frame_stats
     double epsilon;
 };
 
-enum class vca_result_state
+typedef enum
 {
-    OK,
-    ERROR,
-    PUSH_MORE_FRAMES,
-    DONE
-};
+    VCA_RESULT_OK = 0,
+    VCA_RESULT_ERROR,
+    VCA_RESULT_DONE
+} vca_result_state;
 
 struct vca_frame_results
 {
@@ -99,14 +97,18 @@ struct vca_param
  */
 DLL_PUBLIC vca_analyzer *vca_analyzer_open(vca_param cfg);
 
-/* Push a frame to the analyzer and start the analysis
+/* Push a frame to the analyzer and start the analysis.
+ * Note that only the pointers will be copied but no ownership of the memory is
+ * transferred to the library. The caller must make sure that the pointers are
+ * valid until the frame was analyzed. Once a results for a frame was pulled the
+ * library will not use pointers anymore.
  */
-enum class push_result
+typedef enum
 {
-    OK,
-    ERROR,
-    PULL_RESULTS_FIRST
-};
+    VCA_PUSH_OK = 0,
+    VCA_PUSH_OK_RESULTS_READY,
+    VCA_PUSH_ERROR,
+} push_result;
 DLL_PUBLIC push_result vca_analyzer_push(vca_analyzer *enc, vca_frame *pic_in);
 
 DLL_PUBLIC vca_frame_results vca_analyzer_pull_frame_result(vca_analyzer *enc);

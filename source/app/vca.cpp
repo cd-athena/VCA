@@ -26,6 +26,7 @@
 #include <chrono>
 #include <optional>
 #include <signal.h>
+#include <queue>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -272,8 +273,7 @@ static int get_argv_utf8(int *argc_ptr, char ***argv_ptr)
  * 0 - analyze successful
  * 1 - unable to parse command line
  * 2 - unable to open analyzer
- * 3 - unable to generate stream headers
- * 4 - analyzer abort */
+ * 3 - analyzer abort */
 
 int main(int argc, char **argv)
 {
@@ -313,11 +313,11 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    auto vca_analyzer = vca_analyzer_open(options.vcaParam);
-    if (vca_analyzer == nullptr)
+    auto analyzer = vca_analyzer_open(options.vcaParam);
+    if (analyzer == nullptr)
     {
         vca_log(LogLevel::Error, "Error opening analyzer");
-        return 1;
+        return 2;
     }
 
     /* Control-C handler */
@@ -325,7 +325,45 @@ int main(int argc, char **argv)
         vca_log(LogLevel::Error,
                 "Unable to register CTRL+C handler: " + std::string(strerror(errno)));
 
-    // TODO: read frames and push here
+    using framePtr = std::unique_ptr<frameWithData>;
+    std::queue<framePtr> frameRecycling;
+    while (!inputFile->isEof() && !inputFile->isFail())
+    {
+        framePtr frame;
+        if (frameRecycling.empty())
+            frame = std::make_unique<frameWithData>();
+        else
+        {
+            frame = std::move(frameRecycling.front());
+            frameRecycling.pop();
+        }
+
+        if (!inputFile->readFrame(*frame))
+        {
+            vca_log(LogLevel::Error, "Error reading frame from input");
+            return 3;
+        }
+
+        auto ret = vca_analyzer_push(analyzer, &frame->vcaFrame);
+        if (ret == VCA_PUSH_ERROR)
+        {
+            vca_log(LogLevel::Error, "Error pushing frame to lib");
+            return 3;
+        }
+        if (ret == VCA_PUSH_OK_RESULTS_READY)
+        {
+            auto frameResult = vca_analyzer_pull_frame_result(analyzer);
+            if (frameResult.state == VCA_RESULT_ERROR)
+            {
+                vca_log(LogLevel::Error, "Error pulling frame result");
+                return 3;
+            }
+            if (frameResult.state == VCA_RESULT_OK)
+            {
+                // Do something with the result and recycle the frame ...
+            }
+        }
+    }
 
     return 0;
 }
