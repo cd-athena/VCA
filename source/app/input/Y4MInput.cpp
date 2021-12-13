@@ -159,6 +159,7 @@ bool Y4MInput::readFrame(frameWithData &frame)
         frame.data.resize(frameSizeBytes);
 
     this->input.read((char*)(frame.data.data()), frameSizeBytes);
+    this->updateFramePointers(frame);
 
     return true;
 }

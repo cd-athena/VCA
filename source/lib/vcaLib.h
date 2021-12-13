@@ -91,6 +91,8 @@ struct vca_param
 
     double minThresh{}; /* Minimum threshold for epsilon in shot detection */
     double maxThresh{}; /* Maximum threshold for epsilon in shot detection */
+
+    // Todo: Add Logging function
 };
 
 /* Create a new analyzer or nullptr if the config is invalid.

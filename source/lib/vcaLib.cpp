@@ -1,20 +1,21 @@
 #include "vcaLib.h"
+#include "analyzer.h"
 
 DLL_PUBLIC vca_analyzer *vca_analyzer_open(vca_param cfg)
 {
-    return nullptr;
+    return new vca::Analyzer(cfg);
 }
 
 DLL_PUBLIC push_result vca_analyzer_push(vca_analyzer *enc, vca_frame *frame)
 {
-    return VCA_PUSH_ERROR;
+    auto analyzer = (vca::Analyzer*)(enc);
+    return analyzer->push(frame);
 }
 
 DLL_PUBLIC vca_frame_results vca_analyzer_pull_frame_result(vca_analyzer *enc)
 {
-    vca_frame_results result;
-    result.state = VCA_RESULT_ERROR;
-    return result;
+    auto analyzer = (vca::Analyzer*)(enc);
+    return analyzer->pullResult();
 }
 
 DLL_PUBLIC void vca_analyzer_close(vca_analyzer *enc) {}

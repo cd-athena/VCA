@@ -85,7 +85,6 @@ void printStatus(uint32_t frameNum, unsigned framesToBeAnalyzed)
     fprintf(stderr, "%s  \r", buf + 5);
     fflush(stderr); // needed in windows
 }
-
 struct CLIOptions
 {
     std::string inputFilename;
@@ -198,6 +197,9 @@ std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
             options.vcaParam.minThresh = std::stod(optarg);
     }
 
+    if (options.inputFilename.substr(options.inputFilename.size() - 4) == ".y4m")
+        options.openAsY4m = true;
+
     return options;
 }
 
@@ -215,10 +217,7 @@ bool checkOptions(CLIOptions options)
         return false;
     }
 
-    if (options.inputFilename.substr(options.inputFilename.size() - 4) == ".y4m")
-        options.openAsY4m = true;
-
-    if (options.openAsY4m
+    if (!options.openAsY4m
         && (options.vcaParam.frameInfo.width == 0 || options.vcaParam.frameInfo.height == 0))
     {
         vca_log(LogLevel::Error, "No frame size provided.");
@@ -327,6 +326,7 @@ int main(int argc, char **argv)
 
     using framePtr = std::unique_ptr<frameWithData>;
     std::queue<framePtr> frameRecycling;
+    unsigned poc = 0;
     while (!inputFile->isEof() && !inputFile->isFail())
     {
         framePtr frame;
@@ -343,6 +343,7 @@ int main(int argc, char **argv)
             vca_log(LogLevel::Error, "Error reading frame from input");
             return 3;
         }
+        frame->vcaFrame.stats.poc = poc++;
 
         auto ret = vca_analyzer_push(analyzer, &frame->vcaFrame);
         if (ret == VCA_PUSH_ERROR)
