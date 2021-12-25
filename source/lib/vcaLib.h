@@ -85,11 +85,13 @@ struct vca_param
 
     bool enableASM{true};
 
-    /*== Internal Picture Specification ==*/
     vca_frame_info frameInfo{};
 
     double minThresh{}; /* Minimum threshold for epsilon in shot detection */
     double maxThresh{}; /* Maximum threshold for epsilon in shot detection */
+
+    unsigned nrFrameThreads{1};
+    unsigned nrSliceThreads{1};
 
     // Logging
     void (*logFunction)(void *, LogLevel, const char *){};

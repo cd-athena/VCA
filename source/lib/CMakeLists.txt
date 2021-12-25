@@ -6,11 +6,7 @@ file(GLOB_RECURSE vcaLib_asm *.asm)
 
 include_directories(./)
 
-if (VCA_STATIC_BUILD)
-  add_library(vcaLib STATIC ${vcaLib_source} ${vcaLib_header})
-else()
-  add_library(vcaLib SHARED ${vcaLib_source} ${vcaLib_header})
-endif()
+add_library(vcaLib ${vcaLib_source} ${vcaLib_header})
 set_target_properties(vcaLib PROPERTIES OUTPUT_NAME vcaLib)
 set_target_properties(vcaLib PROPERTIES PUBLIC_HEADER "vcaLib.h")
 

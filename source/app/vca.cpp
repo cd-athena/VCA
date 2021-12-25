@@ -34,6 +34,7 @@
 #endif
 
 using namespace vca;
+using namespace std::string_literals;
 
 /* Ctrl-C handler */
 static volatile sig_atomic_t b_ctrl_c /* = 0 */;
@@ -44,7 +45,7 @@ static void sigint_handler(int)
 
 void logLibraryMessage(void *, LogLevel logLevel, const char *message)
 {
-    vca_log(logLevel, message);
+    vca_log(logLevel, "[LIB] "s + message);
 }
 
 void printStatus(uint32_t frameNum, unsigned framesToBeAnalyzed)
@@ -223,6 +224,17 @@ bool checkOptions(CLIOptions options)
     return true;
 }
 
+void logOptions(CLIOptions options)
+{
+    vca_log(LogLevel::Info, "Options:   "s);
+    vca_log(LogLevel::Info, "  Input file name:   "s + options.inputFilename);
+    vca_log(LogLevel::Info, "  Open as Y4m:       "s + (options.openAsY4m ? "True"s : "False"s));
+    vca_log(LogLevel::Info, "  Skip frames:       "s + std::to_string(options.skipFrames));
+    vca_log(LogLevel::Info, "  Frames to analyze: "s + std::to_string(options.framesToBeAnalyzed));
+    vca_log(LogLevel::Info, "  Complexity csv:    "s + options.complexityCSVFilename);
+    vca_log(LogLevel::Info, "  Shot csv:          "s + options.shotCSVFilename);
+}
+
 #ifdef _WIN32
 /* Copy of x264 code, which allows for Unicode characters in the command line.
  * Retrieve command line arguments as UTF-8. */
@@ -270,7 +282,7 @@ int main(int argc, char **argv)
     get_argv_utf8(&argc, &argv);
 #endif
 
-    vca_log(LogLevel::Info, "VCA - Video Complexity Analyzer");
+    vca_log(LogLevel::Debug, "VCA - Video Complexity Analyzer");
 
     CLIOptions options;
     if (auto cliOptions = parseCLIOptions(argc, argv))
@@ -280,6 +292,8 @@ int main(int argc, char **argv)
         vca_log(LogLevel::Error, "Error parsing parameters");
         return 1;
     }
+
+    logOptions(options);
 
     if (!checkOptions(options))
     {
@@ -335,7 +349,8 @@ int main(int argc, char **argv)
             vca_log(LogLevel::Error, "Error reading frame from input");
             return 3;
         }
-        frame->vcaFrame.stats.poc = poc++;
+        frame->vcaFrame.stats.poc = poc;
+        vca_log(LogLevel::Debug, "Read frame " + std::to_string(poc) + " from input");
 
         auto ret = vca_analyzer_push(analyzer, &frame->vcaFrame);
         if (ret == VCA_ERROR)
@@ -343,6 +358,8 @@ int main(int argc, char **argv)
             vca_log(LogLevel::Error, "Error pushing frame to lib");
             return 3;
         }
+
+        vca_log(LogLevel::Debug, "Pushed frame " + std::to_string(poc) + " to analyzer");
 
         if (vca_result_available(analyzer))
         {
@@ -353,8 +370,10 @@ int main(int argc, char **argv)
                 return 3;
             }
             // Do something with the result and recycle the frame ...
-            vca_log(LogLevel::Info, "Got results for frame " + std::to_string(frameResult.poc));
+            vca_log(LogLevel::Debug, "Got results for frame " + std::to_string(frameResult.poc));
         }
+
+        poc++;
     }
 
     return 0;
