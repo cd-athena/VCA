@@ -16,14 +16,6 @@ struct frameWithData
     vca_frame vcaFrame;
 };
 
-enum class LogLevel
-{
-    Error,
-    Warning,
-    Info,
-    Debug
-};
-
 void vca_log(LogLevel level, std::string error);
 
 } // namespace vca

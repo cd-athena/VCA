@@ -26,9 +26,11 @@
 #include <chrono>
 #include <optional>
 #include <signal.h>
+#include <queue>
 
 #ifdef _WIN32
 #include <windows.h>
+#pragma warning(disable : 4996)
 #endif
 
 using namespace vca;
@@ -40,14 +42,9 @@ static void sigint_handler(int)
     b_ctrl_c = 1;
 }
 
-int vca_atoi(const char *str, bool &bError)
+void logLibraryMessage(void *, LogLevel logLevel, const char *message)
 {
-    char *end;
-    int v = strtol(str, &end, 0);
-
-    if (end == str || *end != '\0')
-        bError = true;
-    return v;
+    vca_log(logLevel, message);
 }
 
 void printStatus(uint32_t frameNum, unsigned framesToBeAnalyzed)
@@ -267,14 +264,6 @@ static int get_argv_utf8(int *argc_ptr, char ***argv_ptr)
 }
 #endif
 
-/* CLI return codes:
- *
- * 0 - analyze successful
- * 1 - unable to parse command line
- * 2 - unable to open analyzer
- * 3 - unable to generate stream headers
- * 4 - analyzer abort */
-
 int main(int argc, char **argv)
 {
 #if _WIN32
@@ -313,6 +302,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    options.vcaParam.logFunction = logLibraryMessage;
+
     auto vca_analyzer = vca_analyzer_open(options.vcaParam);
     if (vca_analyzer == nullptr)
     {
@@ -325,7 +316,34 @@ int main(int argc, char **argv)
         vca_log(LogLevel::Error,
                 "Unable to register CTRL+C handler: " + std::string(strerror(errno)));
 
-    // TODO: read frames and push here
+    using FramePtr = std::unique_ptr<frameWithData>;
+
+    std::queue<FramePtr> frameRecycleBin;
+    std::queue<FramePtr> framesInProgress;
+    unsigned nrFramesProcessed = 0;
+    while (true)
+    {
+        FramePtr nextFrame;
+        if (!frameRecycleBin.empty())
+        {
+            nextFrame = std::move(frameRecycleBin.front());
+            frameRecycleBin.pop();
+        }
+        else
+            nextFrame = std::make_unique<frameWithData>();
+
+        framesInProgress.push(std::move(nextFrame));
+
+        auto ret = vca_analyzer_push(vca_analyzer, &framesInProgress.back()->vcaFrame);
+        if (ret == push_result::ERROR)
+        {
+            vca_log(LogLevel::Error, "Error pusing frame");
+            return -1;
+        }
+
+
+    }
+
 
     return 0;
 }

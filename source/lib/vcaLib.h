@@ -5,7 +5,6 @@
 #include "vcaColorSpace.h"
 #include <stdint.h>
 
-
 #if defined(_MSC_VER) && !defined(VCA_STATIC_BUILD)
 #define DLL_PUBLIC __declspec(dllexport)
 #else
@@ -21,6 +20,14 @@ typedef void vca_analyzer;
 /* vca_picyuv:
  *      opaque handler for PicYuv */
 typedef struct vca_picyuv vca_picyuv;
+
+enum class LogLevel
+{
+    Error,
+    Warning,
+    Info,
+    Debug
+};
 
 struct vca_frame_texture_t
 {
@@ -93,22 +100,29 @@ struct vca_param
 
     double minThresh{}; /* Minimum threshold for epsilon in shot detection */
     double maxThresh{}; /* Maximum threshold for epsilon in shot detection */
+
+    // Logging
+    void (*logFunction)(void *, LogLevel, const char *){};
+    void *logFunctionPrivateData{};
 };
 
 /* Create a new analyzer or nullptr if the config is invalid.
  */
 DLL_PUBLIC vca_analyzer *vca_analyzer_open(vca_param cfg);
 
-/* Push a frame to the analyzer and start the analysis
+/* Push a frame to the analyzer and start the analysis.
+ * Push a nullptr as frame to switch to flushing mode.
  */
 enum class push_result
 {
     OK,
-    ERROR,
-    PULL_RESULTS_FIRST
+    OK_PULL_RESULTS_NEXT,
+    ERROR
 };
 DLL_PUBLIC push_result vca_analyzer_push(vca_analyzer *enc, vca_frame *pic_in);
 
+/* Pull a result from the analyzer. This may block until a result is available.
+ */
 DLL_PUBLIC vca_frame_results vca_analyzer_pull_frame_result(vca_analyzer *enc);
 
 DLL_PUBLIC void vca_analyzer_close(vca_analyzer *enc);
