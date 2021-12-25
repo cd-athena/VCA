@@ -66,21 +66,9 @@ bool YUVInput::readFrame(frameWithData &frame)
     auto frameSizeBytes = this->calcualteFrameBytes();
     if (frame.data.size() < frameSizeBytes)
         frame.data.resize(frameSizeBytes);
-
-    uint32_t pixelbytes      = frameInfo.bitDepth > 8 ? 2 : 1;
-    frame.vcaFrame.info      = this->frameInfo;
-    frame.vcaFrame.stride[0] = this->frameInfo.width * pixelbytes;
-    frame.vcaFrame.stride[1] = frame.vcaFrame.stride[0]
-                               >> vca_cli_csps.at(this->frameInfo.colorspace).width[1];
-    frame.vcaFrame.stride[2] = frame.vcaFrame.stride[0]
-                               >> vca_cli_csps.at(this->frameInfo.colorspace).width[2];
-    frame.vcaFrame.planes[0] = frame.vcaFrame.planes[1] = (char *) frame.vcaFrame.planes[0]
-                                                          + frame.vcaFrame.stride[0]
-                                                                * this->frameInfo.height;
-    frame.vcaFrame.planes[2] = (char *) frame.vcaFrame.planes[1]
-                               + frame.vcaFrame.stride[1]
-                                     * (this->frameInfo.height
-                                        >> vca_cli_csps.at(this->frameInfo.colorspace).height[1]);
+    
+    this->input.read((char*)(frame.data.data()), frameSizeBytes);
+    this->updateFramePointers(frame);
 
     return true;
 }

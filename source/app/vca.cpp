@@ -81,7 +81,6 @@ void printStatus(uint32_t frameNum, unsigned framesToBeAnalyzed)
     fprintf(stderr, "%s  \r", buf + 5);
     fflush(stderr); // needed in windows
 }
-
 struct CLIOptions
 {
     std::string inputFilename;
@@ -194,6 +193,9 @@ std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
             options.vcaParam.minThresh = std::stod(optarg);
     }
 
+    if (options.inputFilename.substr(options.inputFilename.size() - 4) == ".y4m")
+        options.openAsY4m = true;
+
     return options;
 }
 
@@ -211,10 +213,7 @@ bool checkOptions(CLIOptions options)
         return false;
     }
 
-    if (options.inputFilename.substr(options.inputFilename.size() - 4) == ".y4m")
-        options.openAsY4m = true;
-
-    if (options.openAsY4m
+    if (!options.openAsY4m
         && (options.vcaParam.frameInfo.width == 0 || options.vcaParam.frameInfo.height == 0))
     {
         vca_log(LogLevel::Error, "No frame size provided.");
@@ -304,11 +303,11 @@ int main(int argc, char **argv)
 
     options.vcaParam.logFunction = logLibraryMessage;
 
-    auto vca_analyzer = vca_analyzer_open(options.vcaParam);
-    if (vca_analyzer == nullptr)
+    auto analyzer = vca_analyzer_open(options.vcaParam);
+    if (analyzer == nullptr)
     {
         vca_log(LogLevel::Error, "Error opening analyzer");
-        return 1;
+        return 2;
     }
 
     /* Control-C handler */
@@ -316,34 +315,47 @@ int main(int argc, char **argv)
         vca_log(LogLevel::Error,
                 "Unable to register CTRL+C handler: " + std::string(strerror(errno)));
 
-    using FramePtr = std::unique_ptr<frameWithData>;
-
-    std::queue<FramePtr> frameRecycleBin;
-    std::queue<FramePtr> framesInProgress;
-    unsigned nrFramesProcessed = 0;
-    while (true)
+    using framePtr = std::unique_ptr<frameWithData>;
+    std::queue<framePtr> frameRecycling;
+    unsigned poc = 0;
+    while (!inputFile->isEof() && !inputFile->isFail())
     {
-        FramePtr nextFrame;
-        if (!frameRecycleBin.empty())
-        {
-            nextFrame = std::move(frameRecycleBin.front());
-            frameRecycleBin.pop();
-        }
+        framePtr frame;
+        if (frameRecycling.empty())
+            frame = std::make_unique<frameWithData>();
         else
-            nextFrame = std::make_unique<frameWithData>();
-
-        framesInProgress.push(std::move(nextFrame));
-
-        auto ret = vca_analyzer_push(vca_analyzer, &framesInProgress.back()->vcaFrame);
-        if (ret == push_result::ERROR)
         {
-            vca_log(LogLevel::Error, "Error pusing frame");
-            return -1;
+            frame = std::move(frameRecycling.front());
+            frameRecycling.pop();
         }
 
+        if (!inputFile->readFrame(*frame))
+        {
+            vca_log(LogLevel::Error, "Error reading frame from input");
+            return 3;
+        }
+        frame->vcaFrame.stats.poc = poc++;
 
+        auto ret = vca_analyzer_push(analyzer, &frame->vcaFrame);
+        if (ret == VCA_PUSH_ERROR)
+        {
+            vca_log(LogLevel::Error, "Error pushing frame to lib");
+            return 3;
+        }
+        if (ret == VCA_PUSH_OK_RESULTS_READY)
+        {
+            auto frameResult = vca_analyzer_pull_frame_result(analyzer);
+            if (frameResult.state == VCA_RESULT_ERROR)
+            {
+                vca_log(LogLevel::Error, "Error pulling frame result");
+                return 3;
+            }
+            if (frameResult.state == VCA_RESULT_OK)
+            {
+                // Do something with the result and recycle the frame ...
+            }
+        }
     }
-
 
     return 0;
 }
