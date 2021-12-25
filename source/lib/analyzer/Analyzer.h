@@ -3,7 +3,11 @@
 
 #include "vcaLib.h"
 
+#include <condition_variable>
+#include <mutex>
+#include <optional>
 #include <queue>
+
 
 namespace vca {
 
@@ -13,13 +17,20 @@ public:
     Analyzer(vca_param cfg);
     ~Analyzer() = default;
 
-    push_result pushFrame(vca_frame *frame);
-    vca_frame_results pullResult();
+    void abort();
+
+    vca_result pushFrame(vca_frame *frame);
+    bool resultAvailable();
+    std::optional<vca_frame_results> pullResult();
 
 private:
     vca_param cfg{};
 
-    std::queue<vca_frame_results> readyResults;
+    std::mutex resultsMutex;
+    std::queue<vca_frame_results> results;
+    std::condition_variable resultsCV;
+
+    bool aborted{};
 };
 
 } // namespace vca

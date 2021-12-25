@@ -318,7 +318,8 @@ int main(int argc, char **argv)
     using framePtr = std::unique_ptr<frameWithData>;
     std::queue<framePtr> frameRecycling;
     unsigned poc = 0;
-    while (!inputFile->isEof() && !inputFile->isFail())
+    while (!inputFile->isEof() && !inputFile->isFail()
+           && (options.framesToBeAnalyzed == 0 || poc < options.framesToBeAnalyzed))
     {
         framePtr frame;
         if (frameRecycling.empty())

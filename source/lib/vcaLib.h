@@ -46,17 +46,8 @@ struct vca_frame_stats
     double epsilon;
 };
 
-typedef enum
-{
-    VCA_RESULT_OK = 0,
-    VCA_RESULT_ERROR,
-    VCA_RESULT_DONE
-} vca_result_state;
-
 struct vca_frame_results
 {
-    vca_result_state state;
-
     // Todo - redo this
     int poc;
     int complexity;
@@ -110,7 +101,6 @@ struct vca_param
 DLL_PUBLIC vca_analyzer *vca_analyzer_open(vca_param cfg);
 
 /* Push a frame to the analyzer and start the analysis.
- * Push a nullptr as frame to switch to flushing mode.
  * Note that only the pointers will be copied but no ownership of the memory is
  * transferred to the library. The caller must make sure that the pointers are
  * valid until the frame was analyzed. Once a results for a frame was pulled the
@@ -118,16 +108,20 @@ DLL_PUBLIC vca_analyzer *vca_analyzer_open(vca_param cfg);
  */
 typedef enum
 {
-    VCA_PUSH_OK = 0,
-    VCA_PUSH_OK_RESULTS_READY,
-    VCA_PUSH_ERROR,
-} push_result;
+    VCA_OK = 0,
+    VCA_ERROR
+} vca_result;
 
-DLL_PUBLIC push_result vca_analyzer_push(vca_analyzer *enc, vca_frame *pic_in);
+DLL_PUBLIC vca_result vca_analyzer_push(vca_analyzer *enc, vca_frame *pic_in);
+
+/* Check if a result is available to pull.
+ */
+DLL_PUBLIC bool vca_result_available(vca_analyzer *enc);
 
 /* Pull a result from the analyzer. This may block until a result is available.
+ * Use vca_result_available if you want to only check if a result is ready.
  */
-DLL_PUBLIC vca_frame_results vca_analyzer_pull_frame_result(vca_analyzer *enc);
+DLL_PUBLIC vca_result vca_analyzer_pull_frame_result(vca_analyzer *enc, vca_frame_results *result);
 
 DLL_PUBLIC void vca_analyzer_close(vca_analyzer *enc);
 DLL_PUBLIC void vca_analyzer_shot_detect(vca_analyzer *enc);
