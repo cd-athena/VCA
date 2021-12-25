@@ -337,23 +337,22 @@ int main(int argc, char **argv)
         frame->vcaFrame.stats.poc = poc++;
 
         auto ret = vca_analyzer_push(analyzer, &frame->vcaFrame);
-        if (ret == VCA_PUSH_ERROR)
+        if (ret == VCA_ERROR)
         {
             vca_log(LogLevel::Error, "Error pushing frame to lib");
             return 3;
         }
-        if (ret == VCA_PUSH_OK_RESULTS_READY)
+
+        if (vca_result_available(analyzer))
         {
-            auto frameResult = vca_analyzer_pull_frame_result(analyzer);
-            if (frameResult.state == VCA_RESULT_ERROR)
+            vca_frame_results frameResult;
+            if (vca_analyzer_pull_frame_result(analyzer, &frameResult) == VCA_ERROR)
             {
                 vca_log(LogLevel::Error, "Error pulling frame result");
                 return 3;
             }
-            if (frameResult.state == VCA_RESULT_OK)
-            {
-                // Do something with the result and recycle the frame ...
-            }
+            // Do something with the result and recycle the frame ...
+            vca_log(LogLevel::Info, "Got results for frame " + std::to_string(frameResult.poc));
         }
     }
 
