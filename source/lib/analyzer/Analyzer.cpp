@@ -1,34 +1,39 @@
-/*****************************************************************************
- * Copyright (C) 2021 Christian Doppler Laboratory ATHENA
- *
- * Authors: Vignesh V Menon <vignesh.menon@aau.at>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.
- *****************************************************************************/
 
 #include "Analyzer.h"
 
 namespace vca {
 
-Analyzer::Analyzer(vca_param param)
+Analyzer::Analyzer(vca_param cfg)
 {
-    this->param = param;
+    this->cfg = cfg;
 }
 
-push_result Analyzer::pushFrame(const vca_frame *pic)
+push_result Analyzer::pushFrame(vca_frame *frame)
 {
-    return push_result::OK;
+    // Todo: Do some real processing on frame
+    vca_frame_results result;
+    result.state      = VCA_RESULT_OK;
+    result.poc        = frame->stats.poc;
+    result.complexity = 22;
+    this->readyResults.push(result);
+
+    return VCA_PUSH_OK_RESULTS_READY;
 }
 
+vca_frame_results Analyzer::pullResult()
+{
+    if (this->readyResults.empty())
+    {
+        vca_frame_results result;
+        result.state = VCA_RESULT_ERROR;
+        return result;
+    }
+    else
+    {
+        auto res = this->readyResults.front();
+        this->readyResults.pop();
+        return res;
+    }
 }
+
+} // namespace vca

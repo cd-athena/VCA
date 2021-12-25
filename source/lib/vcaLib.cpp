@@ -1,5 +1,5 @@
 #include "vcaLib.h"
-#include "analyzer.h"
+#include "analyzer/analyzer.h"
 
 #include "analyzer/Analyzer.h"
 
@@ -22,11 +22,11 @@ DLL_PUBLIC push_result vca_analyzer_push(vca_analyzer *enc, vca_frame *frame)
 
 DLL_PUBLIC vca_frame_results vca_analyzer_pull_frame_result(vca_analyzer *enc)
 {
-    auto analyzer = (vca::Analyzer*)(enc);
+    auto analyzer = (vca::Analyzer *) (enc);
     return analyzer->pullResult();
 }
 
-DLL_PUBLIC void vca_analyzer_close(vca_analyzer *enc) 
+DLL_PUBLIC void vca_analyzer_close(vca_analyzer *enc)
 {
     auto analyzer = (vca::Analyzer *) enc;
     delete analyzer;
