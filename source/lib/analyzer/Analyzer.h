@@ -4,6 +4,8 @@
 #include "vcaLib.h"
 
 #include "common.h"
+#include "MultiThreadQueue.h"
+#include "ProcessingThread.h"
 
 #include <condition_variable>
 #include <mutex>
@@ -18,8 +20,6 @@ public:
     Analyzer(vca_param cfg);
     ~Analyzer();
 
-    void abort();
-
     vca_result pushFrame(vca_frame *frame);
     bool resultAvailable();
     std::optional<vca_frame_results> pullResult();
@@ -30,18 +30,10 @@ private:
     std::optional<vca_frame_info> frameInfo;
     unsigned frameCounter{0};
 
-    std::vector<std::thread> threadPool;
-    void threadFunction(unsigned threadID);
+    std::vector<ProcessingThread> threadPool;
 
-    std::mutex resultsMutex;
-    std::queue<vca_frame_results> results;
-    std::condition_variable resultsCV;
-
-    std::mutex jobsMutex;
-    std::queue<Job> jobs;
-    std::condition_variable jobsCV;
-
-    bool aborted{};
+    MultiThreadQueue<Job> jobs;
+    MultiThreadQueue<Result> results;
 };
 
 } // namespace vca

@@ -55,7 +55,6 @@ struct vca_frame_results
     int32_t eValue{};
 
     int poc;
-    int complexity;
 };
 
 struct vca_frame_info

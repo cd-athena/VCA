@@ -3,6 +3,7 @@
 #include "vcaLib.h"
 
 #include <string>
+#include <vector>
 
 namespace vca {
 
@@ -31,6 +32,14 @@ struct Job
                + std::to_string(this->frame->stats.poc) + " MB "
                + std::to_string(macroblockRange.start) + "-" + std::to_string(macroblockRange.end);
     }
+};
+
+struct Result
+{
+    std::vector<int32_t> energyPerBlock;
+    int32_t eValue{};
+
+    int poc;
 };
 
 } // namespace vca
