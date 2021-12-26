@@ -6,7 +6,7 @@
 
 namespace vca {
 
-inline void log(vca_param &cfg, LogLevel level, std::string message)
+inline void log(const vca_param &cfg, LogLevel level, const std::string &message)
 {
     if (!cfg.logFunction)
         return;

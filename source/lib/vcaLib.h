@@ -48,7 +48,12 @@ struct vca_frame_stats
 
 struct vca_frame_results
 {
-    // Todo - redo this
+    /* Pointer to storage for one value per block in the frame.
+     * The caller must make sure that this is pointing to a valid and big enough block of memory.
+     */
+    int32_t *energyPerBlock{};
+    int32_t eValue{};
+
     int poc;
     int complexity;
 };
@@ -67,7 +72,7 @@ struct vca_frame
 {
     /* Must be specified on input pictures, the number of planes is determined
      * by the colorSpace value */
-    void *planes[3]{nullptr, nullptr, nullptr};
+    uint8_t *planes[3]{nullptr, nullptr, nullptr};
 
     /* Stride is the number of bytes between row starts */
     int stride[3]{0, 0, 0};
@@ -86,6 +91,9 @@ struct vca_param
     bool enableASM{true};
 
     vca_frame_info frameInfo{};
+
+    // Size (width/height) of the analysis block. Must be 8, 16 or 32.
+    unsigned blockSize{32};
 
     double minThresh{}; /* Minimum threshold for epsilon in shot detection */
     double maxThresh{}; /* Maximum threshold for epsilon in shot detection */
