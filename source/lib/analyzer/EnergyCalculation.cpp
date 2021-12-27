@@ -1,6 +1,9 @@
-#include "WeightedCoeffSum.h"
+#include "EnergyCalculation.h"
+
+#include "DCTTransforms.h"
 
 #include <cstdlib>
+#include <stdexcept>
 
 namespace {
 
@@ -167,10 +170,6 @@ static const double weights_dct32[1024] = {
     0.711882, 0.749697, 0.791065, 0.836348, 0.885951, 0.940331, 1.000000,
 };
 
-} // namespace
-
-namespace vca {
-
 int32_t calculateWeightedCoeffSum(unsigned blockSize, int16_t *coeffBuffer)
 {
     int32_t weightedSum = 0;
@@ -196,6 +195,114 @@ int32_t calculateWeightedCoeffSum(unsigned blockSize, int16_t *coeffBuffer)
     }
 
     return weightedSum;
+}
+
+void copyPixelValuesToBuffer(unsigned blockOffsetLuma,
+                             unsigned blockSize,
+                             unsigned bitDepth,
+                             uint8_t *src,
+                             unsigned srcStride,
+                             int16_t *buffer)
+{
+    if (bitDepth == 8)
+    {
+        src += blockOffsetLuma;
+        for (unsigned y = 0; y < blockSize; y++, src += srcStride)
+            for (unsigned x = 0; x < blockSize; x++)
+                *(buffer++) = int16_t(src[x]);
+    }
+    else
+    {
+        auto input = (int16_t *) (src) + blockOffsetLuma;
+        for (unsigned y = 0; y < blockSize; y++, input += srcStride, buffer += blockSize)
+            std::memcpy(buffer, input, blockSize * sizeof(int16_t));
+    }
+}
+
+void performDCT(unsigned blockSize, int16_t *pixelBuffer, int16_t *coeffBuffer)
+{
+    // DCT
+    switch (blockSize)
+    {
+        case 32:
+            vca::dct32_c(pixelBuffer, coeffBuffer, 32);
+            break;
+        case 16:
+            vca::dct16_c(pixelBuffer, coeffBuffer, 16);
+            break;
+        case 8:
+            vca::dct8_c(pixelBuffer, coeffBuffer, 8);
+            break;
+        default:
+            throw std::invalid_argument("Invalid block size " + std::to_string(blockSize));
+    }
+}
+
+} // namespace
+
+namespace vca {
+
+void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize)
+{
+    const auto frame = job.frame;
+    if (frame == nullptr)
+        throw std::invalid_argument("Invalid frame pointer");
+
+    const auto bitDepth = frame->info.bitDepth;
+
+    if (frame->info.bitDepth > 8)
+        throw std::invalid_argument("16 bit input not implemented yet");
+
+    auto src       = frame->planes[0];
+    auto srcStride = frame->stride[0];
+
+    auto [widthInBlocks, heightInBlock] = getFrameSizeInBlocks(blockSize, frame->info);
+    auto totalNumberBlocks              = widthInBlocks * heightInBlock;
+    auto widthInPixels                  = widthInBlocks * blockSize;
+    auto heightInPixels                 = heightInBlock * blockSize;
+
+    if (result.energyPerBlock.size() < totalNumberBlocks)
+        result.energyPerBlock.resize(totalNumberBlocks);
+
+    // First, we will copy the source to a temporary buffer which has one int16_t value
+    // per sample.
+    //   - This may only be needed for 8 bit values. For 16 bit values we could also
+    //     perform this directly from the source buffer. However, we should check the
+    //     performance of that approach (i.e. the buffer may not be aligned)
+
+    ALIGN_VAR_32(int16_t, pixelBuffer[32 * 32]);
+    ALIGN_VAR_32(int16_t, coeffBuffer[32 * 32]);
+
+    auto blockIndex      = 0u;
+    int32_t frameTexture = 0;
+    for (unsigned blockY = 0; blockY < heightInPixels; blockY += blockSize)
+    {
+        auto paddingBottom = blockY + blockSize > frame->info.height;
+        for (unsigned blockX = 0; blockX < widthInPixels; blockX += blockSize)
+        {
+            auto paddingRight    = blockX + widthInPixels > frame->info.width;
+            auto blockOffsetLuma = blockX + (blockY * srcStride);
+
+            if (paddingRight || paddingBottom)
+            {}
+
+            copyPixelValuesToBuffer(blockOffsetLuma,
+                                    blockSize,
+                                    bitDepth,
+                                    src,
+                                    srcStride,
+                                    pixelBuffer);
+
+            performDCT(blockSize, pixelBuffer, coeffBuffer);
+
+            result.energyPerBlock[blockIndex] = calculateWeightedCoeffSum(blockSize, coeffBuffer);
+            frameTexture += result.energyPerBlock[blockIndex];
+
+            blockIndex++;
+        }
+    }
+
+    result.averageEnergy = frameTexture / totalNumberBlocks;
 }
 
 } // namespace vca

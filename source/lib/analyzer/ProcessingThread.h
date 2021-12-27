@@ -23,16 +23,12 @@ public:
     void join();
 
 private:
-    bool computeWeightedDCTEnergy(Job &job, Result &result);
     void threadFunction(MultiThreadQueue<Job> &jobQueue, MultiThreadQueue<Result> &results);
 
     std::thread thread;
     bool aborted{};
     unsigned id{};
     vca_param cfg;
-
-    ALIGN_VAR_32(int16_t, pixelBuffer[32 * 32]);
-    ALIGN_VAR_32(int16_t, coeffBuffer[32 * 32]);
 };
 
 } // namespace vca

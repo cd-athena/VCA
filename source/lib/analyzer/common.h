@@ -3,8 +3,9 @@
 #include "vcaLib.h"
 
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
+
 
 namespace vca {
 
@@ -21,10 +22,11 @@ inline void log(const vca_param &cfg, LogLevel level, const std::string &message
     cfg.logFunction(cfg.logFunctionPrivateData, level, message.c_str());
 }
 
-inline std::pair<unsigned, unsigned> getFrameSizeInBlocks(const vca_param &cfg, const vca_frame_info &info)
+inline std::pair<unsigned, unsigned> getFrameSizeInBlocks(unsigned blockSize,
+                                                          const vca_frame_info &info)
 {
-    auto widthInBlocks = (info.width + cfg.blockSize - 1) / cfg.blockSize;
-    auto heightInBlock = (info.height + cfg.blockSize - 1) / cfg.blockSize;
+    auto widthInBlocks = (info.width + blockSize - 1) / blockSize;
+    auto heightInBlock = (info.height + blockSize - 1) / blockSize;
     return {widthInBlocks, heightInBlock};
 }
 
