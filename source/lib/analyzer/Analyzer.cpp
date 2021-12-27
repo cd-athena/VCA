@@ -11,7 +11,7 @@ Analyzer::Analyzer(vca_param cfg)
     auto nrThreads = cfg.nrFrameThreads * cfg.nrSliceThreads;
     log(cfg, LogLevel::Info, "Starting " + std::to_string(nrThreads) + " threads");
     for (unsigned i = 0; i < nrThreads; i++)
-        this->threadPool.push_back(ProcessingThread(this->cfg, this->jobs, this->results, i));
+        this->threadPool.emplace_back(this->cfg, this->jobs, this->results, i);
 }
 
 Analyzer::~Analyzer()
@@ -50,7 +50,12 @@ std::optional<vca_frame_results> Analyzer::pullResult()
     auto result = this->results.pop();
     vca_frame_results frameResult;
 
+    if (!result)
+        return {};
+
     // TODO: Copy the data
+    frameResult.poc = result->poc;
+    frameResult.averageEnergy = result->averageEnergy;
     // TODO: For a bit of speedup, recycle the results data
 
     return frameResult;

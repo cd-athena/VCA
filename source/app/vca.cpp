@@ -370,11 +370,13 @@ int main(int argc, char **argv)
                 return 3;
             }
             // Do something with the result and recycle the frame ...
-            vca_log(LogLevel::Debug, "Got results for frame " + std::to_string(frameResult.poc));
+            vca_log(LogLevel::Debug, "Got results POC " + std::to_string(frameResult.poc) + " averageEnergy " + std::to_string(frameResult.averageEnergy));
         }
 
         poc++;
     }
+
+    vca_analyzer_close(analyzer);
 
     return 0;
 }

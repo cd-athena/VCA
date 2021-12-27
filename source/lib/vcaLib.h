@@ -52,7 +52,7 @@ struct vca_frame_results
      * The caller must make sure that this is pointing to a valid and big enough block of memory.
      */
     int32_t *energyPerBlock{};
-    int32_t eValue{};
+    int32_t averageEnergy{};
 
     int poc;
 };
