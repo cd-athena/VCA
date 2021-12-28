@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Menon"
+  given-names:  "Vignesh"
+  orcid: "https://orcid.org/0000-0000-0000-0000"
+- family-names: "Amirpour"
+  given-names: "Hadi"
+  orcid: "https://orcid.org/0000-0001-9853-1720"
+title: "VCA"
+version: 1.0.0
+doi: 10.5281/zenodo.1234
+date-released: 2021-12-28
+url: "https://github.com/cd-athena/VCA"
