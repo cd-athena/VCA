@@ -22,7 +22,7 @@ public:
 
     vca_result pushFrame(vca_frame *frame);
     bool resultAvailable();
-    std::optional<vca_frame_results> pullResult();
+    vca_result pullResult(vca_frame_results *result);
 
 private:
     vca_param cfg{};

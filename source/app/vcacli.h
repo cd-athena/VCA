@@ -33,6 +33,7 @@ static const struct option long_options[] = {{"help", no_argument, NULL, 'h'},
                                              {"frames", required_argument, NULL, 'f'},
                                              {"complexity-csv", required_argument, NULL, 0},
                                              {"shot-csv", required_argument, NULL, 0},
+                                             {"yuview-stats", required_argument, NULL, 0},
                                              {"max-thresh", required_argument, NULL, 0},
                                              {"min-thresh", required_argument, NULL, 0},
                                              {0, 0, 0, 0},
@@ -64,8 +65,11 @@ static void showHelp()
     printf("   --complexity-csv <filename>   Comma separated complexity log file\n");
     printf("   --shot-csv <filename>         Comma separated shot detection log file.\n");
     printf("                                 Specify a filename to enable shot-detection.\n");
+    printf("   --yuview-stats <filename>     Write the per block results (energy, sad) to a stats file\n");
+    printf("                                 that can be visualized using YUView.\n");
     printf("\nOperation Options:\n");
     printf("   --[no-]asm                    Enable / disable ASM. Default: Enabled\n");
     printf("   --max-thresh <float>          Maximum threshold of epsilon in shot detection\n");
     printf("   --min-thresh <float>          Minimum threshold of epsilon in shot detection\n");
+    printf("   --block-size <integer>        Block size for DCT transform. Must be 8, 16 or 32 (Default).\n");
 }

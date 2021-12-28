@@ -45,20 +45,20 @@ bool Analyzer::resultAvailable()
     return this->results.empty();
 }
 
-std::optional<vca_frame_results> Analyzer::pullResult()
+vca_result Analyzer::pullResult(vca_frame_results *outputResult)
 {
     auto result = this->results.pop();
-    vca_frame_results frameResult;
 
     if (!result)
-        return {};
+        return vca_result::VCA_ERROR;
 
-    // TODO: Copy the data
-    frameResult.poc = result->poc;
-    frameResult.averageEnergy = result->averageEnergy;
-    // TODO: For a bit of speedup, recycle the results data
+    outputResult->poc           = result->poc;
+    outputResult->averageEnergy = result->averageEnergy;
+    std::memcpy(outputResult->energyPerBlock,
+                result->energyPerBlock.data(),
+                result->energyPerBlock.size() * sizeof(int32_t));
 
-    return frameResult;
+    return vca_result::VCA_OK;
 }
 
 bool Analyzer::checkFrameSize(vca_frame_info frameInfo)

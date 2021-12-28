@@ -21,6 +21,7 @@
 
 #include "input/Y4MInput.h"
 #include "input/YUVInput.h"
+#include "stats/YUViewStatsFile.h"
 #include "vcacli.h"
 
 #include <chrono>
@@ -82,6 +83,7 @@ void printStatus(uint32_t frameNum, unsigned framesToBeAnalyzed)
     fprintf(stderr, "%s  \r", buf + 5);
     fflush(stderr); // needed in windows
 }
+
 struct CLIOptions
 {
     std::string inputFilename;
@@ -90,8 +92,24 @@ struct CLIOptions
     unsigned framesToBeAnalyzed{};
     std::string complexityCSVFilename;
     std::string shotCSVFilename;
+    std::string yuviewStatsFilename;
 
     vca_param vcaParam;
+};
+
+struct Result
+{
+    Result(const vca_frame_info &info, unsigned blockSize)
+    {
+        auto widthInBlocks = (info.width + blockSize - 1) / blockSize;
+        auto heightInBlock = (info.height + blockSize - 1) / blockSize;
+        auto numberBlocks  = widthInBlocks * heightInBlock;
+        this->energyPerBlockData.resize(numberBlocks);
+        this->result.energyPerBlock = this->energyPerBlockData.data();
+    }
+
+    std::vector<int32_t> energyPerBlockData;
+    vca_frame_results result;
 };
 
 std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
@@ -188,10 +206,14 @@ std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
             options.shotCSVFilename           = optarg;
             options.vcaParam.enableShotdetect = true;
         }
+        else if (name == "yuview-stats")
+            options.yuviewStatsFilename = optarg;
         else if (name == "max-thresh")
             options.vcaParam.maxThresh = std::stod(optarg);
         else if (name == "min-thresh")
             options.vcaParam.minThresh = std::stod(optarg);
+        else if (name == "block-size")
+            options.vcaParam.blockSize = std::stoi(optarg);
     }
 
     if (options.inputFilename.substr(options.inputFilename.size() - 4) == ".y4m")
@@ -221,6 +243,15 @@ bool checkOptions(CLIOptions options)
         return false;
     }
 
+    if (options.vcaParam.blockSize != 32 && options.vcaParam.blockSize != 16
+        && options.vcaParam.blockSize != 8)
+    {
+        vca_log(LogLevel::Error,
+                "Invalid block size (" + std::to_string(options.vcaParam.blockSize)
+                    + ") provided. Valid values are 8, 16 and 32.");
+        return false;
+    }
+
     return true;
 }
 
@@ -233,6 +264,7 @@ void logOptions(CLIOptions options)
     vca_log(LogLevel::Info, "  Frames to analyze: "s + std::to_string(options.framesToBeAnalyzed));
     vca_log(LogLevel::Info, "  Complexity csv:    "s + options.complexityCSVFilename);
     vca_log(LogLevel::Info, "  Shot csv:          "s + options.shotCSVFilename);
+    vca_log(LogLevel::Info, "  YUView stats file: "s + options.yuviewStatsFilename);
 }
 
 #ifdef _WIN32
@@ -331,6 +363,7 @@ int main(int argc, char **argv)
 
     using framePtr = std::unique_ptr<frameWithData>;
     std::queue<framePtr> frameRecycling;
+    std::unique_ptr<YUViewStatsFile> yuviewStatsFile;
     unsigned poc = 0;
     while (!inputFile->isEof() && !inputFile->isFail()
            && (options.framesToBeAnalyzed == 0 || poc < options.framesToBeAnalyzed))
@@ -352,6 +385,11 @@ int main(int argc, char **argv)
         frame->vcaFrame.stats.poc = poc;
         vca_log(LogLevel::Debug, "Read frame " + std::to_string(poc) + " from input");
 
+        if (!options.yuviewStatsFilename.empty() && !yuviewStatsFile)
+            yuviewStatsFile = std::make_unique<YUViewStatsFile>(options.yuviewStatsFilename,
+                                                                options.inputFilename,
+                                                                frame->vcaFrame.info);
+
         auto ret = vca_analyzer_push(analyzer, &frame->vcaFrame);
         if (ret == VCA_ERROR)
         {
@@ -363,14 +401,21 @@ int main(int argc, char **argv)
 
         if (vca_result_available(analyzer))
         {
-            vca_frame_results frameResult;
-            if (vca_analyzer_pull_frame_result(analyzer, &frameResult) == VCA_ERROR)
+            Result result(frame->vcaFrame.info, options.vcaParam.blockSize);
+
+            if (vca_analyzer_pull_frame_result(analyzer, &result.result) == VCA_ERROR)
             {
                 vca_log(LogLevel::Error, "Error pulling frame result");
                 return 3;
             }
+
+            if (yuviewStatsFile)
+                yuviewStatsFile->write(result.result, options.vcaParam.blockSize);
+
             // Do something with the result and recycle the frame ...
-            vca_log(LogLevel::Debug, "Got results POC " + std::to_string(frameResult.poc) + " averageEnergy " + std::to_string(frameResult.averageEnergy));
+            vca_log(LogLevel::Debug,
+                    "Got results POC " + std::to_string(result.result.poc) + " averageEnergy "
+                        + std::to_string(result.result.averageEnergy));
         }
 
         poc++;

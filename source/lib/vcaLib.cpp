@@ -35,12 +35,7 @@ DLL_PUBLIC vca_result vca_analyzer_pull_frame_result(vca_analyzer *enc, vca_fram
     if (analyzer == nullptr)
         return vca_result::VCA_ERROR;
 
-    auto pulledResult = analyzer->pullResult();
-    if (!pulledResult)
-        return vca_result::VCA_ERROR;
-
-    *result = *pulledResult;
-    return vca_result::VCA_OK;
+    return analyzer->pullResult(result);
 }
 
 DLL_PUBLIC void vca_analyzer_close(vca_analyzer *enc)
