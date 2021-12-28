@@ -4,6 +4,7 @@
 
 #include <cstdlib>
 #include <stdexcept>
+#include <algorithm>
 
 namespace {
 
