@@ -214,8 +214,42 @@ void copyPixelValuesToBuffer(unsigned blockOffsetLuma,
     else
     {
         auto input = (int16_t *) (src) + blockOffsetLuma;
-        for (unsigned y = 0; y < blockSize; y++, input += srcStride, buffer += blockSize)
+        for (unsigned y = 0; y < blockSize; y++, input += srcStride / 2, buffer += blockSize)
             std::memcpy(buffer, input, blockSize * sizeof(int16_t));
+    }
+}
+
+template<int bitDepth>
+void copyPixelValuesToBufferWithPadding(unsigned blockOffsetLuma,
+                                        unsigned blockSize,
+                                        uint8_t *srcData,
+                                        unsigned srcStride,
+                                        int16_t *buffer,
+                                        unsigned paddingRight,
+                                        unsigned paddingBottom)
+{
+    typedef typename std::conditional<bitDepth == 8, uint8_t *, int16_t *>::type InValueType;
+    static_assert(bitDepth >= 8 && bitDepth <= 16);
+
+    const auto *__restrict src = InValueType(srcData);
+
+    src += blockOffsetLuma;
+    unsigned y          = 0;
+    auto bufferLastLine = buffer;
+    for (; y < blockSize - paddingBottom; y++, src += srcStride)
+    {
+        unsigned x     = 0;
+        bufferLastLine = buffer;
+        for (; x < blockSize - paddingRight; x++)
+            *(buffer++) = int16_t(src[x]);
+        const auto lastValue = int16_t(src[x]);
+        for (; x < blockSize; x++)
+            *(buffer++) = lastValue;
+    }
+    for (; y < blockSize; y++)
+    {
+        for (unsigned x = 0; x < blockSize; x++)
+            *(buffer++) = bufferLastLine[x];
     }
 }
 
@@ -277,21 +311,40 @@ void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize
     int32_t frameTexture = 0;
     for (unsigned blockY = 0; blockY < heightInPixels; blockY += blockSize)
     {
-        auto paddingBottom = blockY + blockSize > frame->info.height;
+        auto paddingBottom = std::max(int(blockY + blockSize) - int(frame->info.height), 0);
         for (unsigned blockX = 0; blockX < widthInPixels; blockX += blockSize)
         {
-            auto paddingRight    = blockX + widthInPixels > frame->info.width;
+            auto paddingRight = std::max(int(blockX + blockSize) - int(frame->info.width), 0);
             auto blockOffsetLuma = blockX + (blockY * srcStride);
 
-            if (paddingRight || paddingBottom)
-            {}
-
-            copyPixelValuesToBuffer(blockOffsetLuma,
-                                    blockSize,
-                                    bitDepth,
-                                    src,
-                                    srcStride,
-                                    pixelBuffer);
+            if (paddingRight > 0 || paddingBottom > 0)
+            {
+                if (bitDepth == 8)
+                    copyPixelValuesToBufferWithPadding<8>(blockOffsetLuma,
+                                                          blockSize,
+                                                          src,
+                                                          srcStride,
+                                                          pixelBuffer,
+                                                          unsigned(paddingRight),
+                                                          unsigned(paddingBottom));
+                else
+                    copyPixelValuesToBufferWithPadding<16>(blockOffsetLuma,
+                                                           blockSize,
+                                                           src,
+                                                           srcStride / 2,
+                                                           pixelBuffer,
+                                                           unsigned(paddingRight),
+                                                           unsigned(paddingBottom));
+            }
+            else
+            {
+                copyPixelValuesToBuffer(blockOffsetLuma,
+                                        blockSize,
+                                        bitDepth,
+                                        src,
+                                        srcStride,
+                                        pixelBuffer);
+            }
 
             performDCT(blockSize, pixelBuffer, coeffBuffer);
 
