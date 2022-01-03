@@ -5,6 +5,8 @@
 
 namespace vca {
 
+MultiThreadIDList<EnergyResult> ProcessingThread::tempResultStorag;
+
 ProcessingThread::ProcessingThread(vca_param cfg,
                                    MultiThreadQueue<Job> &jobs,
                                    MultiThreadQueue<Result> &results,
@@ -34,8 +36,17 @@ void ProcessingThread::threadFunction(MultiThreadQueue<Job> &jobQueue,
 
         Result result;
         result.poc = job->frame->stats.poc;
+        computeWeightedDCTEnergy(*job, result.energyResult, this->cfg.blockSize);
 
-        computeWeightedDCTEnergy(*job, result, this->cfg.blockSize);
+        this->tempResultStorag.push(job->jobID, result.energyResult);
+
+        if (job->jobID > 0)
+        {
+            auto previousFrameJobID   = job->jobID - 1;
+            auto prevJobEnergyResults = this->tempResultStorag.waitAndPop(previousFrameJobID);
+
+            // Calculate SAD
+        }
 
         log(this->cfg,
             LogLevel::Debug,

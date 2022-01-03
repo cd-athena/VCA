@@ -4,6 +4,6 @@
 
 namespace vca {
 
-void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize);
+void computeWeightedDCTEnergy(const Job &job, EnergyResult &result, unsigned blockSize);
 
 }

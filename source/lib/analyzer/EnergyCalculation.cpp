@@ -277,7 +277,7 @@ void performDCT(unsigned blockSize, int16_t *pixelBuffer, int16_t *coeffBuffer)
 
 namespace vca {
 
-void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize)
+void computeWeightedDCTEnergy(const Job &job, EnergyResult &result, unsigned blockSize)
 {
     const auto frame = job.frame;
     if (frame == nullptr)

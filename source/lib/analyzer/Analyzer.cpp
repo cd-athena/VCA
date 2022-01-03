@@ -53,10 +53,10 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
         return vca_result::VCA_ERROR;
 
     outputResult->poc           = result->poc;
-    outputResult->averageEnergy = result->averageEnergy;
+    outputResult->averageEnergy = result->energyResult.averageEnergy;
     std::memcpy(outputResult->energyPerBlock,
-                result->energyPerBlock.data(),
-                result->energyPerBlock.size() * sizeof(int32_t));
+                result->energyResult.energyPerBlock.data(),
+                result->energyResult.energyPerBlock.size() * sizeof(int32_t));
 
     return vca_result::VCA_OK;
 }

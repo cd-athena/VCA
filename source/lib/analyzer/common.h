@@ -6,7 +6,6 @@
 #include <utility>
 #include <vector>
 
-
 namespace vca {
 
 #if defined(__GNUC__)
@@ -17,9 +16,8 @@ namespace vca {
 
 inline void log(const vca_param &cfg, LogLevel level, const std::string &message)
 {
-    if (!cfg.logFunction)
-        return;
-    cfg.logFunction(cfg.logFunctionPrivateData, level, message.c_str());
+    if (cfg.logFunction)
+        cfg.logFunction(cfg.logFunctionPrivateData, level, message.c_str());
 }
 
 inline std::pair<unsigned, unsigned> getFrameSizeInBlocks(unsigned blockSize,
@@ -50,12 +48,17 @@ struct Job
     }
 };
 
-struct Result
+struct EnergyResult
 {
     std::vector<int32_t> energyPerBlock;
     int32_t averageEnergy{};
+};
 
-    int poc;
+struct Result
+{
+    EnergyResult energyResult;
+    
+    int poc{};
 };
 
 } // namespace vca

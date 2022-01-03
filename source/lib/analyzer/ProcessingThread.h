@@ -2,6 +2,7 @@
 
 #include "vcaLib.h"
 
+#include "MultiThreadIDList.h"
 #include "MultiThreadQueue.h"
 #include "common.h"
 #include <thread>
@@ -11,7 +12,7 @@ namespace vca {
 class ProcessingThread
 {
 public:
-    ProcessingThread() = delete;
+    ProcessingThread()                     = delete;
     ProcessingThread(ProcessingThread &&o) = default;
     ProcessingThread(vca_param cfg,
                      MultiThreadQueue<Job> &jobs,
@@ -29,6 +30,8 @@ private:
     bool aborted{};
     unsigned id{};
     vca_param cfg;
+
+    static MultiThreadIDList<EnergyResult> tempResultStorag;
 };
 
 } // namespace vca
