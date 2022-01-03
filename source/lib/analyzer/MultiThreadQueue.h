@@ -2,8 +2,8 @@
 
 #include <condition_variable>
 #include <mutex>
-#include <queue>
 #include <optional>
+#include <queue>
 
 namespace vca {
 
@@ -11,12 +11,15 @@ template<class T>
 class MultiThreadQueue
 {
 public:
+    // Push an item to the queue. Wake one waiting thread.
+    void push(T item);
+
+    // Get an item. If the queue is empty, wait until an item is pushed.
+    // Will return empty opt if abort is called.
+    std::optional<T> waitAndPop();
 
     void abort();
 
-    void push(T item);
-    std::optional<T> pop();
-    
     bool empty();
 
 private:

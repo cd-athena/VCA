@@ -24,7 +24,7 @@ void ProcessingThread::threadFunction(MultiThreadQueue<Job> &jobQueue,
 {
     while (!this->aborted)
     {
-        auto job = jobQueue.pop();
+        auto job = jobQueue.waitAndPop();
         if (!job)
             continue;
 

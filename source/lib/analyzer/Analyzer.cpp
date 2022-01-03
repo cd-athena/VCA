@@ -47,7 +47,7 @@ bool Analyzer::resultAvailable()
 
 vca_result Analyzer::pullResult(vca_frame_results *outputResult)
 {
-    auto result = this->results.pop();
+    auto result = this->results.waitAndPop();
 
     if (!result)
         return vca_result::VCA_ERROR;

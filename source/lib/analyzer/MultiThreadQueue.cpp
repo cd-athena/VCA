@@ -23,7 +23,7 @@ void MultiThreadQueue<T>::push(T item)
 }
 
 template<class T>
-std::optional<T> MultiThreadQueue<T>::pop()
+std::optional<T> MultiThreadQueue<T>::waitAndPop()
 {
     std::unique_lock<std::mutex> lock(this->accessMutex);
     this->accessCV.wait(lock, [this]() { return !this->items.empty() || this->aborted; });
