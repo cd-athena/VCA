@@ -54,6 +54,7 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
 
     outputResult->poc           = result->poc;
     outputResult->averageEnergy = result->energyResult.averageEnergy;
+    outputResult->sad           = result->sad;
     std::memcpy(outputResult->energyPerBlock,
                 result->energyResult.energyPerBlock.data(),
                 result->energyResult.energyPerBlock.size() * sizeof(int32_t));

@@ -28,7 +28,7 @@ void ProcessingThread::threadFunction(MultiThreadQueue<Job> &jobQueue,
     {
         auto job = jobQueue.waitAndPop();
         if (!job)
-            continue;
+            break;
 
         log(this->cfg,
             LogLevel::Debug,
@@ -44,8 +44,12 @@ void ProcessingThread::threadFunction(MultiThreadQueue<Job> &jobQueue,
         {
             auto previousFrameJobID   = job->jobID - 1;
             auto prevJobEnergyResults = this->tempResultStorag.waitAndPop(previousFrameJobID);
+            if (!prevJobEnergyResults)
+            {
+                break;
+            }
 
-            // Calculate SAD
+            result.sad = computeTextureSAD(result.energyResult, *prevJobEnergyResults);
         }
 
         log(this->cfg,
@@ -62,6 +66,7 @@ void ProcessingThread::abort()
 {
     this->aborted = true;
 }
+
 void ProcessingThread::join()
 {
     this->aborted = true;

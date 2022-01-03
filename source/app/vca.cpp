@@ -415,7 +415,7 @@ int main(int argc, char **argv)
             // Do something with the result and recycle the frame ...
             vca_log(LogLevel::Debug,
                     "Got results POC " + std::to_string(result.result.poc) + " averageEnergy "
-                        + std::to_string(result.result.averageEnergy));
+                        + std::to_string(result.result.averageEnergy) + " sad " + std::to_string(result.result.sad));
         }
 
         poc++;

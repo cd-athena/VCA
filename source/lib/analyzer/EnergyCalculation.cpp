@@ -2,9 +2,9 @@
 
 #include "DCTTransforms.h"
 
+#include <algorithm>
 #include <cstdlib>
 #include <stdexcept>
-#include <algorithm>
 
 namespace {
 
@@ -315,7 +315,7 @@ void computeWeightedDCTEnergy(const Job &job, EnergyResult &result, unsigned blo
         auto paddingBottom = std::max(int(blockY + blockSize) - int(frame->info.height), 0);
         for (unsigned blockX = 0; blockX < widthInPixels; blockX += blockSize)
         {
-            auto paddingRight = std::max(int(blockX + blockSize) - int(frame->info.width), 0);
+            auto paddingRight    = std::max(int(blockX + blockSize) - int(frame->info.width), 0);
             auto blockOffsetLuma = blockX + (blockY * srcStride);
 
             if (paddingRight > 0 || paddingBottom > 0)
@@ -357,6 +357,20 @@ void computeWeightedDCTEnergy(const Job &job, EnergyResult &result, unsigned blo
     }
 
     result.averageEnergy = frameTexture / totalNumberBlocks;
+}
+
+double computeTextureSAD(const EnergyResult &results, const EnergyResult &resultsPreviousFrame)
+{
+    if (results.energyPerBlock.size() != resultsPreviousFrame.energyPerBlock.size())
+        throw std::out_of_range("Size of energy result vector must match");
+
+    double textureSad = 0;
+    for (size_t i = 0; i < results.energyPerBlock.size(); i++)
+        textureSad += std::abs(results.energyPerBlock[i] - resultsPreviousFrame.energyPerBlock[i]);
+
+    textureSad /= resultsPreviousFrame.averageEnergy;
+
+    return textureSad;
 }
 
 } // namespace vca

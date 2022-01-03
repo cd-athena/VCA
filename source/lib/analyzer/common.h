@@ -57,7 +57,7 @@ struct EnergyResult
 struct Result
 {
     EnergyResult energyResult;
-    
+    double sad{};
     int poc{};
 };
 
