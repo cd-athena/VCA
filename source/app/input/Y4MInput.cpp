@@ -42,9 +42,9 @@ Y4MInput::Y4MInput(std::string &fileName, unsigned skipFrames)
 
     {
         const auto assumedHeaderSize = 6u;
-        auto estFrameSize = this->calcualteFrameBytes() + assumedHeaderSize;
-        auto fileSize    = std::filesystem::file_size(fileName);
-        this->frameCount = unsigned(fileSize / estFrameSize);
+        auto estFrameSize            = this->calcualteFrameBytes() + assumedHeaderSize;
+        auto fileSize                = std::filesystem::file_size(fileName);
+        this->frameCount             = unsigned(fileSize / estFrameSize);
         vca_log(LogLevel::Info, "Detected " + std::to_string(this->frameCount) + " frames in input");
     }
 
@@ -131,14 +131,17 @@ bool Y4MInput::parseHeader()
 
 bool Y4MInput::readFrame(frameWithData &frame)
 {
-    if (!this->input.good() || this->input.eof())
-        return false;
-
     char c = 0;
     while (this->input.get(c) && c != 'F')
     {}
 
-    auto getNextChar = [this](){
+    if (this->input.eof())
+        return false;
+
+    if (!this->input.good())
+        throw std::exception("Error reading from file");
+
+    auto getNextChar = [this]() {
         char c;
         if (!this->input.get(c))
             return char(0);
@@ -146,10 +149,7 @@ bool Y4MInput::readFrame(frameWithData &frame)
     };
 
     if (getNextChar() != 'R' || getNextChar() != 'A' || getNextChar() != 'M' || getNextChar() != 'E')
-    {
-        vca_log(LogLevel::Error, "Error reading FRAME tag");
-        return false;
-    }
+        throw std::exception("Error reading FRAME tag");
 
     while (this->input.get(c) && c != '\n')
     {}
@@ -158,7 +158,7 @@ bool Y4MInput::readFrame(frameWithData &frame)
     if (frame.data.size() < frameSizeBytes)
         frame.data.resize(frameSizeBytes);
 
-    this->input.read((char*)(frame.data.data()), frameSizeBytes);
+    this->input.read((char *) (frame.data.data()), frameSizeBytes);
     this->updateFramePointers(frame);
 
     return true;

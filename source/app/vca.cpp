@@ -49,7 +49,7 @@ void logLibraryMessage(void *, LogLevel logLevel, const char *message)
     vca_log(logLevel, "[LIB] "s + message);
 }
 
-void printStatus(uint32_t frameNum, unsigned framesToBeAnalyzed)
+void printStatus(uint32_t frameNum, unsigned framesToBeAnalyzed, bool printSummary = false)
 {
     char buf[200];
     static auto startTime      = std::chrono::high_resolution_clock::now();
@@ -57,16 +57,32 @@ void printStatus(uint32_t frameNum, unsigned framesToBeAnalyzed)
     auto now                   = std::chrono::high_resolution_clock::now();
 
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - prevUpdateTime);
-    if (duration < std::chrono::milliseconds(250))
+    if (!printSummary && duration < std::chrono::milliseconds(250))
         return;
 
     prevUpdateTime = now;
 
-    auto elapsedAbs = std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime).count();
-    double fps      = elapsedAbs > 0 ? frameNum * 1000. / elapsedAbs : 0;
-    if (framesToBeAnalyzed > 0)
+    auto elapsedAbsMs = std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime)
+                            .count();
+    double fps = elapsedAbsMs > 0 ? frameNum * 1000. / elapsedAbsMs : 0;
+
+    if (printSummary)
     {
-        int eta = (int) (elapsedAbs * (framesToBeAnalyzed - frameNum) / ((int64_t) frameNum * 1000));
+        fprintf(stdout,
+                "vca - Analyzed %d/%d frames, %.2f fps, time %d:%02d:%02d.%03d\n",
+                frameNum,
+                framesToBeAnalyzed,
+                fps,
+                int(elapsedAbsMs / 1000 / 3600),
+                int((elapsedAbsMs / 1000 / 60) % 60),
+                int((elapsedAbsMs / 1000) % 60),
+                int(elapsedAbsMs % 1000));
+        return;
+    }
+    else if (framesToBeAnalyzed > 0)
+    {
+        int eta = (int) (elapsedAbsMs * (framesToBeAnalyzed - frameNum)
+                         / ((int64_t) frameNum * 1000));
         sprintf(buf,
                 "vca [%.1f%%] %d/%d frames, %.2f fps, eta %d:%02d:%02d",
                 100. * frameNum / (framesToBeAnalyzed),
@@ -80,8 +96,8 @@ void printStatus(uint32_t frameNum, unsigned framesToBeAnalyzed)
     else
         sprintf(buf, "vca %d frames: %.2f fps", frameNum, fps);
 
-    fprintf(stderr, "%s  \r", buf + 5);
-    fflush(stderr); // needed in windows
+    fprintf(stdout, "%s  \r", buf);
+    fflush(stdout); // needed in windows
 }
 
 struct CLIOptions
@@ -314,7 +330,7 @@ int main(int argc, char **argv)
     get_argv_utf8(&argc, &argv);
 #endif
 
-    vca_log(LogLevel::Debug, "VCA - Video Complexity Analyzer");
+    vca_log(LogLevel::Info, "VCA - Video Complexity Analyzer");
 
     CLIOptions options;
     if (auto cliOptions = parseCLIOptions(argc, argv))
@@ -377,11 +393,19 @@ int main(int argc, char **argv)
             frameRecycling.pop();
         }
 
-        if (!inputFile->readFrame(*frame))
+        try
         {
-            vca_log(LogLevel::Error, "Error reading frame from input");
+            if (!inputFile->readFrame(*frame))
+            {
+                break;
+            }
+        }
+        catch (const std::exception &e)
+        {
+            vca_log(LogLevel::Error, "Error reading frame from input: " + std::string(e.what()));
             return 3;
         }
+
         frame->vcaFrame.stats.poc = poc;
         vca_log(LogLevel::Debug, "Read frame " + std::to_string(poc) + " from input");
 
@@ -415,13 +439,17 @@ int main(int argc, char **argv)
             // Do something with the result and recycle the frame ...
             vca_log(LogLevel::Debug,
                     "Got results POC " + std::to_string(result.result.poc) + " averageEnergy "
-                        + std::to_string(result.result.averageEnergy) + " sad " + std::to_string(result.result.sad));
+                        + std::to_string(result.result.averageEnergy) + " sad "
+                        + std::to_string(result.result.sad));
         }
+
+        printStatus(poc, options.framesToBeAnalyzed);
 
         poc++;
     }
 
     vca_analyzer_close(analyzer);
+    printStatus(poc, options.framesToBeAnalyzed, true);
 
     return 0;
 }

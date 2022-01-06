@@ -53,3 +53,10 @@ THE POSSIBILITY OF SUCH DAMAGE
 cmake -DCMAKE_BUILD_TYPE=Debug ../../
 cmake -DCMAKE_BUILD_TYPE=Debug -G "NMake Makefiles" ../../
 cmake -DCMAKE_BUILD_TYPE=DEBUG -DVCA_STATIC_BUILD=True ../../
+
+## To-do list
+
+ - Write a performance check app
+ - Check multi threading. 
+ - Add SSE functions ... do they really make it faster?
+ 
