@@ -19,7 +19,9 @@
 
 #pragma once
 
-#include "getopt/getopt.h"
+#include <common/getopt/getopt.h>
+
+#include <stdio.h>
 
 static const char short_options[]         = "f:h?";
 static const struct option long_options[] = {{"help", no_argument, NULL, 'h'},
@@ -60,16 +62,19 @@ static void showHelp()
     printf("                                 422 (4:2:2)\n");
     printf("                                 444 (4:4:4)\n");
     printf("-f/--frames <integer>            Maximum number of frames to analyze. Default all\n");
-    printf("   --skip <integer>              Skip N frames in the input before starting the analysis\n");
+    printf("   --skip <integer>              Skip N frames in the input before starting the "
+           "analysis\n");
     printf("\nOutput Options:\n");
     printf("   --complexity-csv <filename>   Comma separated complexity log file\n");
     printf("   --shot-csv <filename>         Comma separated shot detection log file.\n");
     printf("                                 Specify a filename to enable shot-detection.\n");
-    printf("   --yuview-stats <filename>     Write the per block results (energy, sad) to a stats file\n");
+    printf("   --yuview-stats <filename>     Write the per block results (energy, sad) to a stats "
+           "file\n");
     printf("                                 that can be visualized using YUView.\n");
     printf("\nOperation Options:\n");
     printf("   --[no-]asm                    Enable / disable ASM. Default: Enabled\n");
     printf("   --max-thresh <float>          Maximum threshold of epsilon in shot detection\n");
     printf("   --min-thresh <float>          Minimum threshold of epsilon in shot detection\n");
-    printf("   --block-size <integer>        Block size for DCT transform. Must be 8, 16 or 32 (Default).\n");
+    printf("   --block-size <integer>        Block size for DCT transform. Must be 8, 16 or 32 "
+           "(Default).\n");
 }

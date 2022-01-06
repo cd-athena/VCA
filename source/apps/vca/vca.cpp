@@ -17,12 +17,12 @@
  * along with this program.
  *****************************************************************************/
 
-#include <lib/vcaLib.h>
-
-#include "input/Y4MInput.h"
-#include "input/YUVInput.h"
-#include "stats/YUViewStatsFile.h"
 #include "vcacli.h"
+
+#include <common/input/Y4MInput.h>
+#include <common/input/YUVInput.h>
+#include <common/stats/YUViewStatsFile.h>
+#include <lib/vcaLib.h>
 
 #include <chrono>
 #include <optional>

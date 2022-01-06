@@ -20,11 +20,8 @@ struct vca_cli_csp
     int height[3];
 };
 
-static const std::map<vca_colorSpace, vca_cli_csp> vca_cli_csps =
-{
-    {vca_colorSpace::YUV400, { 1, { 0, 0, 0 }, { 0, 0, 0 } } },
-    {vca_colorSpace::YUV420, { 3, { 0, 1, 1 }, { 0, 1, 1 } } },
-    {vca_colorSpace::YUV422, { 3, { 0, 1, 1 }, { 0, 0, 0 } } },
-    {vca_colorSpace::YUV444, { 3, { 0, 0, 0 }, { 0, 0, 0 } } }
-};
-
+static const std::map<vca_colorSpace, vca_cli_csp> vca_cli_csps
+    = {{vca_colorSpace::YUV400, {1, {0, 0, 0}, {0, 0, 0}}},
+       {vca_colorSpace::YUV420, {3, {0, 1, 1}, {0, 1, 1}}},
+       {vca_colorSpace::YUV422, {3, {0, 1, 1}, {0, 0, 0}}},
+       {vca_colorSpace::YUV444, {3, {0, 0, 0}, {0, 0, 0}}}};

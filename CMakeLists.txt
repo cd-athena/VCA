@@ -9,4 +9,4 @@ set (CMAKE_CXX_STANDARD 17)
 project (vca)
 
 add_subdirectory(source/lib)
-add_subdirectory(source/app)
+add_subdirectory(source/apps/vca)
