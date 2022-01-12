@@ -195,7 +195,7 @@ int32_t calculateWeightedCoeffSum(unsigned blockSize, int16_t *coeffBuffer)
         weightedSum += weightedCoeff;
     }
 
-    return weightedSum;
+    return weightedSum / (blockSize * blockSize);
 }
 
 void copyPixelValuesToBuffer(unsigned blockOffsetLuma,
@@ -368,9 +368,7 @@ double computeTextureSAD(const EnergyResult &results, const EnergyResult &result
     for (size_t i = 0; i < results.energyPerBlock.size(); i++)
         textureSad += std::abs(results.energyPerBlock[i] - resultsPreviousFrame.energyPerBlock[i]);
 
-    textureSad /= resultsPreviousFrame.averageEnergy;
-
-    return textureSad;
+    return textureSad / 100;
 }
 
 } // namespace vca
