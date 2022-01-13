@@ -54,6 +54,7 @@ struct vca_frame_results
     int32_t *energyPerBlock{};
     int32_t averageEnergy{};
     double sad{};
+    double epsilon{};
 
     int poc;
 };

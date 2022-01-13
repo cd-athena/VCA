@@ -31,7 +31,7 @@ private:
     unsigned id{};
     vca_param cfg;
 
-    static MultiThreadIDList<EnergyResult> tempResultStorag;
+    static MultiThreadIDList<Result> tempResultStorag;
 };
 
 } // namespace vca

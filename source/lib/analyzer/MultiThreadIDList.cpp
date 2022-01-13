@@ -64,6 +64,6 @@ bool MultiThreadIDList<T>::empty()
     return this->items.empty();
 }
 
-template class MultiThreadIDList<EnergyResult>;
+template class MultiThreadIDList<Result>;
 
 } // namespace vca

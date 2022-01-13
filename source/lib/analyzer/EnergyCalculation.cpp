@@ -277,7 +277,7 @@ void performDCT(unsigned blockSize, int16_t *pixelBuffer, int16_t *coeffBuffer)
 
 namespace vca {
 
-void computeWeightedDCTEnergy(const Job &job, EnergyResult &result, unsigned blockSize)
+void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize)
 {
     const auto frame = job.frame;
     if (frame == nullptr)
@@ -359,7 +359,7 @@ void computeWeightedDCTEnergy(const Job &job, EnergyResult &result, unsigned blo
     result.averageEnergy = frameTexture / totalNumberBlocks;
 }
 
-double computeTextureSAD(const EnergyResult &results, const EnergyResult &resultsPreviousFrame)
+double computeTextureSAD(const Result &results, const Result &resultsPreviousFrame)
 {
     if (results.energyPerBlock.size() != resultsPreviousFrame.energyPerBlock.size())
         throw std::out_of_range("Size of energy result vector must match");

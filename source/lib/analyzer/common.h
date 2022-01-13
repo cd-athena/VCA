@@ -48,16 +48,12 @@ struct Job
     }
 };
 
-struct EnergyResult
+struct Result
 {
     std::vector<int32_t> energyPerBlock;
     int32_t averageEnergy{};
-};
-
-struct Result
-{
-    EnergyResult energyResult;
     double sad{};
+    double epsilon{};
     int poc{};
 };
 

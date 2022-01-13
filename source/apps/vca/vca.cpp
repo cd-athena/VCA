@@ -283,6 +283,12 @@ void logOptions(CLIOptions options)
     vca_log(LogLevel::Info, "  YUView stats file: "s + options.yuviewStatsFilename);
 }
 
+void writeComplexityStatsToFile(const Result &result, std::ofstream &file)
+{
+    file << result.result.poc << ", " << result.result.averageEnergy << ", " << result.result.sad
+         << ", " << result.result.epsilon << "\n";
+}
+
 #ifdef _WIN32
 /* Copy of x264 code, which allows for Unicode characters in the command line.
  * Retrieve command line arguments as UTF-8. */
@@ -363,6 +369,29 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    std::ofstream complexityFile;
+    if (!options.complexityCSVFilename.empty())
+    {
+        complexityFile.open(options.complexityCSVFilename);
+        if (!complexityFile.is_open())
+        {
+            vca_log(LogLevel::Error,
+                    "Error opening complexity CSV file " + options.complexityCSVFilename);
+            return 1;
+        }
+    }
+
+    std::ofstream shotsFile;
+    if (!options.shotCSVFilename.empty())
+    {
+        shotsFile.open(options.shotCSVFilename);
+        if (!shotsFile.is_open())
+        {
+            vca_log(LogLevel::Error, "Error opening complexity CSV file " + options.shotCSVFilename);
+            return 1;
+        }
+    }
+
     options.vcaParam.logFunction = logLibraryMessage;
 
     auto analyzer = vca_analyzer_open(options.vcaParam);
@@ -435,6 +464,8 @@ int main(int argc, char **argv)
 
             if (yuviewStatsFile)
                 yuviewStatsFile->write(result.result, options.vcaParam.blockSize);
+            if (complexityFile.is_open())
+                writeComplexityStatsToFile(result, complexityFile);
 
             // Do something with the result and recycle the frame ...
             vca_log(LogLevel::Debug,

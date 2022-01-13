@@ -5,7 +5,7 @@
 
 namespace vca {
 
-MultiThreadIDList<EnergyResult> ProcessingThread::tempResultStorag;
+MultiThreadIDList<Result> ProcessingThread::tempResultStorag;
 
 ProcessingThread::ProcessingThread(vca_param cfg,
                                    MultiThreadQueue<Job> &jobs,
@@ -36,21 +36,26 @@ void ProcessingThread::threadFunction(MultiThreadQueue<Job> &jobQueue,
 
         Result result;
         result.poc = job->frame->stats.poc;
-        computeWeightedDCTEnergy(*job, result.energyResult, this->cfg.blockSize);
-
-        this->tempResultStorag.push(job->jobID, result.energyResult);
+        computeWeightedDCTEnergy(*job, result, this->cfg.blockSize);
 
         if (job->jobID > 0)
         {
-            auto previousFrameJobID   = job->jobID - 1;
-            auto prevJobEnergyResults = this->tempResultStorag.waitAndPop(previousFrameJobID);
-            if (!prevJobEnergyResults)
+            auto previousFrameJobID = job->jobID - 1;
+            auto prevJobResults     = this->tempResultStorag.waitAndPop(previousFrameJobID);
+            if (!prevJobResults)
             {
                 break;
             }
 
-            result.sad = computeTextureSAD(result.energyResult, *prevJobEnergyResults);
+            result.sad = computeTextureSAD(result, *prevJobResults);
+
+            auto sadNormalized     = result.sad / result.averageEnergy;
+            auto sadNormalizedPrev = prevJobResults->sad / prevJobResults->averageEnergy;
+            if (prevJobResults->sad > 0)
+                result.epsilon = abs(sadNormalizedPrev - sadNormalized) / sadNormalizedPrev;
         }
+
+        this->tempResultStorag.push(job->jobID, result);
 
         log(this->cfg,
             LogLevel::Debug,
