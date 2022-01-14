@@ -56,9 +56,14 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
     outputResult->averageEnergy = result->averageEnergy;
     outputResult->sad           = result->sad;
     outputResult->epsilon       = result->epsilon;
-    std::memcpy(outputResult->energyPerBlock,
-                result->energyPerBlock.data(),
-                result->energyPerBlock.size() * sizeof(int32_t));
+    if (outputResult->energyPerBlock)
+        std::memcpy(outputResult->energyPerBlock,
+                    result->energyPerBlock.data(),
+                    result->energyPerBlock.size() * sizeof(uint32_t));
+    if (outputResult->sadPerBlock)
+        std::memcpy(outputResult->sadPerBlock,
+                    result->sadPerBlock.data(),
+                    result->sadPerBlock.size() * sizeof(uint32_t));
 
     return vca_result::VCA_OK;
 }

@@ -50,8 +50,9 @@ struct Job
 
 struct Result
 {
-    std::vector<int32_t> energyPerBlock;
-    int32_t averageEnergy{};
+    std::vector<uint32_t> energyPerBlock;
+    std::vector<uint32_t> sadPerBlock;
+    uint32_t averageEnergy{};
     double sad{};
     double epsilon{};
     int poc{};

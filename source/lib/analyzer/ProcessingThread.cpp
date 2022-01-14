@@ -47,7 +47,7 @@ void ProcessingThread::threadFunction(MultiThreadQueue<Job> &jobQueue,
                 break;
             }
 
-            result.sad = computeTextureSAD(result, *prevJobResults);
+            computeTextureSAD(result, *prevJobResults);
 
             auto sadNormalized     = result.sad / result.averageEnergy;
             auto sadNormalizedPrev = prevJobResults->sad / prevJobResults->averageEnergy;

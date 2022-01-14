@@ -171,9 +171,9 @@ static const double weights_dct32[1024] = {
     0.711882, 0.749697, 0.791065, 0.836348, 0.885951, 0.940331, 1.000000,
 };
 
-int32_t calculateWeightedCoeffSum(unsigned blockSize, int16_t *coeffBuffer)
+uint32_t calculateWeightedCoeffSum(unsigned blockSize, int16_t *coeffBuffer)
 {
-    int32_t weightedSum = 0;
+    uint32_t weightedSum = 0;
 
     auto weightFactorMatrix = weights_dct32;
     switch (blockSize)
@@ -191,11 +191,11 @@ int32_t calculateWeightedCoeffSum(unsigned blockSize, int16_t *coeffBuffer)
 
     for (unsigned i = 0; i < blockSize * blockSize; i++)
     {
-        auto weightedCoeff = (int32_t)(weightFactorMatrix[i] * std::abs(coeffBuffer[i]));
+        auto weightedCoeff = (uint32_t)(weightFactorMatrix[i] * std::abs(coeffBuffer[i]));
         weightedSum += weightedCoeff;
     }
 
-    return weightedSum / (blockSize * blockSize);
+    return weightedSum;
 }
 
 void copyPixelValuesToBuffer(unsigned blockOffsetLuma,
@@ -308,8 +308,8 @@ void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize
     ALIGN_VAR_32(int16_t, pixelBuffer[32 * 32]);
     ALIGN_VAR_32(int16_t, coeffBuffer[32 * 32]);
 
-    auto blockIndex      = 0u;
-    int32_t frameTexture = 0;
+    auto blockIndex       = 0u;
+    uint32_t frameTexture = 0;
     for (unsigned blockY = 0; blockY < heightInPixels; blockY += blockSize)
     {
         auto paddingBottom = std::max(int(blockY + blockSize) - int(frame->info.height), 0);
@@ -356,19 +356,28 @@ void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize
         }
     }
 
-    result.averageEnergy = frameTexture / totalNumberBlocks;
+    auto frameSizeInPixles = widthInPixels * heightInPixels;
+    result.averageEnergy   = frameTexture / frameSizeInPixles;
 }
 
-double computeTextureSAD(const Result &results, const Result &resultsPreviousFrame)
+void computeTextureSAD(Result &result, const Result &resultsPreviousFrame)
 {
-    if (results.energyPerBlock.size() != resultsPreviousFrame.energyPerBlock.size())
+    if (result.energyPerBlock.size() != resultsPreviousFrame.energyPerBlock.size())
         throw std::out_of_range("Size of energy result vector must match");
 
-    double textureSad = 0;
-    for (size_t i = 0; i < results.energyPerBlock.size(); i++)
-        textureSad += std::abs(results.energyPerBlock[i] - resultsPreviousFrame.energyPerBlock[i]);
+    auto totalNumberBlocks = result.energyPerBlock.size();
+    if (result.sadPerBlock.size() < totalNumberBlocks)
+        result.sadPerBlock.resize(totalNumberBlocks);
 
-    return textureSad / 100;
+    double textureSad = 0.0;
+    for (size_t i = 0; i < totalNumberBlocks; i++)
+    {
+        result.sadPerBlock[i] = uint32_t(
+            std::abs(int(result.energyPerBlock[i]) - int(resultsPreviousFrame.energyPerBlock[i])));
+        textureSad += result.sadPerBlock[i];
+    }
+
+    result.sad = textureSad;
 }
 
 } // namespace vca

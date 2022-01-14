@@ -50,10 +50,14 @@ struct vca_frame_results
 {
     /* Pointer to storage for one value per block in the frame.
      * The caller must make sure that this is pointing to a valid and big enough block of memory.
+     * These must not be pointing to memory. If they are nullptr, no data will be written.
      */
-    int32_t *energyPerBlock{};
-    int32_t averageEnergy{};
+    uint32_t *energyPerBlock{};
+    uint32_t averageEnergy{};
+
+    uint32_t *sadPerBlock{};
     double sad{};
+
     double epsilon{};
 
     int poc;

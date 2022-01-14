@@ -122,9 +122,12 @@ struct Result
         auto numberBlocks  = widthInBlocks * heightInBlock;
         this->energyPerBlockData.resize(numberBlocks);
         this->result.energyPerBlock = this->energyPerBlockData.data();
+        this->sadPerBlockData.resize(numberBlocks);
+        this->result.sadPerBlock = this->sadPerBlockData.data();
     }
 
-    std::vector<int32_t> energyPerBlockData;
+    std::vector<uint32_t> energyPerBlockData;
+    std::vector<uint32_t> sadPerBlockData;
     vca_frame_results result;
 };
 

@@ -108,21 +108,6 @@ struct CLIOptions
     vca_param vcaParam;
 };
 
-struct Result
-{
-    Result(const vca_frame_info &info, unsigned blockSize)
-    {
-        auto widthInBlocks = (info.width + blockSize - 1) / blockSize;
-        auto heightInBlock = (info.height + blockSize - 1) / blockSize;
-        auto numberBlocks  = widthInBlocks * heightInBlock;
-        this->energyPerBlockData.resize(numberBlocks);
-        this->result.energyPerBlock = this->energyPerBlockData.data();
-    }
-
-    std::vector<int32_t> energyPerBlockData;
-    vca_frame_results result;
-};
-
 std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
 {
     bool bError = false;
@@ -337,18 +322,18 @@ int main(int argc, char **argv)
 
         if (vca_result_available(analyzer))
         {
-            Result result(vcaFrame->info, options.vcaParam.blockSize);
+            vca_frame_results result;
 
-            if (vca_analyzer_pull_frame_result(analyzer, &result.result) == VCA_ERROR)
+            if (vca_analyzer_pull_frame_result(analyzer, &result) == VCA_ERROR)
             {
                 vca_log(LogLevel::Error, "Error pulling frame result");
                 return 3;
             }
 
             vca_log(LogLevel::Debug,
-                    "Got results POC " + std::to_string(result.result.poc) + " averageEnergy "
-                        + std::to_string(result.result.averageEnergy) + " sad "
-                        + std::to_string(result.result.sad));
+                    "Got results POC " + std::to_string(result.poc) + " averageEnergy "
+                        + std::to_string(result.averageEnergy) + " sad "
+                        + std::to_string(result.sad));
         }
 
         printStatus(poc, options.nrFrames);

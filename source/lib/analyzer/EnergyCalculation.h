@@ -5,6 +5,6 @@
 namespace vca {
 
 void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize);
-double computeTextureSAD(const Result &results, const Result &resultsPreviousFrame);
+void computeTextureSAD(Result &results, const Result &resultsPreviousFrame);
 
 } // namespace vca
