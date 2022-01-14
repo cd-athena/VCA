@@ -10,3 +10,4 @@ project (vca)
 
 add_subdirectory(source/lib)
 add_subdirectory(source/apps/vca)
+add_subdirectory(source/apps/vcaPerformanceTest)
