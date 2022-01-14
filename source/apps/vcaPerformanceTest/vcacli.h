@@ -26,9 +26,9 @@
 static const char short_options[]         = "f:h?";
 static const struct option long_options[] = {{"help", no_argument, NULL, 'h'},
                                              {"iterations", required_argument, NULL, 'N'},
-                                             {0, 0, 0, 0},
-                                             {0, 0, 0, 0},
-                                             {0, 0, 0, 0},
+                                             {"input-res", required_argument, NULL, 0},
+                                             {"input-depth", required_argument, NULL, 0},
+                                             {"input-csp", required_argument, NULL, 0},
                                              {0, 0, 0, 0},
                                              {0, 0, 0, 0},
                                              {0, 0, 0, 0},
@@ -44,7 +44,8 @@ static void showHelp()
     printf("\nExecutable Options:\n");
     printf("-h/--help                        Show this help text and exit\n");
     printf("\nOptions:\n");
-    printf("-N/--iterations <integer>        How many frames should be pushed in each test. (Default 1000)\n");
+    printf("-N/--iterations <integer>        How many frames should be pushed in each test. "
+           "(Default 1000)\n");
     printf("   --input-res WxH               Test picture size [w x h] (Default 1920x1080)\n");
     printf("   --input-depth <integer>       Bit-depth of test input. Default 8\n");
     printf("   --input-csp <string>          Chroma subsampling for test\n");

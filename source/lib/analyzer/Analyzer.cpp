@@ -11,17 +11,20 @@ Analyzer::Analyzer(vca_param cfg)
     auto nrThreads = cfg.nrFrameThreads * cfg.nrSliceThreads;
     log(cfg, LogLevel::Info, "Starting " + std::to_string(nrThreads) + " threads");
     for (unsigned i = 0; i < nrThreads; i++)
-        this->threadPool.emplace_back(this->cfg, this->jobs, this->results, i);
+    {
+        auto newThread = std::make_unique<ProcessingThread>(this->cfg, this->jobs, this->results, i);
+        this->threadPool.push_back(std::move(newThread));
+    }
 }
 
 Analyzer::~Analyzer()
 {
     for (auto &thread : this->threadPool)
-        thread.abort();
+        thread->abort();
     this->jobs.abort();
     this->results.abort();
     for (auto &thread : this->threadPool)
-        thread.join();
+        thread->join();
 }
 
 vca_result Analyzer::pushFrame(vca_frame *frame)

@@ -282,6 +282,7 @@ int main(int argc, char **argv)
         options.vcaParam.frameInfo.width  = 1920;
         options.vcaParam.frameInfo.height = 1080;
     }
+    options.vcaParam.nrFrameThreads = 4;
 
     logOptions(options);
 

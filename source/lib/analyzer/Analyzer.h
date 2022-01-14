@@ -30,7 +30,7 @@ private:
     std::optional<vca_frame_info> frameInfo;
     unsigned frameCounter{0};
 
-    std::vector<ProcessingThread> threadPool;
+    std::vector<std::unique_ptr<ProcessingThread>> threadPool;
 
     MultiThreadQueue<Job> jobs;
     MultiThreadQueue<Result> results;

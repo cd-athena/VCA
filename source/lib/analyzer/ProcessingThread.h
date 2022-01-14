@@ -13,7 +13,7 @@ class ProcessingThread
 {
 public:
     ProcessingThread()                     = delete;
-    ProcessingThread(ProcessingThread &&o) = default;
+    ProcessingThread(ProcessingThread &&o) = delete;
     ProcessingThread(vca_param cfg,
                      MultiThreadQueue<Job> &jobs,
                      MultiThreadQueue<Result> &results,
