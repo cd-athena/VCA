@@ -103,8 +103,7 @@ void printStatus(uint32_t frameNum, unsigned framesToBeAnalyzed, bool printSumma
 
 struct CLIOptions
 {
-    unsigned nrFrames{};
-
+    unsigned nrFrames{1000};
     vca_param vcaParam;
 };
 
@@ -197,7 +196,8 @@ void logOptions(CLIOptions options)
     vca_log(LogLevel::Info, "  Number frames:     "s + std::to_string(options.nrFrames));
 }
 
-std::vector<FrameWithData> generateRandomFrames(vca_frame_info frameInfo, unsigned nrFrames)
+std::vector<std::unique_ptr<FrameWithData>> generateRandomFrames(vca_frame_info frameInfo,
+                                                                 unsigned nrFrames)
 {
     if (frameInfo.colorspace != vca_colorSpace::YUV420 || frameInfo.bitDepth != 8)
         throw std::exception("Not implemented yet");
@@ -206,16 +206,17 @@ std::vector<FrameWithData> generateRandomFrames(vca_frame_info frameInfo, unsign
     std::default_random_engine randomEngine(randomDevice());
     std::uniform_int_distribution<unsigned> uniform_dist(0, 255);
 
-    std::vector<FrameWithData> frames;
+    std::vector<std::unique_ptr<FrameWithData>> frames;
     for (unsigned i = 0; i < nrFrames; i++)
     {
-        auto &newFrame = frames.emplace_back(frameInfo);
-        auto dataSize  = newFrame.getFrameSize();
-        auto data      = newFrame.getData();
+        auto newFrame = std::make_unique<FrameWithData>(frameInfo);
+        auto dataSize = newFrame->getFrameSize();
+        auto data     = newFrame->getData();
         for (size_t i = 0; i < dataSize; i++)
             data[i] = uint8_t(uniform_dist(randomEngine));
+        frames.push_back(std::move(newFrame));
     }
-    return frames;
+    return std::move(frames);
 }
 
 #ifdef _WIN32
@@ -268,15 +269,18 @@ int main(int argc, char **argv)
     vca_log(LogLevel::Info, "VCA - Video Complexity Analyzer");
 
     CLIOptions options;
-    // Default for the performance test in case the user specifies nothing
-    options.vcaParam.frameInfo.width  = 1920;
-    options.vcaParam.frameInfo.height = 1080;
     if (auto cliOptions = parseCLIOptions(argc, argv))
         options = *cliOptions;
     else
     {
         vca_log(LogLevel::Error, "Error parsing parameters");
         return 1;
+    }
+
+    if (options.vcaParam.frameInfo.width == 0 && options.vcaParam.frameInfo.height == 0)
+    {
+        options.vcaParam.frameInfo.width  = 1920;
+        options.vcaParam.frameInfo.height = 1080;
     }
 
     logOptions(options);
@@ -308,7 +312,7 @@ int main(int argc, char **argv)
     auto frameIt   = pushFrames.begin();
     for (unsigned poc = 0; poc < options.nrFrames; poc++)
     {
-        auto vcaFrame       = frameIt->getFrame();
+        auto vcaFrame       = (*frameIt)->getFrame();
         vcaFrame->stats.poc = poc;
 
         auto ret = vca_analyzer_push(analyzer, vcaFrame);

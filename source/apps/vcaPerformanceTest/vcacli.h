@@ -44,7 +44,7 @@ static void showHelp()
     printf("\nExecutable Options:\n");
     printf("-h/--help                        Show this help text and exit\n");
     printf("\nOptions:\n");
-    printf("-N/--iterations <integer>        How many frames should be pushed in each test\n");
+    printf("-N/--iterations <integer>        How many frames should be pushed in each test. (Default 1000)\n");
     printf("   --input-res WxH               Test picture size [w x h] (Default 1920x1080)\n");
     printf("   --input-depth <integer>       Bit-depth of test input. Default 8\n");
     printf("   --input-csp <string>          Chroma subsampling for test\n");
