@@ -42,7 +42,7 @@ YUVInput::YUVInput(std::string &fileName, vca_frame_info &openFrameInfo, unsigne
         return;
     }
 
-    auto frameSizeBytes = this->calcualteFrameBytes();
+    auto frameSizeBytes = IInputFile::calcualteFrameBytesInInput(this->frameInfo);
 
     {
         auto fileSize    = std::filesystem::file_size(fileName);
@@ -58,17 +58,12 @@ YUVInput::YUVInput(std::string &fileName, vca_frame_info &openFrameInfo, unsigne
     }
 }
 
-bool YUVInput::readFrame(frameWithData &frame)
+bool YUVInput::readFrame(FrameWithData &frame)
 {
     if (!this->input.good() || this->input.eof())
         return false;
 
-    auto frameSizeBytes = this->calcualteFrameBytes();
-    if (frame.data.size() < frameSizeBytes)
-        frame.data.resize(frameSizeBytes);
-    
-    this->input.read((char*)(frame.data.data()), frameSizeBytes);
-    this->updateFramePointers(frame);
+    this->input.read((char *) (frame.getData()), frame.getFrameSize());
 
     return true;
 }

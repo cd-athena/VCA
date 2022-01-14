@@ -17,7 +17,7 @@ endif(NOT HAVE_GETOPT_H)
 include_directories("${CMAKE_SOURCE_DIR}/source")
 include_directories("${CMAKE_SOURCE_DIR}/source/apps")
 
-add_executable(vca vcacli.h vca.cpp ${vca_apps_common_source} ${vca_apps_common_header} ${GETOPT})
-target_link_libraries (vca vcaLib)
+add_executable(vcaPerformanceTest vcacli.h vcaPerformanceTest.cpp ${vca_apps_common_source} ${vca_apps_common_header} ${GETOPT})
+target_link_libraries (vcaPerformanceTest vcaLib)
 
 install(TARGETS vca RUNTIME DESTINATION bin COMPONENT applications)

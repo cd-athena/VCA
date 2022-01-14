@@ -9,10 +9,28 @@
 
 namespace vca {
 
-struct frameWithData
+class FrameWithData
 {
-    std::vector<uint8_t> data;
+public:
+    FrameWithData() = delete;
+    FrameWithData(const vca_frame_info &frameInfo);
+    ~FrameWithData() = default;
 
+    uint8_t *getData() const
+    {
+        return (uint8_t *) (this->data.data());
+    }
+    size_t getFrameSize() const
+    {
+        return this->data.size();
+    }
+    vca_frame *getFrame()
+    {
+        return &this->vcaFrame;
+    }
+
+private:
+    std::vector<uint8_t> data;
     vca_frame vcaFrame;
 };
 

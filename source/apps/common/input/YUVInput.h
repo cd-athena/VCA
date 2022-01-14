@@ -32,7 +32,7 @@ public:
     YUVInput(std::string &fileName, vca_frame_info &openFrameInfo, unsigned skipFrames);
     ~YUVInput() = default;
 
-    bool readFrame(frameWithData &frame) override;
+    bool readFrame(FrameWithData &frame) override;
 };
 
 } // namespace vca

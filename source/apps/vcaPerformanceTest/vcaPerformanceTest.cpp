@@ -26,6 +26,7 @@
 
 #include <chrono>
 #include <optional>
+#include <random>
 #include <signal.h>
 #include <queue>
 
@@ -102,13 +103,7 @@ void printStatus(uint32_t frameNum, unsigned framesToBeAnalyzed, bool printSumma
 
 struct CLIOptions
 {
-    std::string inputFilename;
-    bool openAsY4m{};
-    unsigned skipFrames{};
-    unsigned framesToBeAnalyzed{};
-    std::string complexityCSVFilename;
-    std::string shotCSVFilename;
-    std::string yuviewStatsFilename;
+    unsigned nrFrames{};
 
     vca_param vcaParam;
 };
@@ -132,12 +127,6 @@ std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
 {
     bool bError = false;
     CLIOptions options;
-
-    if (argc <= 1)
-    {
-        vca_log(LogLevel::Error, "No input file. Run vca --help for a list of options.");
-        return {};
-    }
 
     int long_options_index = -1;
     while (true)
@@ -181,12 +170,8 @@ std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
 
         auto name = std::string(long_options[long_options_index].name);
         auto arg  = std::string(optarg);
-        if (name == "asm")
-            options.vcaParam.enableASM = true;
-        else if (name == "no-asm")
-            options.vcaParam.enableASM = false;
-        else if (name == "input")
-            options.inputFilename = optarg;
+        if (name == "iterations")
+            options.nrFrames = std::stoul(optarg);
         else if (name == "input-depth")
             options.vcaParam.frameInfo.bitDepth = std::stoul(optarg);
         else if (name == "input-res")
@@ -211,82 +196,41 @@ std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
             else if (arg == "444" || arg == "4:4:4")
                 options.vcaParam.frameInfo.colorspace = vca_colorSpace::YUV444;
         }
-        else if (name == "skip")
-            options.skipFrames = std::stoul(optarg);
-        else if (name == "frames")
-            options.framesToBeAnalyzed = std::stoul(optarg);
-        else if (name == "complexity-csv")
-            options.complexityCSVFilename = optarg;
-        else if (name == "shot-csv")
-        {
-            options.shotCSVFilename           = optarg;
-            options.vcaParam.enableShotdetect = true;
-        }
-        else if (name == "yuview-stats")
-            options.yuviewStatsFilename = optarg;
-        else if (name == "max-thresh")
-            options.vcaParam.maxThresh = std::stod(optarg);
-        else if (name == "min-thresh")
-            options.vcaParam.minThresh = std::stod(optarg);
-        else if (name == "block-size")
-            options.vcaParam.blockSize = std::stoi(optarg);
     }
-
-    if (options.inputFilename.substr(options.inputFilename.size() - 4) == ".y4m")
-        options.openAsY4m = true;
 
     return options;
 }
 
 bool checkOptions(CLIOptions options)
 {
-    if (options.inputFilename.empty())
-    {
-        vca_log(LogLevel::Error, "No input filename specified");
-        return false;
-    }
-
-    if (options.vcaParam.frameInfo.bitDepth < 8 || options.vcaParam.frameInfo.bitDepth > 16)
-    {
-        vca_log(LogLevel::Error, "Bit depth must be between 8 and 16 bits.");
-        return false;
-    }
-
-    if (!options.openAsY4m
-        && (options.vcaParam.frameInfo.width == 0 || options.vcaParam.frameInfo.height == 0))
-    {
-        vca_log(LogLevel::Error, "No frame size provided.");
-        return false;
-    }
-
-    if (options.vcaParam.blockSize != 32 && options.vcaParam.blockSize != 16
-        && options.vcaParam.blockSize != 8)
-    {
-        vca_log(LogLevel::Error,
-                "Invalid block size (" + std::to_string(options.vcaParam.blockSize)
-                    + ") provided. Valid values are 8, 16 and 32.");
-        return false;
-    }
-
     return true;
 }
 
 void logOptions(CLIOptions options)
 {
     vca_log(LogLevel::Info, "Options:   "s);
-    vca_log(LogLevel::Info, "  Input file name:   "s + options.inputFilename);
-    vca_log(LogLevel::Info, "  Open as Y4m:       "s + (options.openAsY4m ? "True"s : "False"s));
-    vca_log(LogLevel::Info, "  Skip frames:       "s + std::to_string(options.skipFrames));
-    vca_log(LogLevel::Info, "  Frames to analyze: "s + std::to_string(options.framesToBeAnalyzed));
-    vca_log(LogLevel::Info, "  Complexity csv:    "s + options.complexityCSVFilename);
-    vca_log(LogLevel::Info, "  Shot csv:          "s + options.shotCSVFilename);
-    vca_log(LogLevel::Info, "  YUView stats file: "s + options.yuviewStatsFilename);
+    vca_log(LogLevel::Info, "  Number frames:     "s + std::to_string(options.nrFrames));
 }
 
-void writeComplexityStatsToFile(const Result &result, std::ofstream &file)
+std::vector<FrameWithData> generateRandomFrames(vca_frame_info frameInfo, unsigned nrFrames)
 {
-    file << result.result.poc << ", " << result.result.averageEnergy << ", " << result.result.sad
-         << ", " << result.result.epsilon << "\n";
+    if (frameInfo.colorspace != vca_colorSpace::YUV420 || frameInfo.bitDepth != 8)
+        throw std::exception("Not implemented yet");
+
+    std::random_device randomDevice;
+    std::default_random_engine randomEngine(randomDevice());
+    std::uniform_int_distribution<unsigned> uniform_dist(0, 255);
+
+    std::vector<FrameWithData> frames;
+    for (unsigned i = 0; i < nrFrames; i++)
+    {
+        auto &newFrame = frames.emplace_back(frameInfo);
+        auto dataSize  = newFrame.getFrameSize();
+        auto data      = newFrame.getData();
+        for (size_t i = 0; i < dataSize; i++)
+            data[i] = uint8_t(uniform_dist(randomEngine));
+    }
+    return frames;
 }
 
 #ifdef _WIN32
@@ -339,6 +283,9 @@ int main(int argc, char **argv)
     vca_log(LogLevel::Info, "VCA - Video Complexity Analyzer");
 
     CLIOptions options;
+    // Default for the performance test in case the user specifies nothing
+    options.vcaParam.frameInfo.width  = 1920;
+    options.vcaParam.frameInfo.height = 1080;
     if (auto cliOptions = parseCLIOptions(argc, argv))
         options = *cliOptions;
     else
@@ -355,43 +302,6 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    std::unique_ptr<IInputFile> inputFile;
-    if (options.openAsY4m)
-        inputFile = std::make_unique<Y4MInput>(options.inputFilename, options.skipFrames);
-    else
-        inputFile = std::make_unique<YUVInput>(options.inputFilename,
-                                               options.vcaParam.frameInfo,
-                                               options.skipFrames);
-
-    if (inputFile->isFail())
-    {
-        vca_log(LogLevel::Error, "Error opening input file");
-        return 1;
-    }
-
-    std::ofstream complexityFile;
-    if (!options.complexityCSVFilename.empty())
-    {
-        complexityFile.open(options.complexityCSVFilename);
-        if (!complexityFile.is_open())
-        {
-            vca_log(LogLevel::Error,
-                    "Error opening complexity CSV file " + options.complexityCSVFilename);
-            return 1;
-        }
-    }
-
-    std::ofstream shotsFile;
-    if (!options.shotCSVFilename.empty())
-    {
-        shotsFile.open(options.shotCSVFilename);
-        if (!shotsFile.is_open())
-        {
-            vca_log(LogLevel::Error, "Error opening complexity CSV file " + options.shotCSVFilename);
-            return 1;
-        }
-    }
-
     options.vcaParam.logFunction = logLibraryMessage;
 
     auto analyzer = vca_analyzer_open(options.vcaParam);
@@ -406,44 +316,17 @@ int main(int argc, char **argv)
         vca_log(LogLevel::Error,
                 "Unable to register CTRL+C handler: " + std::string(strerror(errno)));
 
+    auto pushFrames = generateRandomFrames(options.vcaParam.frameInfo, 5);
+    vca_log(LogLevel::Info, "Generated " + std::to_string(pushFrames.size()) + " random frames");
+
     using framePtr = std::unique_ptr<FrameWithData>;
-    std::queue<framePtr> frameRecycling;
-    std::unique_ptr<YUViewStatsFile> yuviewStatsFile;
-    unsigned poc = 0;
-    while (!inputFile->isEof() && !inputFile->isFail()
-           && (options.framesToBeAnalyzed == 0 || poc < options.framesToBeAnalyzed))
+    auto frameIt   = pushFrames.begin();
+    for (unsigned poc = 0; poc < options.nrFrames; poc++)
     {
-        framePtr frame;
-        if (frameRecycling.empty())
-            frame = std::make_unique<FrameWithData>(inputFile->getFrameInfo());
-        else
-        {
-            frame = std::move(frameRecycling.front());
-            frameRecycling.pop();
-        }
+        auto vcaFrame       = frameIt->getFrame();
+        vcaFrame->stats.poc = poc;
 
-        try
-        {
-            if (!inputFile->readFrame(*frame))
-            {
-                break;
-            }
-        }
-        catch (const std::exception &e)
-        {
-            vca_log(LogLevel::Error, "Error reading frame from input: " + std::string(e.what()));
-            return 3;
-        }
-
-        frame->getFrame()->stats.poc = poc;
-        vca_log(LogLevel::Debug, "Read frame " + std::to_string(poc) + " from input");
-
-        if (!options.yuviewStatsFilename.empty() && !yuviewStatsFile)
-            yuviewStatsFile = std::make_unique<YUViewStatsFile>(options.yuviewStatsFilename,
-                                                                options.inputFilename,
-                                                                frame->getFrame()->info);
-
-        auto ret = vca_analyzer_push(analyzer, frame->getFrame());
+        auto ret = vca_analyzer_push(analyzer, vcaFrame);
         if (ret == VCA_ERROR)
         {
             vca_log(LogLevel::Error, "Error pushing frame to lib");
@@ -454,7 +337,7 @@ int main(int argc, char **argv)
 
         if (vca_result_available(analyzer))
         {
-            Result result(frame->getFrame()->info, options.vcaParam.blockSize);
+            Result result(vcaFrame->info, options.vcaParam.blockSize);
 
             if (vca_analyzer_pull_frame_result(analyzer, &result.result) == VCA_ERROR)
             {
@@ -462,26 +345,21 @@ int main(int argc, char **argv)
                 return 3;
             }
 
-            if (yuviewStatsFile)
-                yuviewStatsFile->write(result.result, options.vcaParam.blockSize);
-            if (complexityFile.is_open())
-                writeComplexityStatsToFile(result, complexityFile);
-
             vca_log(LogLevel::Debug,
                     "Got results POC " + std::to_string(result.result.poc) + " averageEnergy "
                         + std::to_string(result.result.averageEnergy) + " sad "
                         + std::to_string(result.result.sad));
-
-            frameRecycling.push(std::move(frame));
         }
 
-        printStatus(poc, options.framesToBeAnalyzed);
+        printStatus(poc, options.nrFrames);
 
-        poc++;
+        frameIt++;
+        if (frameIt == pushFrames.end())
+            frameIt = pushFrames.begin();
     }
 
     vca_analyzer_close(analyzer);
-    printStatus(poc, options.framesToBeAnalyzed, true);
+    printStatus(options.nrFrames, options.nrFrames, true);
 
     return 0;
 }

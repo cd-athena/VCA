@@ -34,7 +34,7 @@ public:
     Y4MInput(std::string &fileName, unsigned skipFrames);
     ~Y4MInput() = default;
 
-    bool readFrame(frameWithData &frame) override;
+    bool readFrame(FrameWithData &frame) override;
 };
 
 } // namespace vca

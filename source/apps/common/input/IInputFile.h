@@ -42,43 +42,20 @@ protected:
 public:
     virtual ~IInputFile() {}
 
-    virtual bool readFrame(frameWithData &frame) = 0;
+    virtual bool readFrame(FrameWithData &frame) = 0;
 
-    size_t calcualteFrameBytes() const
+    static size_t calcualteFrameBytesInInput(const vca_frame_info &frameInfo)
     {
         size_t framesizeBytes = 0;
-        const auto colorspace = this->frameInfo.colorspace;
-        auto pixelbytes       = this->frameInfo.bitDepth > 8 ? 2u : 1u;
+        const auto colorspace = frameInfo.colorspace;
+        auto pixelbytes       = frameInfo.bitDepth > 8 ? 2u : 1u;
         for (int i = 0; i < vca_cli_csps.at(colorspace).planes; i++)
         {
-            uint32_t w = this->frameInfo.width >> vca_cli_csps.at(colorspace).width[i];
-            uint32_t h = this->frameInfo.height >> vca_cli_csps.at(colorspace).height[i];
+            uint32_t w = frameInfo.width >> vca_cli_csps.at(colorspace).width[i];
+            uint32_t h = frameInfo.height >> vca_cli_csps.at(colorspace).height[i];
             framesizeBytes += w * h * pixelbytes;
         }
         return framesizeBytes;
-    }
-
-    void updateFramePointers(frameWithData &frame) const
-    {
-        const auto colorspace = this->frameInfo.colorspace;
-        auto pixelbytes       = this->frameInfo.bitDepth > 8 ? 2u : 1u;
-
-        frame.vcaFrame.info = this->frameInfo;
-
-        frame.vcaFrame.planes[0] = frame.data.data();
-        frame.vcaFrame.stride[0] = this->frameInfo.width;
-
-        if (vca_cli_csps.at(colorspace).planes > 1)
-        {
-            uint32_t widthChroma  = this->frameInfo.width >> vca_cli_csps.at(colorspace).width[1];
-            uint32_t heightChroma = this->frameInfo.height >> vca_cli_csps.at(colorspace).height[1];
-            auto frameSizeBytes   = widthChroma * heightChroma * pixelbytes;
-
-            frame.vcaFrame.planes[1] = frame.data.data() + frameSizeBytes;
-            frame.vcaFrame.planes[2] = frame.data.data() + frameSizeBytes * 2;
-            frame.vcaFrame.stride[1] = widthChroma;
-            frame.vcaFrame.stride[2] = widthChroma;
-        }
     }
 
     bool isEof() const

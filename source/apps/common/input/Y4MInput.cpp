@@ -42,9 +42,10 @@ Y4MInput::Y4MInput(std::string &fileName, unsigned skipFrames)
 
     {
         const auto assumedHeaderSize = 6u;
-        auto estFrameSize            = this->calcualteFrameBytes() + assumedHeaderSize;
-        auto fileSize                = std::filesystem::file_size(fileName);
-        this->frameCount             = unsigned(fileSize / estFrameSize);
+        auto estFrameSize            = IInputFile::calcualteFrameBytesInInput(this->frameInfo)
+                            + assumedHeaderSize;
+        auto fileSize    = std::filesystem::file_size(fileName);
+        this->frameCount = unsigned(fileSize / estFrameSize);
         vca_log(LogLevel::Info, "Detected " + std::to_string(this->frameCount) + " frames in input");
     }
 
@@ -129,7 +130,7 @@ bool Y4MInput::parseHeader()
     return true;
 }
 
-bool Y4MInput::readFrame(frameWithData &frame)
+bool Y4MInput::readFrame(FrameWithData &frame)
 {
     char c = 0;
     while (this->input.get(c) && c != 'F')
@@ -154,12 +155,7 @@ bool Y4MInput::readFrame(frameWithData &frame)
     while (this->input.get(c) && c != '\n')
     {}
 
-    auto frameSizeBytes = this->calcualteFrameBytes();
-    if (frame.data.size() < frameSizeBytes)
-        frame.data.resize(frameSizeBytes);
-
-    this->input.read((char *) (frame.data.data()), frameSizeBytes);
-    this->updateFramePointers(frame);
+    this->input.read((char *) (frame.getData()), frame.getFrameSize());
 
     return true;
 }
