@@ -10,4 +10,8 @@ project (vca)
 
 add_subdirectory(source/lib)
 add_subdirectory(source/apps/vca)
-add_subdirectory(source/apps/vcaPerformanceTest)
+
+option(ENABLE_PERFORMANCE_TEST "Enable Performance Test" OFF)
+if(ENABLE_PERFORMANCE_TEST)
+	add_subdirectory(source/apps/vcaPerformanceTest)
+endif(ENABLE_PERFORMANCE_TEST)
