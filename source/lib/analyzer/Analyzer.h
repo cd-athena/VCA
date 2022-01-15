@@ -26,7 +26,7 @@ public:
 
 private:
     vca_param cfg{};
-    bool checkFrameSize(vca_frame_info frameInfo);
+    bool checkFrame(const vca_frame *frame);
     std::optional<vca_frame_info> frameInfo;
     unsigned frameCounter{0};
 

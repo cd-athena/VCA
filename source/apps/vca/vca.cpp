@@ -411,55 +411,61 @@ int main(int argc, char **argv)
         vca_log(LogLevel::Error,
                 "Unable to register CTRL+C handler: " + std::string(strerror(errno)));
 
+    auto frameInfo = inputFile->getFrameInfo();
+
     using framePtr = std::unique_ptr<FrameWithData>;
     std::queue<framePtr> frameRecycling;
+    std::queue<framePtr> activeFrames;
     std::unique_ptr<YUViewStatsFile> yuviewStatsFile;
     unsigned poc = 0;
     while (!inputFile->isEof() && !inputFile->isFail()
            && (options.framesToBeAnalyzed == 0 || poc < options.framesToBeAnalyzed))
     {
-        framePtr frame;
-        if (frameRecycling.empty())
-            frame = std::make_unique<FrameWithData>(inputFile->getFrameInfo());
-        else
         {
-            frame = std::move(frameRecycling.front());
-            frameRecycling.pop();
-        }
-
-        try
-        {
-            if (!inputFile->readFrame(*frame))
+            framePtr frame;
+            if (frameRecycling.empty())
+                frame = std::make_unique<FrameWithData>(inputFile->getFrameInfo());
+            else
             {
-                break;
+                frame = std::move(frameRecycling.front());
+                frameRecycling.pop();
             }
+
+            try
+            {
+                if (!inputFile->readFrame(*frame))
+                {
+                    break;
+                }
+            }
+            catch (const std::exception &e)
+            {
+                vca_log(LogLevel::Error, "Error reading frame from input: " + std::string(e.what()));
+                return 3;
+            }
+
+            frame->getFrame()->stats.poc = poc;
+            vca_log(LogLevel::Debug, "Read frame " + std::to_string(poc) + " from input");
+
+            if (!options.yuviewStatsFilename.empty() && !yuviewStatsFile)
+                yuviewStatsFile = std::make_unique<YUViewStatsFile>(options.yuviewStatsFilename,
+                                                                    options.inputFilename,
+                                                                    frame->getFrame()->info);
+
+            auto ret = vca_analyzer_push(analyzer, frame->getFrame());
+            if (ret == VCA_ERROR)
+            {
+                vca_log(LogLevel::Error, "Error pushing frame to lib");
+                return 3;
+            }
+            vca_log(LogLevel::Debug, "Pushed frame " + std::to_string(poc) + " to analyzer");
+
+            activeFrames.push(std::move(frame));
         }
-        catch (const std::exception &e)
-        {
-            vca_log(LogLevel::Error, "Error reading frame from input: " + std::string(e.what()));
-            return 3;
-        }
-
-        frame->getFrame()->stats.poc = poc;
-        vca_log(LogLevel::Debug, "Read frame " + std::to_string(poc) + " from input");
-
-        if (!options.yuviewStatsFilename.empty() && !yuviewStatsFile)
-            yuviewStatsFile = std::make_unique<YUViewStatsFile>(options.yuviewStatsFilename,
-                                                                options.inputFilename,
-                                                                frame->getFrame()->info);
-
-        auto ret = vca_analyzer_push(analyzer, frame->getFrame());
-        if (ret == VCA_ERROR)
-        {
-            vca_log(LogLevel::Error, "Error pushing frame to lib");
-            return 3;
-        }
-
-        vca_log(LogLevel::Debug, "Pushed frame " + std::to_string(poc) + " to analyzer");
 
         if (vca_result_available(analyzer))
         {
-            Result result(frame->getFrame()->info, options.vcaParam.blockSize);
+            Result result(frameInfo, options.vcaParam.blockSize);
 
             if (vca_analyzer_pull_frame_result(analyzer, &result.result) == VCA_ERROR)
             {
@@ -472,12 +478,20 @@ int main(int argc, char **argv)
             if (complexityFile.is_open())
                 writeComplexityStatsToFile(result, complexityFile);
 
+            auto processedFrame = std::move(activeFrames.front());
+            activeFrames.pop();
+
+            if (result.result.poc != processedFrame->getFrame()->stats.poc)
+                vca_log(
+                    LogLevel::Warning,
+                    "The poc of the returned data does not match the expected next frames POC.");
+
             vca_log(LogLevel::Debug,
                     "Got results POC " + std::to_string(result.result.poc) + " averageEnergy "
                         + std::to_string(result.result.averageEnergy) + " sad "
                         + std::to_string(result.result.sad));
 
-            frameRecycling.push(std::move(frame));
+            frameRecycling.push(std::move(processedFrame));
         }
 
         printStatus(poc, options.framesToBeAnalyzed);
