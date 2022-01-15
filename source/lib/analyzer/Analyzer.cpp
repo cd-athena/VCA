@@ -1,5 +1,6 @@
 
 #include "Analyzer.h"
+#include "EnergyCalculation.h"
 
 #include <string>
 
@@ -59,9 +60,18 @@ bool Analyzer::resultAvailable()
 vca_result Analyzer::pullResult(vca_frame_results *outputResult)
 {
     auto result = this->results.waitAndPop();
-
     if (!result)
         return vca_result::VCA_ERROR;
+
+    if (this->previousResult)
+    {
+        computeTextureSAD(*result, *this->previousResult);
+
+        auto sadNormalized     = result->sad / result->averageEnergy;
+        auto sadNormalizedPrev = this->previousResult->sad / this->previousResult->averageEnergy;
+        if (this->previousResult->sad > 0)
+            result->epsilon = abs(sadNormalizedPrev - sadNormalized) / sadNormalizedPrev;
+    }
 
     outputResult->poc           = result->poc;
     outputResult->averageEnergy = result->averageEnergy;
@@ -75,6 +85,8 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
         std::memcpy(outputResult->sadPerBlock,
                     result->sadPerBlock.data(),
                     result->sadPerBlock.size() * sizeof(uint32_t));
+
+    this->previousResult = result;
 
     return vca_result::VCA_OK;
 }

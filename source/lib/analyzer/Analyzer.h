@@ -34,6 +34,8 @@ private:
 
     MultiThreadQueue<Job> jobs;
     MultiThreadQueue<Result> results;
+
+    std::optional<Result> previousResult;
 };
 
 } // namespace vca

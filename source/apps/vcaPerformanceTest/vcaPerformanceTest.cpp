@@ -28,6 +28,7 @@
 #include <optional>
 #include <random>
 #include <signal.h>
+#include <thread>
 #include <queue>
 
 #ifdef _WIN32
@@ -305,7 +306,11 @@ int main(int argc, char **argv)
         vca_log(LogLevel::Error,
                 "Unable to register CTRL+C handler: " + std::string(strerror(errno)));
 
-    auto pushFrames = generateRandomFrames(options.vcaParam.frameInfo, 5);
+    auto nrFramesToAllocate = options.vcaParam.nrFrameThreads;
+    if (nrFramesToAllocate == 0)
+        nrFramesToAllocate = std::thread::hardware_concurrency();
+
+    auto pushFrames = generateRandomFrames(options.vcaParam.frameInfo, nrFramesToAllocate + 1);
     vca_log(LogLevel::Info, "Generated " + std::to_string(pushFrames.size()) + " random frames");
 
     using framePtr = std::unique_ptr<FrameWithData>;
