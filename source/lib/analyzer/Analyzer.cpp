@@ -37,7 +37,7 @@ Analyzer::~Analyzer()
 
 vca_result Analyzer::pushFrame(vca_frame *frame)
 {
-    if (!this->checkFrameSize(frame->info))
+    if (!this->checkFrame(frame))
         return vca_result::VCA_ERROR;
 
     Job job;
@@ -79,32 +79,44 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
     return vca_result::VCA_OK;
 }
 
-bool Analyzer::checkFrameSize(vca_frame_info frameInfo)
+bool Analyzer::checkFrame(const vca_frame *frame)
 {
-    if (!this->frameInfo)
+    if (frame == nullptr)
     {
-        if (frameInfo.bitDepth < 8 || frameInfo.bitDepth > 16)
-        {
-            log(this->cfg,
-                LogLevel::Error,
-                "Frame with invalid bit " + std::to_string(frameInfo.bitDepth) + " depth provided");
-            return false;
-        }
-        if (frameInfo.width == 0 || frameInfo.width % 2 != 0 || frameInfo.height == 0
-            || frameInfo.height % 2 != 0)
-        {
-            log(this->cfg,
-                LogLevel::Error,
-                "Frame with invalid size " + std::to_string(frameInfo.width) + "x"
-                    + std::to_string(frameInfo.height) + " depth provided");
-            return false;
-        }
-        this->frameInfo = frameInfo;
+        log(this->cfg, LogLevel::Error, "Nullptr pushed");
+        return false;
     }
 
-    if (frameInfo.bitDepth != this->frameInfo->bitDepth || frameInfo.width != this->frameInfo->width
-        || frameInfo.height != this->frameInfo->height
-        || frameInfo.colorspace != this->frameInfo->colorspace)
+    if (frame->planes[0] == nullptr || frame->stride[0] == 0)
+    {
+        log(this->cfg, LogLevel::Error, "No luma data provided");
+        return false;
+    }
+
+    const auto &info = frame->info;
+
+    if (!this->frameInfo)
+    {
+        if (info.bitDepth < 8 || info.bitDepth > 16)
+        {
+            log(this->cfg,
+                LogLevel::Error,
+                "Frame with invalid bit " + std::to_string(info.bitDepth) + " depth provided");
+            return false;
+        }
+        if (info.width == 0 || info.width % 2 != 0 || info.height == 0 || info.height % 2 != 0)
+        {
+            log(this->cfg,
+                LogLevel::Error,
+                "Frame with invalid size " + std::to_string(info.width) + "x"
+                    + std::to_string(info.height) + " depth provided");
+            return false;
+        }
+        this->frameInfo = info;
+    }
+
+    if (info.bitDepth != this->frameInfo->bitDepth || info.width != this->frameInfo->width
+        || info.height != this->frameInfo->height || info.colorspace != this->frameInfo->colorspace)
     {
         log(this->cfg, LogLevel::Error, "Frame with different settings revieved");
         return false;
