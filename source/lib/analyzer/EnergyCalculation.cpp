@@ -171,6 +171,9 @@ static const double weights_dct32[1024] = {
     0.711882, 0.749697, 0.791065, 0.836348, 0.885951, 0.940331, 1.000000,
 };
 
+static const double E_norm_factor = 90;
+static const double h_norm_factor = 18;
+
 uint32_t calculateWeightedCoeffSum(unsigned blockSize, int16_t *coeffBuffer)
 {
     uint32_t weightedSum = 0;
@@ -356,8 +359,8 @@ void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize
         }
     }
 
-    auto frameSizeInPixles = widthInPixels * heightInPixels;
-    result.averageEnergy   = frameTexture / frameSizeInPixles;
+    auto frameSizeInPixels = widthInPixels * heightInPixels;
+    result.averageEnergy   = uint32_t((double)(frameTexture) / (totalNumberBlocks * E_norm_factor));
 }
 
 void computeTextureSAD(Result &result, const Result &resultsPreviousFrame)
@@ -377,7 +380,7 @@ void computeTextureSAD(Result &result, const Result &resultsPreviousFrame)
         textureSad += result.sadPerBlock[i];
     }
 
-    result.sad = textureSad;
+    result.sad = textureSad / (totalNumberBlocks * h_norm_factor);
 }
 
 } // namespace vca
