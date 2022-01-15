@@ -61,7 +61,7 @@ void ProcessingThread::threadFunction(MultiThreadQueue<Job> &jobQueue,
             LogLevel::Debug,
             "Thread " + std::to_string(this->id) + ": Finished work on job " + job->infoString());
 
-        results.push(result);
+        results.waitAndPush(result);
     }
 
     log(this->cfg, LogLevel::Info, "Thread " + std::to_string(this->id) + " quit");

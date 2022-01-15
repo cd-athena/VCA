@@ -115,18 +115,20 @@ struct vca_param
  */
 DLL_PUBLIC vca_analyzer *vca_analyzer_open(vca_param cfg);
 
-/* Push a frame to the analyzer and start the analysis.
- * Note that only the pointers will be copied but no ownership of the memory is
- * transferred to the library. The caller must make sure that the pointers are
- * valid until the frame was analyzed. Once a results for a frame was pulled the
- * library will not use pointers anymore.
- */
 typedef enum
 {
     VCA_OK = 0,
     VCA_ERROR
 } vca_result;
 
+/* Push a frame to the analyzer and start the analysis.
+ * Note that only the pointers will be copied but no ownership of the memory is
+ * transferred to the library. The caller must make sure that the pointers are
+ * valid until the frame was analyzed. Once a results for a frame was pulled the
+ * library will not use pointers anymore.
+ * This may block until there is a slot available to work on. The number of 
+ * frames that will be processed in parallel can be set using nrFrameThreads.
+ */
 DLL_PUBLIC vca_result vca_analyzer_push(vca_analyzer *enc, vca_frame *pic_in);
 
 /* Check if a result is available to pull.

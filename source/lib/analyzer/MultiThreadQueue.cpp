@@ -8,31 +8,41 @@ template<class T>
 void MultiThreadQueue<T>::abort()
 {
     this->aborted = true;
-    this->accessCV.notify_all();
+    this->pushJobCV.notify_all();
+    this->popJobCV.notify_all();
 }
 
 template<class T>
-void MultiThreadQueue<T>::push(T item)
+void MultiThreadQueue<T>::waitAndPush(T item)
 {
     if (this->aborted)
         return;
 
     std::unique_lock<std::mutex> lock(this->accessMutex);
+    this->popJobCV.wait(lock, [this]() {
+        return this->maximumQueueSize == 0 || this->items.size() < this->maximumQueueSize
+               || this->aborted;
+    });
+
+    if (this->aborted)
+        return;
+
     this->items.push(std::move(item));
-    this->accessCV.notify_one();
+    this->pushJobCV.notify_one();
 }
 
 template<class T>
 std::optional<T> MultiThreadQueue<T>::waitAndPop()
 {
     std::unique_lock<std::mutex> lock(this->accessMutex);
-    this->accessCV.wait(lock, [this]() { return !this->items.empty() || this->aborted; });
+    this->pushJobCV.wait(lock, [this]() { return !this->items.empty() || this->aborted; });
 
     if (this->aborted)
         return {};
 
     auto item = this->items.front();
     this->items.pop();
+    this->popJobCV.notify_one();
     return item;
 }
 
@@ -44,6 +54,12 @@ bool MultiThreadQueue<T>::empty()
 
     std::unique_lock<std::mutex> lock(this->accessMutex);
     return this->items.empty();
+}
+
+template<class T>
+void MultiThreadQueue<T>::setMaximumQueueSize(size_t max)
+{
+    this->maximumQueueSize = max;
 }
 
 template class MultiThreadQueue<Job>;

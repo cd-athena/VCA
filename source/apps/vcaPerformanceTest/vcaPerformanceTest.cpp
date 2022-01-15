@@ -282,7 +282,7 @@ int main(int argc, char **argv)
         options.vcaParam.frameInfo.width  = 1920;
         options.vcaParam.frameInfo.height = 1080;
     }
-    options.vcaParam.nrFrameThreads = 4;
+    options.vcaParam.nrFrameThreads = 12;
 
     logOptions(options);
 
@@ -316,6 +316,8 @@ int main(int argc, char **argv)
         auto vcaFrame       = (*frameIt)->getFrame();
         vcaFrame->stats.poc = poc;
 
+        vca_log(LogLevel::Debug, "Start push frame " + std::to_string(poc) + " to analyzer");
+
         auto ret = vca_analyzer_push(analyzer, vcaFrame);
         if (ret == VCA_ERROR)
         {
@@ -328,6 +330,8 @@ int main(int argc, char **argv)
         if (vca_result_available(analyzer))
         {
             vca_frame_results result;
+
+            vca_log(LogLevel::Debug, "Result available. Pulling it");
 
             if (vca_analyzer_pull_frame_result(analyzer, &result) == VCA_ERROR)
             {
