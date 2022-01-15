@@ -1,5 +1,6 @@
 
 #include "Analyzer.h"
+#include "EnergyCalculation.h"
 
 #include <string>
 
@@ -7,8 +8,16 @@ namespace vca {
 
 Analyzer::Analyzer(vca_param cfg)
 {
-    this->cfg      = cfg;
-    auto nrThreads = cfg.nrFrameThreads * cfg.nrSliceThreads;
+    this->cfg = cfg;
+    this->jobs.setMaximumQueueSize(5);
+
+    if (cfg.nrFrameThreads == 0)
+    {
+        cfg.nrFrameThreads = std::thread::hardware_concurrency();
+        log(cfg, LogLevel::Info, "Autodetect nr threads " + std::to_string(cfg.nrFrameThreads));
+    }
+
+    auto nrThreads = cfg.nrFrameThreads;
     log(cfg, LogLevel::Info, "Starting " + std::to_string(nrThreads) + " threads");
     for (unsigned i = 0; i < nrThreads; i++)
     {
@@ -29,7 +38,7 @@ Analyzer::~Analyzer()
 
 vca_result Analyzer::pushFrame(vca_frame *frame)
 {
-    if (!this->checkFrameSize(frame->info))
+    if (!this->checkFrame(frame))
         return vca_result::VCA_ERROR;
 
     Job job;
@@ -37,7 +46,7 @@ vca_result Analyzer::pushFrame(vca_frame *frame)
     job.jobID = this->frameCounter;
     // job.macroblockRange = TODO
 
-    this->jobs.push(job);
+    this->jobs.waitAndPush(job);
     this->frameCounter++;
 
     return vca_result::VCA_OK;
@@ -45,15 +54,24 @@ vca_result Analyzer::pushFrame(vca_frame *frame)
 
 bool Analyzer::resultAvailable()
 {
-    return this->results.empty();
+    return !this->results.empty();
 }
 
 vca_result Analyzer::pullResult(vca_frame_results *outputResult)
 {
     auto result = this->results.waitAndPop();
-
     if (!result)
         return vca_result::VCA_ERROR;
+
+    if (this->previousResult)
+    {
+        computeTextureSAD(*result, *this->previousResult);
+
+        auto sadNormalized     = result->sad / result->averageEnergy;
+        auto sadNormalizedPrev = this->previousResult->sad / this->previousResult->averageEnergy;
+        if (this->previousResult->sad > 0)
+            result->epsilon = abs(sadNormalizedPrev - sadNormalized) / sadNormalizedPrev;
+    }
 
     outputResult->poc           = result->poc;
     outputResult->averageEnergy = result->averageEnergy;
@@ -68,35 +86,49 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
                     result->sadPerBlock.data(),
                     result->sadPerBlock.size() * sizeof(uint32_t));
 
+    this->previousResult = result;
+
     return vca_result::VCA_OK;
 }
 
-bool Analyzer::checkFrameSize(vca_frame_info frameInfo)
+bool Analyzer::checkFrame(const vca_frame *frame)
 {
-    if (!this->frameInfo)
+    if (frame == nullptr)
     {
-        if (frameInfo.bitDepth < 8 || frameInfo.bitDepth > 16)
-        {
-            log(this->cfg,
-                LogLevel::Error,
-                "Frame with invalid bit " + std::to_string(frameInfo.bitDepth) + " depth provided");
-            return false;
-        }
-        if (frameInfo.width == 0 || frameInfo.width % 2 != 0 || frameInfo.height == 0
-            || frameInfo.height % 2 != 0)
-        {
-            log(this->cfg,
-                LogLevel::Error,
-                "Frame with invalid size " + std::to_string(frameInfo.width) + "x"
-                    + std::to_string(frameInfo.height) + " depth provided");
-            return false;
-        }
-        this->frameInfo = frameInfo;
+        log(this->cfg, LogLevel::Error, "Nullptr pushed");
+        return false;
     }
 
-    if (frameInfo.bitDepth != this->frameInfo->bitDepth || frameInfo.width != this->frameInfo->width
-        || frameInfo.height != this->frameInfo->height
-        || frameInfo.colorspace != this->frameInfo->colorspace)
+    if (frame->planes[0] == nullptr || frame->stride[0] == 0)
+    {
+        log(this->cfg, LogLevel::Error, "No luma data provided");
+        return false;
+    }
+
+    const auto &info = frame->info;
+
+    if (!this->frameInfo)
+    {
+        if (info.bitDepth < 8 || info.bitDepth > 16)
+        {
+            log(this->cfg,
+                LogLevel::Error,
+                "Frame with invalid bit " + std::to_string(info.bitDepth) + " depth provided");
+            return false;
+        }
+        if (info.width == 0 || info.width % 2 != 0 || info.height == 0 || info.height % 2 != 0)
+        {
+            log(this->cfg,
+                LogLevel::Error,
+                "Frame with invalid size " + std::to_string(info.width) + "x"
+                    + std::to_string(info.height) + " depth provided");
+            return false;
+        }
+        this->frameInfo = info;
+    }
+
+    if (info.bitDepth != this->frameInfo->bitDepth || info.width != this->frameInfo->width
+        || info.height != this->frameInfo->height || info.colorspace != this->frameInfo->colorspace)
     {
         log(this->cfg, LogLevel::Error, "Frame with different settings revieved");
         return false;

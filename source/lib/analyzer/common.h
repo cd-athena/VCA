@@ -2,6 +2,7 @@
 
 #include "vcaLib.h"
 
+#include <mutex>
 #include <string>
 #include <utility>
 #include <vector>
@@ -16,6 +17,8 @@ namespace vca {
 
 inline void log(const vca_param &cfg, LogLevel level, const std::string &message)
 {
+    static std::mutex loggingMutex;
+    std::unique_lock<std::mutex> lock(loggingMutex);
     if (cfg.logFunction)
         cfg.logFunction(cfg.logFunctionPrivateData, level, message.c_str());
 }

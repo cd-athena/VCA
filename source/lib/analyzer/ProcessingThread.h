@@ -30,8 +30,6 @@ private:
     bool aborted{};
     unsigned id{};
     vca_param cfg;
-
-    static MultiThreadIDList<Result> tempResultStorag;
 };
 
 } // namespace vca

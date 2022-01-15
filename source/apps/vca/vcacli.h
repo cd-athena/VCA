@@ -38,6 +38,8 @@ static const struct option long_options[] = {{"help", no_argument, NULL, 'h'},
                                              {"yuview-stats", required_argument, NULL, 0},
                                              {"max-thresh", required_argument, NULL, 0},
                                              {"min-thresh", required_argument, NULL, 0},
+                                             {"block-size", required_argument, NULL, 0},
+                                             {"threads", required_argument, NULL, 0},
                                              {0, 0, 0, 0},
                                              {0, 0, 0, 0},
                                              {0, 0, 0, 0},
@@ -77,4 +79,5 @@ static void showHelp()
     printf("   --min-thresh <float>          Minimum threshold of epsilon in shot detection\n");
     printf("   --block-size <integer>        Block size for DCT transform. Must be 8, 16 or 32 "
            "(Default).\n");
+    printf("   --threads <integer>           Nr of threads to use. (Default: 0 (autodetect))\n");
 }

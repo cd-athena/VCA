@@ -28,6 +28,7 @@
 #include <optional>
 #include <random>
 #include <signal.h>
+#include <thread>
 #include <queue>
 
 #ifdef _WIN32
@@ -282,7 +283,6 @@ int main(int argc, char **argv)
         options.vcaParam.frameInfo.width  = 1920;
         options.vcaParam.frameInfo.height = 1080;
     }
-    options.vcaParam.nrFrameThreads = 4;
 
     logOptions(options);
 
@@ -306,7 +306,11 @@ int main(int argc, char **argv)
         vca_log(LogLevel::Error,
                 "Unable to register CTRL+C handler: " + std::string(strerror(errno)));
 
-    auto pushFrames = generateRandomFrames(options.vcaParam.frameInfo, 5);
+    auto nrFramesToAllocate = options.vcaParam.nrFrameThreads;
+    if (nrFramesToAllocate == 0)
+        nrFramesToAllocate = std::thread::hardware_concurrency();
+
+    auto pushFrames = generateRandomFrames(options.vcaParam.frameInfo, nrFramesToAllocate + 1);
     vca_log(LogLevel::Info, "Generated " + std::to_string(pushFrames.size()) + " random frames");
 
     using framePtr = std::unique_ptr<FrameWithData>;
@@ -315,6 +319,8 @@ int main(int argc, char **argv)
     {
         auto vcaFrame       = (*frameIt)->getFrame();
         vcaFrame->stats.poc = poc;
+
+        vca_log(LogLevel::Debug, "Start push frame " + std::to_string(poc) + " to analyzer");
 
         auto ret = vca_analyzer_push(analyzer, vcaFrame);
         if (ret == VCA_ERROR)
@@ -328,6 +334,8 @@ int main(int argc, char **argv)
         if (vca_result_available(analyzer))
         {
             vca_frame_results result;
+
+            vca_log(LogLevel::Debug, "Result available. Pulling it");
 
             if (vca_analyzer_pull_frame_result(analyzer, &result) == VCA_ERROR)
             {
