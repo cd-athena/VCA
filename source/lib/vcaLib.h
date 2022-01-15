@@ -103,8 +103,8 @@ struct vca_param
     double minThresh{}; /* Minimum threshold for epsilon in shot detection */
     double maxThresh{}; /* Maximum threshold for epsilon in shot detection */
 
-    unsigned nrFrameThreads{1};
-    unsigned nrSliceThreads{1};
+    unsigned nrFrameThreads{0};
+    unsigned nrSliceThreads{0};
 
     // Logging
     void (*logFunction)(void *, LogLevel, const char *){};

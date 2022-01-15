@@ -10,7 +10,13 @@ Analyzer::Analyzer(vca_param cfg)
     this->cfg = cfg;
     this->jobs.setMaximumQueueSize(5);
 
-    auto nrThreads = cfg.nrFrameThreads * cfg.nrSliceThreads;
+    if (cfg.nrFrameThreads == 0)
+    {
+        cfg.nrFrameThreads = std::thread::hardware_concurrency();
+        log(cfg, LogLevel::Info, "Autodetect nr threads " + std::to_string(cfg.nrFrameThreads));
+    }
+
+    auto nrThreads = cfg.nrFrameThreads;
     log(cfg, LogLevel::Info, "Starting " + std::to_string(nrThreads) + " threads");
     for (unsigned i = 0; i < nrThreads; i++)
     {
