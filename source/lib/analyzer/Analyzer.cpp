@@ -7,8 +7,16 @@ namespace vca {
 
 Analyzer::Analyzer(vca_param cfg)
 {
-    this->cfg      = cfg;
-    auto nrThreads = cfg.nrFrameThreads * cfg.nrSliceThreads;
+    this->cfg = cfg;
+    this->jobs.setMaximumQueueSize(5);
+
+    if (cfg.nrFrameThreads == 0)
+    {
+        cfg.nrFrameThreads = std::thread::hardware_concurrency();
+        log(cfg, LogLevel::Info, "Autodetect nr threads " + std::to_string(cfg.nrFrameThreads));
+    }
+
+    auto nrThreads = cfg.nrFrameThreads;
     log(cfg, LogLevel::Info, "Starting " + std::to_string(nrThreads) + " threads");
     for (unsigned i = 0; i < nrThreads; i++)
     {
@@ -37,7 +45,7 @@ vca_result Analyzer::pushFrame(vca_frame *frame)
     job.jobID = this->frameCounter;
     // job.macroblockRange = TODO
 
-    this->jobs.push(job);
+    this->jobs.waitAndPush(job);
     this->frameCounter++;
 
     return vca_result::VCA_OK;
@@ -45,7 +53,7 @@ vca_result Analyzer::pushFrame(vca_frame *frame)
 
 bool Analyzer::resultAvailable()
 {
-    return this->results.empty();
+    return !this->results.empty();
 }
 
 vca_result Analyzer::pullResult(vca_frame_results *outputResult)

@@ -233,6 +233,8 @@ std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
             options.vcaParam.minThresh = std::stod(optarg);
         else if (name == "block-size")
             options.vcaParam.blockSize = std::stoi(optarg);
+        else if (name == "threads")
+            options.vcaParam.nrFrameThreads = std::stoi(optarg);
     }
 
     if (options.inputFilename.substr(options.inputFilename.size() - 4) == ".y4m")
