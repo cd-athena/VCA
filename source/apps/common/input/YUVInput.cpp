@@ -19,7 +19,14 @@
 
 #include "YUVInput.h"
 
+#ifdef FILESYSTEM_EXPERIMENTAL
+#include <experimental/filesystem>
+namespace filesystem = std::experimental::filesystem;
+#else
 #include <filesystem>
+namespace filesystem = std::filesystem;
+#endif
+
 #include <iostream>
 
 namespace vca {
@@ -45,7 +52,7 @@ YUVInput::YUVInput(std::string &fileName, vca_frame_info &openFrameInfo, unsigne
     auto frameSizeBytes = IInputFile::calculateFrameBytesInInput(this->frameInfo);
 
     {
-        auto fileSize    = std::filesystem::file_size(fileName);
+        auto fileSize    = filesystem::file_size(fileName);
         this->frameCount = unsigned(fileSize / frameSizeBytes);
         vca_log(LogLevel::Info, "Detected " + std::to_string(this->frameCount) + " frames in input");
     }

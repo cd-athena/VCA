@@ -14,10 +14,16 @@ if(NOT HAVE_GETOPT_H)
     message(STATUS "Using compatibility getopt")
 endif(NOT HAVE_GETOPT_H)
 
+if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
+    add_definitions(-DFILESYSTEM_EXPERIMENTAL=1)
+    message(STATUS "Including filesystem as experimental because of old GCC")
+    set(EXPERIMENTAL_FILESYSTEM_LINK stdc++fs)
+endif()
+
 include_directories("${CMAKE_SOURCE_DIR}/source")
 include_directories("${CMAKE_SOURCE_DIR}/source/apps")
 
 add_executable(vca vcacli.h vca.cpp ${vca_apps_common_source} ${vca_apps_common_header} ${GETOPT})
-target_link_libraries (vca vcaLib)
+target_link_libraries (vca vcaLib ${EXPERIMENTAL_FILESYSTEM_LINK})
 
 install(TARGETS vca RUNTIME DESTINATION bin COMPONENT applications)

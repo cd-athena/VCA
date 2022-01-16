@@ -19,7 +19,14 @@
 
 #include "Y4MInput.h"
 
+#ifdef FILESYSTEM_EXPERIMENTAL
+#include <experimental/filesystem>
+namespace filesystem = std::experimental::filesystem;
+#else
 #include <filesystem>
+namespace filesystem = std::filesystem;
+#endif
+
 #include <iterator>
 #include <string>
 
@@ -44,7 +51,7 @@ Y4MInput::Y4MInput(std::string &fileName, unsigned skipFrames)
         const auto assumedHeaderSize = 6u;
         auto estFrameSize            = IInputFile::calculateFrameBytesInInput(this->frameInfo)
                             + assumedHeaderSize;
-        auto fileSize    = std::filesystem::file_size(fileName);
+        auto fileSize    = filesystem::file_size(fileName);
         this->frameCount = unsigned(fileSize / estFrameSize);
         vca_log(LogLevel::Info, "Detected " + std::to_string(this->frameCount) + " frames in input");
     }
