@@ -5,6 +5,16 @@
 
 #include <string>
 
+namespace {
+
+const std::map<CpuSimd, std::string> cpuSimdNames = {{CpuSimd::None, "None"},
+                                                     {CpuSimd::SSE2, "SSE2"},
+                                                     {CpuSimd::SSSE3, "SSSE3"},
+                                                     {CpuSimd::SSE4, "SSE4"},
+                                                     {CpuSimd::AVX2, "AVX2"}};
+                                                     
+}
+
 namespace vca {
 
 Analyzer::Analyzer(vca_param cfg)
@@ -13,7 +23,11 @@ Analyzer::Analyzer(vca_param cfg)
     this->jobs.setMaximumQueueSize(5);
 
     if (this->cfg.cpuSimd == CpuSimd::Autodetect)
+    {
         this->cfg.cpuSimd = cpuDetectMaxSimd();
+        log(cfg, LogLevel::Info, "Autodetected SIMD.");
+    }
+    log(cfg, LogLevel::Info, "Using SIMD " + cpuSimdNames.at(this->cfg.cpuSimd));
 
     if (cfg.nrFrameThreads == 0)
     {

@@ -23,13 +23,15 @@
 #include "cpu.h"
 
 #if MACOS || SYS_FREEBSD
-#include <sys/types.h>
 #include <sys/sysctl.h>
+#include <sys/types.h>
+
 #endif
 #if SYS_OPENBSD
+#include <machine/cpu.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
-#include <machine/cpu.h>
+
 #endif
 
 namespace vca {
@@ -84,14 +86,14 @@ void vca_intel_cpu_indicator_init(void) {}
 }
 
 extern "C" {
-    /* cpu-a.asm */
-    int vca_cpu_cpuid_test(void);
-    void vca_cpu_cpuid(uint32_t op, uint32_t *eax, uint32_t *ebx, uint32_t *ecx, uint32_t *edx);
-    uint64_t vca_cpu_xgetbv(int xcr);
+/* cpu-a.asm */
+int vca_cpu_cpuid_test(void);
+void vca_cpu_cpuid(uint32_t op, uint32_t *eax, uint32_t *ebx, uint32_t *ecx, uint32_t *edx);
+uint64_t vca_cpu_xgetbv(int xcr);
 }
 
 #if defined(_MSC_VER)
-#pragma warning(disable: 4309) // truncation of constant value
+#pragma warning(disable : 4309) // truncation of constant value
 #endif
 
 CpuSimd cpuDetectMaxSimd()
@@ -99,8 +101,8 @@ CpuSimd cpuDetectMaxSimd()
     auto cpu = CpuSimd::None;
 
     uint32_t eax, ebx, ecx, edx;
-    uint32_t vendor[4] = { 0 };
-    uint32_t max_extended_cap, max_basic_cap;
+    uint32_t vendor[4] = {0};
+    uint32_t max_basic_cap;
     uint64_t xcr0 = 0;
 
 #if !X86_64
@@ -144,5 +146,4 @@ uint32_t cpuDetectMaxSimd()
     return CpuSimd::None;
 }
 #endif // if VCA_ARCH_X86
-}
-
+} // namespace vca
