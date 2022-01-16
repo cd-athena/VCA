@@ -42,7 +42,7 @@ Y4MInput::Y4MInput(std::string &fileName, unsigned skipFrames)
 
     {
         const auto assumedHeaderSize = 6u;
-        auto estFrameSize            = IInputFile::calcualteFrameBytesInInput(this->frameInfo)
+        auto estFrameSize            = IInputFile::calculateFrameBytesInInput(this->frameInfo)
                             + assumedHeaderSize;
         auto fileSize    = std::filesystem::file_size(fileName);
         this->frameCount = unsigned(fileSize / estFrameSize);
@@ -50,7 +50,8 @@ Y4MInput::Y4MInput(std::string &fileName, unsigned skipFrames)
     }
 
     if (skipFrames)
-    {}
+    {
+    }
 }
 
 bool Y4MInput::parseHeader()
@@ -134,13 +135,14 @@ bool Y4MInput::readFrame(FrameWithData &frame)
 {
     char c = 0;
     while (this->input.get(c) && c != 'F')
-    {}
+    {
+    }
 
     if (this->input.eof())
         return false;
 
     if (!this->input.good())
-        throw std::exception("Error reading from file");
+        throw std::runtime_error("Error reading from file");
 
     auto getNextChar = [this]() {
         char c;
@@ -150,10 +152,11 @@ bool Y4MInput::readFrame(FrameWithData &frame)
     };
 
     if (getNextChar() != 'R' || getNextChar() != 'A' || getNextChar() != 'M' || getNextChar() != 'E')
-        throw std::exception("Error reading FRAME tag");
+        throw std::runtime_error("Error reading FRAME tag");
 
     while (this->input.get(c) && c != '\n')
-    {}
+    {
+    }
 
     this->input.read((char *) (frame.getData()), frame.getFrameSize());
 

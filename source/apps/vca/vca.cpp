@@ -28,6 +28,8 @@
 #include <optional>
 #include <signal.h>
 #include <queue>
+#include <memory>
+#include <cstring>
 
 #ifdef _WIN32
 #include <windows.h>

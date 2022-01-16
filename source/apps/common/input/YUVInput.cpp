@@ -42,7 +42,7 @@ YUVInput::YUVInput(std::string &fileName, vca_frame_info &openFrameInfo, unsigne
         return;
     }
 
-    auto frameSizeBytes = IInputFile::calcualteFrameBytesInInput(this->frameInfo);
+    auto frameSizeBytes = IInputFile::calculateFrameBytesInInput(this->frameInfo);
 
     {
         auto fileSize    = std::filesystem::file_size(fileName);

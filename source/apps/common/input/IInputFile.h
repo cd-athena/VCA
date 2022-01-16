@@ -44,7 +44,7 @@ public:
 
     virtual bool readFrame(FrameWithData &frame) = 0;
 
-    static size_t calcualteFrameBytesInInput(const vca_frame_info &frameInfo)
+    static size_t calculateFrameBytesInInput(const vca_frame_info &frameInfo)
     {
         size_t framesizeBytes = 0;
         const auto colorspace = frameInfo.colorspace;

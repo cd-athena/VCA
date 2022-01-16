@@ -1,5 +1,5 @@
 #include "vcaLib.h"
-#include "analyzer/analyzer.h"
+#include "analyzer/Analyzer.h"
 
 #include "analyzer/Analyzer.h"
 
