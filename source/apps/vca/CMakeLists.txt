@@ -11,7 +11,7 @@ if(NOT HAVE_GETOPT_H)
     endif(MSVC)
     include_directories(../common/getopt)
     set(GETOPT ../common/getopt/getopt.c ../common/getopt/getopt.h)
-    message("Using compatibility getopt")
+    message(STATUS "Using compatibility getopt")
 endif(NOT HAVE_GETOPT_H)
 
 include_directories("${CMAKE_SOURCE_DIR}/source")

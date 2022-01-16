@@ -1,6 +1,11 @@
 #include "EnergyCalculation.h"
 
 #include "DCTTransforms.h"
+#include "simd/dct-ssse3.h"
+
+extern "C" {
+#include "simd/dct8.h"
+}
 
 #include <algorithm>
 #include <cstdlib>
@@ -178,19 +183,35 @@ void copyPixelValuesToBufferWithPadding(unsigned blockOffsetLuma,
     }
 }
 
-void performDCT(unsigned blockSize, int16_t *pixelBuffer, int16_t *coeffBuffer)
+void performDCT(unsigned blockSize, int16_t *pixelBuffer, int16_t *coeffBuffer, CpuSimd cpuSimd)
 {
-    // DCT
     switch (blockSize)
     {
         case 32:
-            vca::dct32_c(pixelBuffer, coeffBuffer, 32);
+            if (cpuSimd == CpuSimd::AVX2)
+                vca_dct32_avx2(pixelBuffer, coeffBuffer, 32);
+            else if (cpuSimd == CpuSimd::SSSE3)
+                vca_dct32_ssse3(pixelBuffer, coeffBuffer, 32);
+            else
+                vca::dct32_c(pixelBuffer, coeffBuffer, 32);
             break;
         case 16:
-            vca::dct16_c(pixelBuffer, coeffBuffer, 16);
+            if (cpuSimd == CpuSimd::AVX2)
+                vca_dct16_avx2(pixelBuffer, coeffBuffer, 16);
+            else if (cpuSimd == CpuSimd::SSSE3)
+                vca_dct16_ssse3(pixelBuffer, coeffBuffer, 16);
+            else
+                vca::dct16_c(pixelBuffer, coeffBuffer, 16);
             break;
         case 8:
-            vca::dct8_c(pixelBuffer, coeffBuffer, 8);
+            if (cpuSimd == CpuSimd::AVX2)
+                vca_dct8_avx2(pixelBuffer, coeffBuffer, 8);
+            else if (cpuSimd == CpuSimd::SSE4)
+                vca_dct8_sse4(pixelBuffer, coeffBuffer, 8);
+            else if (cpuSimd == CpuSimd::SSE2)
+                vca_dct8_sse2(pixelBuffer, coeffBuffer, 8);
+            else
+                vca::dct8_c(pixelBuffer, coeffBuffer, 8);
             break;
         default:
             throw std::invalid_argument("Invalid block size " + std::to_string(blockSize));
@@ -201,7 +222,7 @@ void performDCT(unsigned blockSize, int16_t *pixelBuffer, int16_t *coeffBuffer)
 
 namespace vca {
 
-void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize)
+void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize, CpuSimd cpuSimd)
 {
     const auto frame = job.frame;
     if (frame == nullptr)
@@ -271,7 +292,7 @@ void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize
                                         pixelBuffer);
             }
 
-            performDCT(blockSize, pixelBuffer, coeffBuffer);
+            performDCT(blockSize, pixelBuffer, coeffBuffer, cpuSimd);
 
             result.energyPerBlock[blockIndex] = calculateWeightedCoeffSum(blockSize, coeffBuffer);
             frameTexture += result.energyPerBlock[blockIndex];

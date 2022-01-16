@@ -29,6 +29,16 @@ enum class LogLevel
     Debug
 };
 
+enum class CpuSimd
+{
+    Autodetect,
+    None,
+    SSE2,
+    SSSE3,
+    SSE4,
+    AVX2
+};
+
 struct vca_frame_texture_t
 {
     int32_t *m_ctuAbsoluteEnergy;
@@ -105,6 +115,8 @@ struct vca_param
 
     unsigned nrFrameThreads{0};
     unsigned nrSliceThreads{0};
+
+    CpuSimd cpuSimd{CpuSimd::Autodetect};
 
     // Logging
     void (*logFunction)(void *, LogLevel, const char *){};

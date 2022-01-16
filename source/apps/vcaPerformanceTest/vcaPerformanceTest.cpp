@@ -51,12 +51,21 @@ void logLibraryMessage(void *, LogLevel logLevel, const char *message)
     vca_log(logLevel, "[LIB] "s + message);
 }
 
-void printStatus(uint32_t frameNum, unsigned framesToBeAnalyzed, bool printSummary = false)
+void printStatus(uint32_t frameNum,
+                 unsigned framesToBeAnalyzed,
+                 bool start        = false,
+                 bool printSummary = false)
 {
     char buf[200];
     static auto startTime      = std::chrono::high_resolution_clock::now();
     static auto prevUpdateTime = std::chrono::high_resolution_clock::now();
-    auto now                   = std::chrono::high_resolution_clock::now();
+    if (start)
+    {
+        startTime      = std::chrono::high_resolution_clock::now();
+        prevUpdateTime = std::chrono::high_resolution_clock::now();
+    }
+
+    auto now = std::chrono::high_resolution_clock::now();
 
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - prevUpdateTime);
     if (!printSummary && duration < std::chrono::milliseconds(250))
@@ -260,6 +269,64 @@ static int get_argv_utf8(int *argc_ptr, char ***argv_ptr)
 }
 #endif
 
+void runTest(CLIOptions &options, std::vector<std::unique_ptr<FrameWithData>> &pushFrames)
+{
+    auto analyzer = vca_analyzer_open(options.vcaParam);
+    if (analyzer == nullptr)
+    {
+        vca_log(LogLevel::Error, "Error opening analyzer");
+        return;
+    }
+
+    printStatus(0, options.nrFrames, true);
+
+    using framePtr = std::unique_ptr<FrameWithData>;
+    auto frameIt   = pushFrames.begin();
+    for (unsigned poc = 0; poc < options.nrFrames; poc++)
+    {
+        auto vcaFrame       = (*frameIt)->getFrame();
+        vcaFrame->stats.poc = poc;
+
+        vca_log(LogLevel::Debug, "Start push frame " + std::to_string(poc) + " to analyzer");
+
+        auto ret = vca_analyzer_push(analyzer, vcaFrame);
+        if (ret == VCA_ERROR)
+        {
+            vca_log(LogLevel::Error, "Error pushing frame to lib");
+            return;
+        }
+
+        vca_log(LogLevel::Debug, "Pushed frame " + std::to_string(poc) + " to analyzer");
+
+        if (vca_result_available(analyzer))
+        {
+            vca_frame_results result;
+
+            vca_log(LogLevel::Debug, "Result available. Pulling it");
+
+            if (vca_analyzer_pull_frame_result(analyzer, &result) == VCA_ERROR)
+            {
+                vca_log(LogLevel::Error, "Error pulling frame result");
+                return;
+            }
+
+            vca_log(LogLevel::Debug,
+                    "Got results POC " + std::to_string(result.poc) + " averageEnergy "
+                        + std::to_string(result.averageEnergy) + " sad "
+                        + std::to_string(result.sad));
+        }
+
+        printStatus(poc, options.nrFrames);
+
+        frameIt++;
+        if (frameIt == pushFrames.end())
+            frameIt = pushFrames.begin();
+    }
+
+    vca_analyzer_close(analyzer);
+    printStatus(options.nrFrames, options.nrFrames, false, true);
+}
+
 int main(int argc, char **argv)
 {
 #if _WIN32
@@ -294,13 +361,6 @@ int main(int argc, char **argv)
 
     options.vcaParam.logFunction = logLibraryMessage;
 
-    auto analyzer = vca_analyzer_open(options.vcaParam);
-    if (analyzer == nullptr)
-    {
-        vca_log(LogLevel::Error, "Error opening analyzer");
-        return 2;
-    }
-
     /* Control-C handler */
     if (signal(SIGINT, sigint_handler) == SIG_ERR)
         vca_log(LogLevel::Error,
@@ -313,51 +373,25 @@ int main(int argc, char **argv)
     auto pushFrames = generateRandomFrames(options.vcaParam.frameInfo, nrFramesToAllocate + 1);
     vca_log(LogLevel::Info, "Generated " + std::to_string(pushFrames.size()) + " random frames");
 
-    using framePtr = std::unique_ptr<FrameWithData>;
-    auto frameIt   = pushFrames.begin();
-    for (unsigned poc = 0; poc < options.nrFrames; poc++)
+    const std::map<CpuSimd, std::string> cpuSimdNames = {{CpuSimd::None, "None"},
+                                                         {CpuSimd::SSE2, "SSE2"},
+                                                         {CpuSimd::SSSE3, "SSSE3"},
+                                                         {CpuSimd::SSE4, "SSE4"},
+                                                         {CpuSimd::AVX2, "AVX2"}};
+
+    for (auto &simd : cpuSimdNames)
     {
-        auto vcaFrame       = (*frameIt)->getFrame();
-        vcaFrame->stats.poc = poc;
-
-        vca_log(LogLevel::Debug, "Start push frame " + std::to_string(poc) + " to analyzer");
-
-        auto ret = vca_analyzer_push(analyzer, vcaFrame);
-        if (ret == VCA_ERROR)
+        for (unsigned blocksize : {8, 16, 32})
         {
-            vca_log(LogLevel::Error, "Error pushing frame to lib");
-            return 3;
+            std::cout << "  [Run test 0 - " << simd.second << " - " << blocksize << "x" << blocksize
+                      << "]\n";
+            options.vcaParam.cpuSimd   = simd.first;
+            options.vcaParam.blockSize = blocksize;
+
+            runTest(options, pushFrames);
+            std::cout << "\n";
         }
-
-        vca_log(LogLevel::Debug, "Pushed frame " + std::to_string(poc) + " to analyzer");
-
-        if (vca_result_available(analyzer))
-        {
-            vca_frame_results result;
-
-            vca_log(LogLevel::Debug, "Result available. Pulling it");
-
-            if (vca_analyzer_pull_frame_result(analyzer, &result) == VCA_ERROR)
-            {
-                vca_log(LogLevel::Error, "Error pulling frame result");
-                return 3;
-            }
-
-            vca_log(LogLevel::Debug,
-                    "Got results POC " + std::to_string(result.poc) + " averageEnergy "
-                        + std::to_string(result.averageEnergy) + " sad "
-                        + std::to_string(result.sad));
-        }
-
-        printStatus(poc, options.nrFrames);
-
-        frameIt++;
-        if (frameIt == pushFrames.end())
-            frameIt = pushFrames.begin();
     }
-
-    vca_analyzer_close(analyzer);
-    printStatus(options.nrFrames, options.nrFrames, true);
 
     return 0;
 }
