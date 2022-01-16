@@ -2,6 +2,10 @@
 
 #include "DCTTransforms.h"
 
+extern "C" {
+#include "simd/dct8.h"
+}
+
 #include <algorithm>
 #include <cstdlib>
 #include <stdexcept>
@@ -184,7 +188,8 @@ void performDCT(unsigned blockSize, int16_t *pixelBuffer, int16_t *coeffBuffer)
     switch (blockSize)
     {
         case 32:
-            vca::dct32_c(pixelBuffer, coeffBuffer, 32);
+            // vca::dct32_c(pixelBuffer, coeffBuffer, 32);
+            vca_dct32_avx2(pixelBuffer, coeffBuffer, 32);
             break;
         case 16:
             vca::dct16_c(pixelBuffer, coeffBuffer, 16);
