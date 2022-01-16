@@ -1,6 +1,7 @@
 #include "EnergyCalculation.h"
 
 #include "DCTTransforms.h"
+#include "simd/dct-ssse3.h"
 
 extern "C" {
 #include "simd/dct8.h"
@@ -189,12 +190,16 @@ void performDCT(unsigned blockSize, int16_t *pixelBuffer, int16_t *coeffBuffer, 
         case 32:
             if (cpuSimd == CpuSimd::AVX2)
                 vca_dct32_avx2(pixelBuffer, coeffBuffer, 32);
+            else if (cpuSimd == CpuSimd::SSSE3)
+                vca_dct32_ssse3(pixelBuffer, coeffBuffer, 32);
             else
                 vca::dct32_c(pixelBuffer, coeffBuffer, 32);
             break;
         case 16:
             if (cpuSimd == CpuSimd::AVX2)
                 vca_dct16_avx2(pixelBuffer, coeffBuffer, 16);
+            else if (cpuSimd == CpuSimd::SSSE3)
+                vca_dct16_ssse3(pixelBuffer, coeffBuffer, 16);
             else
                 vca::dct16_c(pixelBuffer, coeffBuffer, 16);
             break;
