@@ -1,6 +1,7 @@
 
 #include "Analyzer.h"
 #include "EnergyCalculation.h"
+#include "simd/cpu.h"
 
 #include <string>
 
@@ -10,6 +11,9 @@ Analyzer::Analyzer(vca_param cfg)
 {
     this->cfg = cfg;
     this->jobs.setMaximumQueueSize(5);
+
+    if (this->cfg.cpuSimd == CpuSimd::Autodetect)
+        this->cfg.cpuSimd = cpuDetectMaxSimd();
 
     if (cfg.nrFrameThreads == 0)
     {

@@ -34,7 +34,7 @@ void ProcessingThread::threadFunction(MultiThreadQueue<Job> &jobQueue,
 
         Result result;
         result.poc = job->frame->stats.poc;
-        computeWeightedDCTEnergy(*job, result, this->cfg.blockSize);
+        computeWeightedDCTEnergy(*job, result, this->cfg.blockSize, this->cfg.cpuSimd);
 
         log(this->cfg,
             LogLevel::Debug,
