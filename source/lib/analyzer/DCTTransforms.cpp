@@ -1,6 +1,8 @@
 #include "DCTTransforms.h"
 
-#include "Common.h"
+#include "common.h"
+
+#include <cstring>
 
 namespace {
 
@@ -288,7 +290,7 @@ void dct8_c(const int16_t *src, int16_t *dst, intptr_t srcStride)
 
     for (int i = 0; i < 8; i++)
     {
-        memcpy(&block[i * 8], &src[i * srcStride], 8 * sizeof(int16_t));
+        std::memcpy(&block[i * 8], &src[i * srcStride], 8 * sizeof(int16_t));
     }
 
     partialButterfly8(block, coef, shift_1st, 8);
@@ -305,7 +307,7 @@ void dct16_c(const int16_t *src, int16_t *dst, intptr_t srcStride)
 
     for (int i = 0; i < 16; i++)
     {
-        memcpy(&block[i * 16], &src[i * srcStride], 16 * sizeof(int16_t));
+        std::memcpy(&block[i * 16], &src[i * srcStride], 16 * sizeof(int16_t));
     }
 
     partialButterfly16(block, coef, shift_1st, 16);
@@ -322,7 +324,7 @@ void dct32_c(const int16_t *src, int16_t *dst, intptr_t srcStride)
 
     for (int i = 0; i < 32; i++)
     {
-        memcpy(&block[i * 32], &src[i * srcStride], 32 * sizeof(int16_t));
+        std::memcpy(&block[i * 32], &src[i * srcStride], 32 * sizeof(int16_t));
     }
 
     partialButterfly32(block, coef, shift_1st, 32);

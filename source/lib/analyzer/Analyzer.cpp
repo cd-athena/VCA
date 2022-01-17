@@ -3,6 +3,7 @@
 #include "EnergyCalculation.h"
 #include "simd/cpu.h"
 
+#include <cstring>
 #include <string>
 
 namespace {
@@ -12,7 +13,7 @@ const std::map<CpuSimd, std::string> cpuSimdNames = {{CpuSimd::None, "None"},
                                                      {CpuSimd::SSSE3, "SSSE3"},
                                                      {CpuSimd::SSE4, "SSE4"},
                                                      {CpuSimd::AVX2, "AVX2"}};
-                                                     
+
 }
 
 namespace vca {

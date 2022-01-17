@@ -9,6 +9,7 @@ extern "C" {
 
 #include <algorithm>
 #include <cstdlib>
+#include <cstring>
 #include <stdexcept>
 
 namespace {

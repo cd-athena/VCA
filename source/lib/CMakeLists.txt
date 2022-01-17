@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
+find_package (Threads REQUIRED)
+
 # System architecture detection
 string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" SYSPROC)
 set(X86_ALIASES x86 i386 i686 x86_64 amd64)
@@ -19,16 +21,23 @@ else()
     message(STATUS "Please add this value near ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE}")
 endif()
 
-message("ENABLE_ASSEMBLY " ${ENABLE_ASSEMBLY})
+if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+    set(GCC 1)
+endif()
+
 if(ENABLE_ASSEMBLY)
-    message("Activating nasm assembly")
+    message(STATUS "Activating nasm assembly")
     enable_language(ASM_NASM)
     set(A_SRCS 
         analyzer/simd/dct8.asm 
         analyzer/simd/const-a.asm
         analyzer/simd/cpu-a.asm)
     
-    set(CMAKE_ASM_NASM_FLAGS "-I\"${CMAKE_CURRENT_SOURCE_DIR}/analyzer/simd\" -DARCH_X86_64=1 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DVCA_NS=vca")
+    set(CMAKE_ASM_NASM_FLAGS "-I\"${CMAKE_CURRENT_SOURCE_DIR}/analyzer/simd/\" -DPIC -DARCH_X86_64=1 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DVCA_NS=vca")
+
+    if (GCC)
+        set_source_files_properties(analyzer/simd/dct-ssse3.cpp PROPERTIES COMPILE_FLAGS "-mssse3")
+    endif(GCC)
 endif(ENABLE_ASSEMBLY)
 
 file(GLOB_RECURSE vcaLib_source *.cpp)
@@ -37,6 +46,7 @@ file(GLOB_RECURSE vcaLib_header *.h)
 include_directories(./)
 
 add_library(vcaLib ${vcaLib_source} ${vcaLib_header} ${A_SRCS})
+target_link_libraries(vcaLib Threads::Threads)
 set_target_properties(vcaLib PROPERTIES OUTPUT_NAME vcaLib)
 set_target_properties(vcaLib PROPERTIES PUBLIC_HEADER "vcaLib.h")
 
