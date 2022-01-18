@@ -37,8 +37,8 @@ if(ENABLE_ASSEMBLY)
         analyzer/simd/const-a.asm
         analyzer/simd/cpu-a.asm)
     
-	if(APPLE)
-		set(CMAKE_ASM_NASM_FLAGS "-I\"${CMAKE_CURRENT_SOURCE_DIR}/analyzer/simd/\" -DPIC -DARCH_X86_64=1 -DPREFIX -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DVCA_NS=vca")
+    if(APPLE)
+        set(CMAKE_ASM_NASM_FLAGS "-I\"${CMAKE_CURRENT_SOURCE_DIR}/analyzer/simd/\" -DPIC -DARCH_X86_64=1 -DPREFIX -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DVCA_NS=vca")
     else()
         set(CMAKE_ASM_NASM_FLAGS "-I\"${CMAKE_CURRENT_SOURCE_DIR}/analyzer/simd/\" -DPIC -DARCH_X86_64=1 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DVCA_NS=vca")	
     endif()
