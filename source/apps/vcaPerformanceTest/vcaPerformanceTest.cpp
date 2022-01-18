@@ -1,7 +1,7 @@
 /*****************************************************************************
- * Copyright (C) 2021 Christian Doppler Laboratory ATHENA
+ * Copyright (C) 2022 Christian Doppler Laboratory ATHENA
  *
- * Authors: Vignesh V Menon <vignesh.menon@aau.at>
+ * Authors: Christian Feldmann <christian.feldmann@bitmovin.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
