@@ -26,7 +26,7 @@ CMake is then used for generating build files and compiling the VCA binaries.
     $ cd vca
     $ mkdir build
     $ cd build
-    $ cmake -G "Unix Makefiles" ../../ && ccmake ../../
+    $ cmake -G "Unix Makefiles" ../ && ccmake ../
     $ make
 
 This will create VCA binaries in the vca/build/source/apps/ folder.
@@ -43,7 +43,7 @@ solution.
     $ cd vca
     $ mkdir build
     $ cd build
-    $ cmake -G "Visual Studio 15 Win64" ../../ && cmake-gui ../../
+    $ cmake -G "Visual Studio 15 Win64" ../ && cmake-gui ../
 
 The -G argument should be adjusted to match your version of Visual Studio and
 the target architecture.
