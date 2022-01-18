@@ -21,6 +21,10 @@ else()
     message(STATUS "Please add this value near ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE}")
 endif()
 
+if(NOT X64)
+    message(FATAL_ERROR "Only 64bit architecture is supported")
+endif()
+
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     set(GCC 1)
 endif()
@@ -33,7 +37,11 @@ if(ENABLE_ASSEMBLY)
         analyzer/simd/const-a.asm
         analyzer/simd/cpu-a.asm)
     
-    set(CMAKE_ASM_NASM_FLAGS "-I\"${CMAKE_CURRENT_SOURCE_DIR}/analyzer/simd/\" -DPIC -DARCH_X86_64=1 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DVCA_NS=vca")
+    if(APPLE)
+        set(CMAKE_ASM_NASM_FLAGS "-I\"${CMAKE_CURRENT_SOURCE_DIR}/analyzer/simd/\" -DPIC -DARCH_X86_64=1 -DPREFIX -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DVCA_NS=vca")
+    else()
+        set(CMAKE_ASM_NASM_FLAGS "-I\"${CMAKE_CURRENT_SOURCE_DIR}/analyzer/simd/\" -DPIC -DARCH_X86_64=1 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DVCA_NS=vca")	
+    endif()
 
     if (GCC)
         set_source_files_properties(analyzer/simd/dct-ssse3.cpp PROPERTIES COMPILE_FLAGS "-mssse3")
