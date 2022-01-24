@@ -32,6 +32,10 @@ public:
     // Push an item to the queue. Wait if the queue reached a maximum size.
     // Wake one waiting thread.
     void waitAndPush(T item);
+    // Push items in order. Increase the counter by one in the order of items.
+    // Pushing threads will be paused until the pushs are in order.
+    // Don't mix calls to these two push functions.
+    void waitAndPushInOrder(T item, size_t counter);
 
     // Get an item. If the queue is empty, wait until an item is pushed.
     // Will return empty opt if abort is called.
@@ -52,6 +56,7 @@ private:
 
     bool aborted{};
     size_t maximumQueueSize{};
+    size_t pushCounter{};
 };
 
 } // namespace vca

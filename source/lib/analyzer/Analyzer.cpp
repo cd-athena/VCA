@@ -110,6 +110,7 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
     }
 
     outputResult->poc           = result->poc;
+    outputResult->jobID         = result->jobID;
     outputResult->averageEnergy = result->averageEnergy;
     outputResult->sad           = result->sad;
     outputResult->epsilon       = result->epsilon;

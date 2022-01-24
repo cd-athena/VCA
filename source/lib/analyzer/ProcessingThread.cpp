@@ -51,13 +51,14 @@ void ProcessingThread::threadFunction(MultiThreadQueue<Job> &jobQueue,
 
         Result result;
         result.poc = job->frame->stats.poc;
+        result.jobID = job->jobID;
         computeWeightedDCTEnergy(*job, result, this->cfg.blockSize, this->cfg.cpuSimd);
 
         log(this->cfg,
             LogLevel::Debug,
             "Thread " + std::to_string(this->id) + ": Finished work on job " + job->infoString());
 
-        results.waitAndPush(result);
+        results.waitAndPushInOrder(result, result.jobID);
     }
 
     log(this->cfg, LogLevel::Debug, "Thread " + std::to_string(this->id) + " quit");

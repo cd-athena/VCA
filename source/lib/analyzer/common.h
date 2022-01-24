@@ -77,6 +77,7 @@ struct Result
     double sad{};
     double epsilon{};
     int poc{};
+    unsigned jobID{};
 };
 
 } // namespace vca
