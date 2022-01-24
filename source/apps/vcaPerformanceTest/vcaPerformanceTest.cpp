@@ -280,14 +280,17 @@ void runTest(CLIOptions &options, std::vector<std::unique_ptr<FrameWithData>> &p
 
     printStatus(0, options.nrFrames, true);
 
-    using framePtr = std::unique_ptr<FrameWithData>;
-    auto frameIt   = pushFrames.begin();
-    for (unsigned poc = 0; poc < options.nrFrames; poc++)
+    using framePtr          = std::unique_ptr<FrameWithData>;
+    auto frameIt            = pushFrames.begin();
+    unsigned pushedFrames   = 0;
+    unsigned resultsCounter = 0;
+    for (; pushedFrames < options.nrFrames; pushedFrames++)
     {
         auto vcaFrame       = (*frameIt)->getFrame();
-        vcaFrame->stats.poc = poc;
+        vcaFrame->stats.poc = pushedFrames;
 
-        vca_log(LogLevel::Debug, "Start push frame " + std::to_string(poc) + " to analyzer");
+        vca_log(LogLevel::Debug,
+                "Start push frame " + std::to_string(pushedFrames) + " to analyzer");
 
         auto ret = vca_analyzer_push(analyzer, vcaFrame);
         if (ret == VCA_ERROR)
@@ -296,9 +299,9 @@ void runTest(CLIOptions &options, std::vector<std::unique_ptr<FrameWithData>> &p
             return;
         }
 
-        vca_log(LogLevel::Debug, "Pushed frame " + std::to_string(poc) + " to analyzer");
+        vca_log(LogLevel::Debug, "Pushed frame " + std::to_string(pushedFrames) + " to analyzer");
 
-        if (vca_result_available(analyzer))
+        while (vca_result_available(analyzer))
         {
             vca_frame_results result;
 
@@ -314,13 +317,34 @@ void runTest(CLIOptions &options, std::vector<std::unique_ptr<FrameWithData>> &p
                     "Got results POC " + std::to_string(result.poc) + " averageEnergy "
                         + std::to_string(result.averageEnergy) + " sad "
                         + std::to_string(result.sad));
+
+            resultsCounter++;
         }
 
-        printStatus(poc, options.nrFrames);
+        printStatus(resultsCounter, options.nrFrames);
 
         frameIt++;
         if (frameIt == pushFrames.end())
             frameIt = pushFrames.begin();
+    }
+
+    while (resultsCounter < pushedFrames)
+    {
+        vca_frame_results result;
+
+        vca_log(LogLevel::Debug, "Result available. Pulling it");
+
+        if (vca_analyzer_pull_frame_result(analyzer, &result) == VCA_ERROR)
+        {
+            vca_log(LogLevel::Error, "Error pulling frame result");
+            return;
+        }
+
+        vca_log(LogLevel::Debug,
+                "Got results POC " + std::to_string(result.poc) + " averageEnergy "
+                    + std::to_string(result.averageEnergy) + " sad " + std::to_string(result.sad));
+
+        resultsCounter++;
     }
 
     vca_analyzer_close(analyzer);

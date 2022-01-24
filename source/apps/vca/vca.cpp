@@ -279,7 +279,7 @@ bool checkOptions(CLIOptions options)
     return true;
 }
 
-void logOptions(CLIOptions options)
+void logOptions(const CLIOptions &options)
 {
     vca_log(LogLevel::Info, "Options:   "s);
     vca_log(LogLevel::Info, "  Input file name:   "s + options.inputFilename);
@@ -289,6 +289,25 @@ void logOptions(CLIOptions options)
     vca_log(LogLevel::Info, "  Complexity csv:    "s + options.complexityCSVFilename);
     vca_log(LogLevel::Info, "  Shot csv:          "s + options.shotCSVFilename);
     vca_log(LogLevel::Info, "  YUView stats file: "s + options.yuviewStatsFilename);
+}
+
+void logResult(const Result &result, const vca_frame *frame, const unsigned resultsCounter)
+{
+    if (result.result.poc != frame->stats.poc)
+        vca_log(LogLevel::Warning,
+                "The poc of the returned data (" + std::to_string(result.result.poc)
+                    + ") does not match the expected next frames POC ("
+                    + std::to_string(frame->stats.poc) + ").");
+    if (result.result.poc != resultsCounter)
+        vca_log(LogLevel::Warning,
+                "The poc of the returned data (" + std::to_string(result.result.poc)
+                    + ") does not match the expected results counter ("
+                    + std::to_string(resultsCounter) + ").");
+
+    vca_log(LogLevel::Debug,
+            "Got results POC " + std::to_string(result.result.poc) + " averageEnergy "
+                + std::to_string(result.result.averageEnergy) + " sad "
+                + std::to_string(result.result.sad));
 }
 
 void writeComplexityStatsToFile(const Result &result, std::ofstream &file)
@@ -420,9 +439,10 @@ int main(int argc, char **argv)
     std::queue<framePtr> frameRecycling;
     std::queue<framePtr> activeFrames;
     std::unique_ptr<YUViewStatsFile> yuviewStatsFile;
-    unsigned poc = 0;
+    unsigned pushedFrames   = 0;
+    unsigned resultsCounter = 0;
     while (!inputFile->isEof() && !inputFile->isFail()
-           && (options.framesToBeAnalyzed == 0 || poc < options.framesToBeAnalyzed))
+           && (options.framesToBeAnalyzed == 0 || pushedFrames < options.framesToBeAnalyzed))
     {
         {
             framePtr frame;
@@ -447,8 +467,8 @@ int main(int argc, char **argv)
                 return 3;
             }
 
-            frame->getFrame()->stats.poc = poc;
-            vca_log(LogLevel::Debug, "Read frame " + std::to_string(poc) + " from input");
+            frame->getFrame()->stats.poc = pushedFrames;
+            vca_log(LogLevel::Debug, "Read frame " + std::to_string(pushedFrames) + " from input");
 
             if (!options.yuviewStatsFilename.empty() && !yuviewStatsFile)
                 yuviewStatsFile = std::make_unique<YUViewStatsFile>(options.yuviewStatsFilename,
@@ -461,12 +481,14 @@ int main(int argc, char **argv)
                 vca_log(LogLevel::Error, "Error pushing frame to lib");
                 return 3;
             }
-            vca_log(LogLevel::Debug, "Pushed frame " + std::to_string(poc) + " to analyzer");
+            vca_log(LogLevel::Debug,
+                    "Pushed frame " + std::to_string(pushedFrames) + " to analyzer");
 
             activeFrames.push(std::move(frame));
+            pushedFrames++;
         }
 
-        if (vca_result_available(analyzer))
+        while (vca_result_available(analyzer))
         {
             Result result(frameInfo, options.vcaParam.blockSize);
 
@@ -484,27 +506,40 @@ int main(int argc, char **argv)
             auto processedFrame = std::move(activeFrames.front());
             activeFrames.pop();
 
-            if (result.result.poc != processedFrame->getFrame()->stats.poc)
-                vca_log(LogLevel::Warning,
-                        "The poc of the returned data (" + std::to_string(result.result.poc)
-                            + ") does not match the expected next frames POC ("
-                            + std::to_string(processedFrame->getFrame()->stats.poc) + ").");
-
-            vca_log(LogLevel::Debug,
-                    "Got results POC " + std::to_string(result.result.poc) + " averageEnergy "
-                        + std::to_string(result.result.averageEnergy) + " sad "
-                        + std::to_string(result.result.sad));
+            logResult(result, processedFrame->getFrame(), resultsCounter);
 
             frameRecycling.push(std::move(processedFrame));
+            resultsCounter++;
         }
 
-        printStatus(poc, options.framesToBeAnalyzed);
+        printStatus(resultsCounter, options.framesToBeAnalyzed);
+    }
 
-        poc++;
+    while (resultsCounter < pushedFrames)
+    {
+        Result result(frameInfo, options.vcaParam.blockSize);
+
+        if (vca_analyzer_pull_frame_result(analyzer, &result.result) == VCA_ERROR)
+        {
+            vca_log(LogLevel::Error, "Error pulling frame result");
+            return 3;
+        }
+
+        if (yuviewStatsFile)
+            yuviewStatsFile->write(result.result, options.vcaParam.blockSize);
+        if (complexityFile.is_open())
+            writeComplexityStatsToFile(result, complexityFile);
+
+        auto processedFrame = std::move(activeFrames.front());
+        activeFrames.pop();
+
+        logResult(result, processedFrame->getFrame(), resultsCounter);
+
+        resultsCounter++;
     }
 
     vca_analyzer_close(analyzer);
-    printStatus(poc, options.framesToBeAnalyzed, true);
+    printStatus(resultsCounter, pushedFrames, true);
 
     return 0;
 }
