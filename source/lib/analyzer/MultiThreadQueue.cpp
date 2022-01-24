@@ -49,6 +49,28 @@ void MultiThreadQueue<T>::waitAndPush(T item)
 }
 
 template<class T>
+void MultiThreadQueue<T>::waitAndPushInOrder(T item, size_t orderCounter)
+{
+    if (this->aborted)
+        return;
+
+    std::unique_lock<std::mutex> lock(this->accessMutex);
+    this->popJobCV.wait(lock, [this, orderCounter]() {
+        if (this->aborted)
+            return true;
+        auto slotFree = this->maximumQueueSize == 0 || this->items.size() < this->maximumQueueSize;
+        return slotFree && orderCounter == this->pushCounter;
+    });
+
+    if (this->aborted)
+        return;
+
+    this->items.push(std::move(item));
+    this->pushCounter++;
+    this->pushJobCV.notify_one();
+}
+
+template<class T>
 std::optional<T> MultiThreadQueue<T>::waitAndPop()
 {
     std::unique_lock<std::mutex> lock(this->accessMutex);

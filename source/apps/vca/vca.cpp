@@ -26,11 +26,11 @@
 #include <lib/vcaLib.h>
 
 #include <chrono>
+#include <cstring>
+#include <memory>
 #include <optional>
 #include <signal.h>
 #include <queue>
-#include <memory>
-#include <cstring>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -485,9 +485,10 @@ int main(int argc, char **argv)
             activeFrames.pop();
 
             if (result.result.poc != processedFrame->getFrame()->stats.poc)
-                vca_log(
-                    LogLevel::Warning,
-                    "The poc of the returned data does not match the expected next frames POC.");
+                vca_log(LogLevel::Warning,
+                        "The poc of the returned data (" + std::to_string(result.result.poc)
+                            + ") does not match the expected next frames POC ("
+                            + std::to_string(processedFrame->getFrame()->stats.poc) + ").");
 
             vca_log(LogLevel::Debug,
                     "Got results POC " + std::to_string(result.result.poc) + " averageEnergy "

@@ -90,7 +90,11 @@ struct vca_frame_results
 
     double epsilon{};
 
-    int poc;
+    int poc{};
+
+    // An increasing counter that is incremented with each call to 'vca_analyzer_push'.
+    // So with this one can double check that the results are recieved in the right order.
+    unsigned jobID{};
 };
 
 struct vca_frame_info
