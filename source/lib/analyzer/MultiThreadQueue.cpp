@@ -67,6 +67,7 @@ void MultiThreadQueue<T>::waitAndPushInOrder(T item, size_t orderCounter)
 
     this->items.push(std::move(item));
     this->pushCounter++;
+    this->popJobCV.notify_all();
     this->pushJobCV.notify_one();
 }
 
