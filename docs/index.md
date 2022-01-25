@@ -16,3 +16,5 @@ While VCA is primarily designed as a video complexity analyzer library, a comman
 [CLI options](cli.md)
 
 [API functions](api.md)
+
+[Related Publications](related_publications.md)
