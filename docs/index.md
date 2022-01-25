@@ -11,8 +11,8 @@ The primary objective of VCA is to become the best spatial and temporal complexi
 
 While VCA is primarily designed as a video complexity analyzer library, a command-line executable is provided to facilitate testing and development. We expect VCA to be utilized in many leading video encoding solutions in the coming years.
 
-[How to build?](docs/build.md)
+[How to build?](build.md)
 
-[CLI options](docs/cli.md)
+[CLI options](cli.md)
 
-[API functions](docs/api.md)
+[API functions](api.md)
