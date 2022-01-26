@@ -1,6 +1,6 @@
-************
 Building instructions
-************
+=============
+The software is tested mostly in Linux and Windows OS. It requires some pre-requisite software to be installed before compiling. The steps to build the project in Linux and Windows are explained below.
 
 Prerequisites
 =============
@@ -8,6 +8,7 @@ Prerequisites
  1. [CMake](https://cmake.org) version 3.1 or higher.
  2. [Git](https://git-scm.com/).
  3. C++ compiler with C++11 support
+ 4. [NASM](https://nasm.us/) assembly compiler (for x86 SIMD support)
 
 The following C++11 compilers have been known to work:
 
@@ -15,7 +16,7 @@ The following C++11 compilers have been known to work:
  * GCC 4.8 or later
  * Clang 3.3 or later
 
-Linux build steps
+Unix build steps
 =================
 
 The following commands will checkout the project source code and create a
