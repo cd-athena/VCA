@@ -363,7 +363,7 @@ int main(int argc, char **argv)
     get_argv_utf8(&argc, &argv);
 #endif
 
-    vca_log(LogLevel::Info, "VCA - Video Complexity Analyzer");
+    vca_log(LogLevel::Info, "VCA - Video Complexity Analyzer " + std::string(vca_version_str));
 
     CLIOptions options;
     if (auto cliOptions = parseCLIOptions(argc, argv))
