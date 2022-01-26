@@ -374,13 +374,13 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    logOptions(options);
-
     if (!checkOptions(options))
     {
         vca_log(LogLevel::Error, "Error checking parameters");
         return 1;
     }
+
+    logOptions(options);
 
     std::unique_ptr<IInputFile> inputFile;
     if (options.openAsY4m)
@@ -414,7 +414,7 @@ int main(int argc, char **argv)
         shotsFile.open(options.shotCSVFilename);
         if (!shotsFile.is_open())
         {
-            vca_log(LogLevel::Error, "Error opening complexity CSV file " + options.shotCSVFilename);
+            vca_log(LogLevel::Error, "Error opening shot CSV file " + options.shotCSVFilename);
             return 1;
         }
     }
