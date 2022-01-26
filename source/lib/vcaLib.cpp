@@ -21,7 +21,6 @@
 #include "vcaLib.h"
 #include "analyzer/Analyzer.h"
 
-#define XSTR(x) STR(x)
 #define STR(x) #x
 
 DLL_PUBLIC vca_analyzer *vca_analyzer_open(vca_param param)
@@ -67,5 +66,5 @@ DLL_PUBLIC void vca_analyzer_close(vca_analyzer *enc)
 
 DLL_PUBLIC void vca_analyzer_shot_detect(vca_analyzer *enc) {}
 
-const char *vca_version_str = XSTR(VCA_VERSION);
+const char *vca_version_str = STR(VCA_VERSION);
 
