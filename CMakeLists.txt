@@ -7,7 +7,7 @@ endif()
 set (CMAKE_CXX_STANDARD 17)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-project (vca)
+project (VCA)
 
 option(ENABLE_ASSEMBLY "Enable use of nasm assembly" ON)
 option(ENABLE_PERFORMANCE_TEST "Enable Performance Test" OFF)

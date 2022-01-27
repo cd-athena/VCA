@@ -179,4 +179,6 @@ DLL_PUBLIC vca_result vca_analyzer_pull_frame_result(vca_analyzer *enc, vca_fram
 DLL_PUBLIC void vca_analyzer_close(vca_analyzer *enc);
 DLL_PUBLIC void vca_analyzer_shot_detect(vca_analyzer *enc);
 
+DLL_PUBLIC extern const char *vca_version_str;
+
 } // extern "C"

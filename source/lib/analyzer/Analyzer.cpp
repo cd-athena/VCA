@@ -40,6 +40,8 @@ Analyzer::Analyzer(vca_param cfg)
     this->cfg = cfg;
     this->jobs.setMaximumQueueSize(5);
 
+    log(cfg, LogLevel::Info, "Block size: " + std::to_string(this->cfg.blockSize));
+
     if (this->cfg.cpuSimd == CpuSimd::Autodetect)
     {
         this->cfg.cpuSimd = cpuDetectMaxSimd();
