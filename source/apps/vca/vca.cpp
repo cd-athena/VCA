@@ -406,6 +406,7 @@ int main(int argc, char **argv)
                     "Error opening complexity CSV file " + options.complexityCSVFilename);
             return 1;
         }
+        complexityFile << "POC, E, h, epsilon \n";
     }
 
     std::ofstream shotsFile;
