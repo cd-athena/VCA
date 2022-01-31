@@ -6,7 +6,7 @@ For online prediction in live streaming applications, selecting low-complexity f
 About VCA
 ======================
 
-The primary objective of VCA is to become the best spatial and temporal complexity predictor for every video/ video segment which aids in predicting encoding parameters for applications like online per-title encoding. VCA is available as an open source library, published under the GPLv3 license and is also available under a commercial license. VCA leverages some of the x86 SIMD optimizations from the x265 HEVC encoder project.
+The primary objective of VCA is to become the best spatial and temporal complexity predictor for every video/ video segment which aids in predicting encoding parameters for applications like online per-title encoding. VCA is available as an open source library, published under the GPLv3 license. VCA leverages x86 SIMD and multi-threading optimizations for effective performance.
 While VCA is primarily designed as a video complexity analyzer library, a command-line executable is provided to facilitate testing and development. We expect VCA to be utilized in many leading video encoding solutions in the coming years.
 
 [How to build?](build.md)
