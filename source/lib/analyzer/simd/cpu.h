@@ -28,7 +28,9 @@
 #define VCA_CPU_AVX2   (1 << 3)
 
 // from primitives.cpp
+#if ENABLE_ASSEMBLY
 extern "C" void vca_cpu_emms(void);
+#endif
 
 #if _MSC_VER
 #include <mmintrin.h>

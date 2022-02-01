@@ -42,12 +42,17 @@ Analyzer::Analyzer(vca_param cfg)
 
     log(cfg, LogLevel::Info, "Block size: " + std::to_string(this->cfg.blockSize));
 
+#if ENABLE_ASSEMBLY
     if (this->cfg.cpuSimd == CpuSimd::Autodetect)
     {
         this->cfg.cpuSimd = cpuDetectMaxSimd();
         log(cfg, LogLevel::Info, "Autodetected SIMD.");
     }
     log(cfg, LogLevel::Info, "Using SIMD " + cpuSimdNames.at(this->cfg.cpuSimd));
+#else
+    this->cfg.cpuSimd = CpuSimd::None;
+    log(cfg, LogLevel::Info, "SIMD is disabled");
+#endif
 
     if (cfg.nrFrameThreads == 0)
     {
