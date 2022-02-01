@@ -110,6 +110,7 @@ else()
 endif()
 
 if(ENABLE_ASSEMBLY)
+    set_source_files_properties(analyzer/Analyzer.cpp analyzer/EnergyCalculation.cpp analyzer/simd/cpu.cpp PROPERTIES COMPILE_FLAGS -DENABLE_ASSEMBLY=1)
     message(STATUS "Activating nasm assembly")
     enable_language(ASM_NASM)
     set(A_SRCS 
