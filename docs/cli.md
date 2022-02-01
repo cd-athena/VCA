@@ -2,8 +2,7 @@ Command Line Options
 ======================
 
 ******************
-Executable Options (**CLI ONLY**)
-******************
+**Executable Options (CLI ONLY)**
 
 - option:: **--help, -h**
 
@@ -15,8 +14,7 @@ Executable Options (**CLI ONLY**)
 	> Display version details
 
 ******************
-Logging/Statistic Options (**CLI ONLY**)
-******************
+**Logging/Statistic Options (CLI ONLY)**
 
 - option:: **--complexity-csv < filename>**
 
@@ -43,8 +41,7 @@ Logging/Statistic Options (**CLI ONLY**)
 	visualized using YUView.
 
 ******************
-Performance Options
-******************
+**Performance Options**
 
 - option:: **--[no-]asm**
 
@@ -56,8 +53,7 @@ Performance Options
 	Default: 0 (autodetect)
 
 ******************
-Input/Output File Options (**CLI ONLY**)
-******************
+**Input/Output File Options (CLI ONLY)**
 
 These options describe the input video sequence or operations that are performed on the sequence prior to analyze. All options dealing with files (names, formats, offsets or
 frame counts) are only applicable to the CLI application.
