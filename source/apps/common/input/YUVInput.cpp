@@ -73,6 +73,9 @@ bool YUVInput::readFrame(FrameWithData &frame)
 
     this->input.read((char *) (frame.getData()), frame.getFrameSize());
 
+    if (!this->input)
+        return false;
+
     return true;
 }
 
