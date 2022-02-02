@@ -125,8 +125,6 @@ struct vca_frame
  */
 struct vca_param
 {
-    bool enableShotdetect{}; /* Enable shot detection algorithm using epsilon feature */
-
     bool enableASM{true};
 
     vca_frame_info frameInfo{};
@@ -134,15 +132,11 @@ struct vca_param
     // Size (width/height) of the analysis block. Must be 8, 16 or 32.
     unsigned blockSize{32};
 
-    double minThresh{}; /* Minimum threshold for epsilon in shot detection */
-    double maxThresh{}; /* Maximum threshold for epsilon in shot detection */
-
     unsigned nrFrameThreads{0};
     unsigned nrSliceThreads{0};
 
     CpuSimd cpuSimd{CpuSimd::Autodetect};
 
-    // Logging
     void (*logFunction)(void *, LogLevel, const char *){};
     void *logFunctionPrivateData{};
 };
@@ -162,7 +156,7 @@ typedef enum
  * transferred to the library. The caller must make sure that the pointers are
  * valid until the frame was analyzed. Once a results for a frame was pulled the
  * library will not use pointers anymore.
- * This may block until there is a slot available to work on. The number of 
+ * This may block until there is a slot available to work on. The number of
  * frames that will be processed in parallel can be set using nrFrameThreads.
  */
 DLL_PUBLIC vca_result vca_analyzer_push(vca_analyzer *enc, vca_frame *pic_in);
@@ -177,7 +171,27 @@ DLL_PUBLIC bool vca_result_available(vca_analyzer *enc);
 DLL_PUBLIC vca_result vca_analyzer_pull_frame_result(vca_analyzer *enc, vca_frame_results *result);
 
 DLL_PUBLIC void vca_analyzer_close(vca_analyzer *enc);
-DLL_PUBLIC void vca_analyzer_shot_detect(vca_analyzer *enc);
+
+struct vca_shot_detection_param
+{
+    double minEpsilonThresh{};
+    double maxEpsilonThresh{};
+
+    unsigned fps{};
+
+    void (*logFunction)(void *, LogLevel, const char *){};
+    void *logFunctionPrivateData{};
+};
+
+struct vca_shot_detect_frame
+{
+    double epsilon{};
+    bool isNewShot{};
+};
+
+DLL_PUBLIC vca_result vca_shot_detectection(const vca_shot_detection_param &param,
+                                            vca_shot_detect_frame *frames,
+                                            size_t num_frames);
 
 DLL_PUBLIC extern const char *vca_version_str;
 

@@ -114,6 +114,7 @@ struct CLIOptions
     std::string yuviewStatsFilename;
 
     vca_param vcaParam;
+    vca_shot_detection_param shotDetectParam;
 };
 
 struct Result
@@ -224,16 +225,13 @@ std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
         else if (name == "complexity-csv")
             options.complexityCSVFilename = optarg;
         else if (name == "shot-csv")
-        {
-            options.shotCSVFilename           = optarg;
-            options.vcaParam.enableShotdetect = true;
-        }
+            options.shotCSVFilename = optarg;
         else if (name == "yuview-stats")
             options.yuviewStatsFilename = optarg;
         else if (name == "max-thresh")
-            options.vcaParam.maxThresh = std::stod(optarg);
+            options.shotDetectParam.maxEpsilonThresh = std::stod(optarg);
         else if (name == "min-thresh")
-            options.vcaParam.minThresh = std::stod(optarg);
+            options.shotDetectParam.minEpsilonThresh = std::stod(optarg);
         else if (name == "block-size")
             options.vcaParam.blockSize = std::stoi(optarg);
         else if (name == "threads")

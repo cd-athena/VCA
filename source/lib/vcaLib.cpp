@@ -20,6 +20,7 @@
 
 #include "vcaLib.h"
 #include "analyzer/Analyzer.h"
+#include "analyzer/ShotDetection.h"
 
 #define XSTR(x) STR(x)
 #define STR(x) #x
@@ -65,7 +66,17 @@ DLL_PUBLIC void vca_analyzer_close(vca_analyzer *enc)
     delete analyzer;
 }
 
-DLL_PUBLIC void vca_analyzer_shot_detect(vca_analyzer *enc) {}
+DLL_PUBLIC vca_result vca_shot_detectection(const vca_shot_detection_param &param,
+                                            vca_shot_detect_frame *frames,
+                                            size_t num_frames)
+{
+    if (frames == nullptr)
+        return vca_result::VCA_ERROR;
+
+    if (num_frames == 0)
+        return vca_result::VCA_OK;
+
+    return vca::shot_detection(param, frames, num_frames);
+}
 
 const char *vca_version_str = XSTR(VCA_VERSION);
-
