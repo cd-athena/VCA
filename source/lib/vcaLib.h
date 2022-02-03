@@ -174,8 +174,8 @@ DLL_PUBLIC void vca_analyzer_close(vca_analyzer *enc);
 
 struct vca_shot_detection_param
 {
-    double minEpsilonThresh{};
-    double maxEpsilonThresh{};
+    double minEpsilonThresh{10};
+    double maxEpsilonThresh{50};
 
     double fps{};
 

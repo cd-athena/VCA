@@ -68,7 +68,7 @@ void detect(const vca_shot_detection_param &param, vca_shot_detect_frame *frames
 
     for (auto it = unsureFrames.begin(); it != unsureFrames.end(); it++)
     {
-        auto itNext = it++;
+        auto itNext = it + 1;
         if (itNext != unsureFrames.end() && it->previousShotDistance > param.fps
             && itNext->previousShotDistance > param.fps)
         {
