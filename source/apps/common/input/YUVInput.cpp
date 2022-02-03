@@ -79,4 +79,9 @@ bool YUVInput::readFrame(FrameWithData &frame)
     return true;
 }
 
+double YUVInput::getFPS() const
+{
+    return 0.0;
+}
+
 } // namespace vca

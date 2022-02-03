@@ -33,6 +33,7 @@ public:
     ~YUVInput() = default;
 
     bool readFrame(FrameWithData &frame) override;
+    double getFPS() const override;
 };
 
 } // namespace vca

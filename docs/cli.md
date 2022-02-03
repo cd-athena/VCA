@@ -86,6 +86,10 @@ frame counts) are only applicable to the CLI application.
 	> 2. i422 (4:2:2)            - Not supported by Main, Main10 and Main12 profiles
 	> 3. i444 (4:4:4)            - Supported by Main 4:4:4, Main 4:4:4 10, Main 4:4:4 12, Main 4:4:4 16 Intra profiles
 
+- options:: **--input-fps <doublt>**
+
+	> The framerate of the input. If the input is a Y4M file, it will be read from there but can be overriden with this.
+
 - option:: **--skip < integer>**
 
 	> Number of frames to skip at start of input file. Default 0

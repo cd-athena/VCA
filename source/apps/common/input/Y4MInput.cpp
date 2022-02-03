@@ -58,8 +58,7 @@ Y4MInput::Y4MInput(std::string &fileName, unsigned skipFrames)
     }
 
     if (skipFrames)
-    {
-    }
+    {}
 }
 
 bool Y4MInput::parseHeader()
@@ -134,6 +133,29 @@ bool Y4MInput::parseHeader()
                 vca_log(LogLevel::Info,
                         "Y4M invalid colorspace indicator (" + indicator + "). Assuming 4:2:0.");
         }
+        else if (parameterIndicator == 'F')
+        {
+            auto colonPos = field.find(':');
+            if (colonPos == std::string::npos)
+            {
+                vca_log(LogLevel::Error, "Invalid fps value: " + field);
+                return false;
+            }
+
+            try
+            {
+                auto num  = std::stoi(field.substr(1, colonPos - 1));
+                auto den  = std::stoi(field.substr(colonPos + 1));
+                this->fps = double(num) / double(den);
+                vca_log(LogLevel::Info,
+                        "Y4M Detected fps " + std::to_string(num) + "/" + std::to_string(den));
+            }
+            catch (...)
+            {
+                vca_log(LogLevel::Error, "Invalid fps value: " + field);
+                return false;
+            }
+        }
     }
 
     return true;
@@ -143,8 +165,7 @@ bool Y4MInput::readFrame(FrameWithData &frame)
 {
     char c = 0;
     while (this->input.get(c) && c != 'F')
-    {
-    }
+    {}
 
     if (this->input.eof())
         return false;
@@ -163,12 +184,16 @@ bool Y4MInput::readFrame(FrameWithData &frame)
         throw std::runtime_error("Error reading FRAME tag");
 
     while (this->input.get(c) && c != '\n')
-    {
-    }
+    {}
 
     this->input.read((char *) (frame.getData()), frame.getFrameSize());
 
     return true;
+}
+
+double Y4MInput::getFPS() const
+{
+    return this->fps;
 }
 
 } // namespace vca

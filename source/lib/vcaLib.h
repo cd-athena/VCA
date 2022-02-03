@@ -177,7 +177,7 @@ struct vca_shot_detection_param
     double minEpsilonThresh{};
     double maxEpsilonThresh{};
 
-    unsigned fps{};
+    double fps{};
 
     void (*logFunction)(void *, LogLevel, const char *){};
     void *logFunctionPrivateData{};

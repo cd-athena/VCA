@@ -29,12 +29,15 @@ class Y4MInput : public IInputFile
 protected:
     bool parseHeader();
 
+    double fps{};
+
 public:
     Y4MInput() = delete;
     Y4MInput(std::string &fileName, unsigned skipFrames);
     ~Y4MInput() = default;
 
     bool readFrame(FrameWithData &frame) override;
+    double getFPS() const override;
 };
 
 } // namespace vca
