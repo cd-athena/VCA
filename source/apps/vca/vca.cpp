@@ -114,6 +114,7 @@ struct CLIOptions
     std::string yuviewStatsFilename;
 
     vca_param vcaParam;
+    vca_shot_detection_param shotDetectParam;
 };
 
 struct Result
@@ -217,6 +218,8 @@ std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
             else if (arg == "444" || arg == "4:4:4")
                 options.vcaParam.frameInfo.colorspace = vca_colorSpace::YUV444;
         }
+        else if (name == "input-fps")
+            options.shotDetectParam.fps = std::stod(optarg);
         else if (name == "skip")
             options.skipFrames = std::stoul(optarg);
         else if (name == "frames")
@@ -224,16 +227,13 @@ std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
         else if (name == "complexity-csv")
             options.complexityCSVFilename = optarg;
         else if (name == "shot-csv")
-        {
-            options.shotCSVFilename           = optarg;
-            options.vcaParam.enableShotdetect = true;
-        }
+            options.shotCSVFilename = optarg;
         else if (name == "yuview-stats")
             options.yuviewStatsFilename = optarg;
         else if (name == "max-thresh")
-            options.vcaParam.maxThresh = std::stod(optarg);
+            options.shotDetectParam.maxEpsilonThresh = std::stod(optarg);
         else if (name == "min-thresh")
-            options.vcaParam.minThresh = std::stod(optarg);
+            options.shotDetectParam.minEpsilonThresh = std::stod(optarg);
         else if (name == "block-size")
             options.vcaParam.blockSize = std::stoi(optarg);
         else if (name == "threads")
@@ -314,6 +314,21 @@ void writeComplexityStatsToFile(const Result &result, std::ofstream &file)
 {
     file << result.result.poc << ", " << result.result.averageEnergy << ", " << result.result.sad
          << ", " << result.result.epsilon << "\n";
+}
+
+void writeShotDetectionResultsToFile(const std::vector<vca_shot_detect_frame> &shotDetectFrames,
+                                     std::ofstream &file)
+{
+    size_t shotCounter = 0;
+    for (size_t i = 0; i < shotDetectFrames.size(); i++)
+    {
+        auto &frame = shotDetectFrames.at(i);
+        if (frame.isNewShot)
+        {
+            file << shotCounter << ", " << i << "\n";
+            shotCounter++;
+        }
+    }
 }
 
 #ifdef _WIN32
@@ -409,18 +424,8 @@ int main(int argc, char **argv)
         complexityFile << "POC, E, h, epsilon \n";
     }
 
-    std::ofstream shotsFile;
-    if (!options.shotCSVFilename.empty())
-    {
-        shotsFile.open(options.shotCSVFilename);
-        if (!shotsFile.is_open())
-        {
-            vca_log(LogLevel::Error, "Error opening shot CSV file " + options.shotCSVFilename);
-            return 1;
-        }
-    }
-
-    options.vcaParam.logFunction = logLibraryMessage;
+    options.vcaParam.logFunction        = logLibraryMessage;
+    options.shotDetectParam.logFunction = logLibraryMessage;
 
     auto analyzer = vca_analyzer_open(options.vcaParam);
     if (analyzer == nullptr)
@@ -440,6 +445,7 @@ int main(int argc, char **argv)
     std::queue<framePtr> frameRecycling;
     std::queue<framePtr> activeFrames;
     std::unique_ptr<YUViewStatsFile> yuviewStatsFile;
+    std::vector<vca_shot_detect_frame> shotDetectFrames;
     unsigned pushedFrames   = 0;
     unsigned resultsCounter = 0;
     while (!inputFile->isEof() && !inputFile->isFail()
@@ -503,6 +509,8 @@ int main(int argc, char **argv)
                 yuviewStatsFile->write(result.result, options.vcaParam.blockSize);
             if (complexityFile.is_open())
                 writeComplexityStatsToFile(result, complexityFile);
+            if (!options.shotCSVFilename.empty())
+                shotDetectFrames.push_back({result.result.epsilon, false});
 
             auto processedFrame = std::move(activeFrames.front());
             activeFrames.pop();
@@ -530,6 +538,8 @@ int main(int argc, char **argv)
             yuviewStatsFile->write(result.result, options.vcaParam.blockSize);
         if (complexityFile.is_open())
             writeComplexityStatsToFile(result, complexityFile);
+        if (!options.shotCSVFilename.empty())
+            shotDetectFrames.push_back({result.result.epsilon, false});
 
         auto processedFrame = std::move(activeFrames.front());
         activeFrames.pop();
@@ -541,6 +551,30 @@ int main(int argc, char **argv)
 
     vca_analyzer_close(analyzer);
     printStatus(resultsCounter, pushedFrames, true);
+
+    if (!options.shotCSVFilename.empty())
+    {
+        if (options.shotDetectParam.fps == 0.0)
+            options.shotDetectParam.fps = inputFile->getFPS();
+
+        vca_shot_detectection(options.shotDetectParam,
+                              shotDetectFrames.data(),
+                              shotDetectFrames.size());
+
+        std::ofstream shotsFile;
+        shotsFile.open(options.shotCSVFilename);
+        if (!shotsFile.is_open())
+        {
+            vca_log(LogLevel::Error, "Error opening shot CSV file " + options.shotCSVFilename);
+            return 1;
+        }
+        shotsFile << "ID, Start POC \n";
+        writeShotDetectionResultsToFile(shotDetectFrames, shotsFile);
+
+        vca_log(LogLevel::Info,
+                "Performed shot detection for " + std::to_string(shotDetectFrames.size())
+                    + " frames.");
+    }
 
     return 0;
 }

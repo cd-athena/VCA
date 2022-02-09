@@ -1,7 +1,6 @@
-/*****************************************************************************
- * Copyright (C) 2022 Christian Doppler Laboratory ATHENA
+/* Copyright (C) 2022 Christian Doppler Laboratory ATHENA
  *
- * Authors: Steve Borho <steve@borho.org>
+ * Authors: Christian Feldmann <christian.feldmann@bitmovin.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,21 +18,12 @@
 
 #pragma once
 
-#include "IInputFile.h"
-
-#include <fstream>
+#include "vcaLib.h"
 
 namespace vca {
 
-class YUVInput : public IInputFile
-{
-public:
-    YUVInput() = delete;
-    YUVInput(std::string &fileName, vca_frame_info &openFrameInfo, unsigned skipFrames);
-    ~YUVInput() = default;
+vca_result shot_detection(const vca_shot_detection_param &param,
+                          vca_shot_detect_frame *frames,
+                          size_t num_frames);
 
-    bool readFrame(FrameWithData &frame) override;
-    double getFPS() const override;
-};
-
-} // namespace vca
+}

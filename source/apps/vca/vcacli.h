@@ -32,6 +32,7 @@ static const struct option long_options[] = {{"help", no_argument, NULL, 'h'},
                                              {"input-depth", required_argument, NULL, 0},
                                              {"input-res", required_argument, NULL, 0},
                                              {"input-csp", required_argument, NULL, 0},
+                                             {"input-fps", required_argument, NULL, 0},
                                              {"skip", required_argument, NULL, 0},
                                              {"frames", required_argument, NULL, 'f'},
                                              {"complexity-csv", required_argument, NULL, 0},
@@ -64,6 +65,8 @@ static void showHelp()
     printf("                                 420 (4:2:0 default)\n");
     printf("                                 422 (4:2:2)\n");
     printf("                                 444 (4:4:4)\n");
+    printf("   --input-fps <double>          Input fps, auto-detected if Y4M. Needed for shot "
+           "detection.\n");
     printf("-f/--frames <integer>            Maximum number of frames to analyze. Default all\n");
     printf("   --skip <integer>              Skip N frames in the input before starting the "
            "analysis\n");

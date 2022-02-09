@@ -1,4 +1,3 @@
-
 Command Line Options
 ======================
 
@@ -33,7 +32,7 @@ Command Line Options
 - option:: **--shot-csv < filename>** 
 
 	``` 
-	Write the shot id, the first frame and last frame of every shot to a Comma Separated Values log file. Creates the file if it doesn't already exist. ```
+	Write the shot id, the first POC of every shot to a Comma Separated Values log file. Creates the file if it doesn't already exist. ```
 	
 - option:: **--yuvview-stats < filename>** 
 
@@ -95,6 +94,11 @@ frame counts) are only applicable to the CLI application.
 
 	>  3 or i444 (4:4:4)            - Supported by Main 4:4:4, Main 4:4:4 10, Main 4:4:4 12, Main 4:4:4 16 Intra profiles
 
+- option:: **--input-fps < double>**
+
+	```
+	The framerate of the input. If the input is a Y4M file, it will be read from there but can be overriden with this. ```
+
 - option:: **--skip < integer>**
 
 	``` 
@@ -114,12 +118,12 @@ frame counts) are only applicable to the CLI application.
 	```
 	Size of the non-overlapping blocks used to determine the E, h features. Default: 32 ```
 
-- option:: **--min-thresh < float>** 
+- option:: **--min-thresh < double>** 
 
 	``` 
 	Minimum threshold of epsilon for shot detection ```
 
-- option:: **--max-thresh < float>**
+- option:: **--max-thresh < double>**
  
 	```
 	Maximum threshold of epsilon for shot detection	```

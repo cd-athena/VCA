@@ -61,17 +61,18 @@ public:
 
     bool isEof() const
     {
-        return input.eof();
+        return this->input.eof();
     }
     bool isFail()
     {
-        return input.fail();
+        return this->input.fail();
     }
 
     vca_frame_info getFrameInfo() const
     {
-        return frameInfo;
+        return this->frameInfo;
     }
+    virtual double getFPS() const = 0;
 };
 
 } // namespace vca
