@@ -85,7 +85,7 @@ void vca_intel_cpu_indicator_init(void) {}
 #endif // ifdef __INTEL_COMPILER
 }
 
-#if ENABLE_ASSEMBLY
+#if ENABLE_NASM
 extern "C" {
 /* cpu-a.asm */
 int vca_cpu_cpuid_test(void);
@@ -100,8 +100,8 @@ uint64_t vca_cpu_xgetbv(int xcr);
 
 CpuSimd cpuDetectMaxSimd()
 {
-    auto cpu = CpuSimd::None;
-#if ENABLE_ASSEMBLY
+    auto cpu = CpuSimd::SSSE3;
+#if ENABLE_NASM
     uint32_t eax, ebx, ecx, edx;
     uint32_t vendor[4] = {0};
     uint32_t max_basic_cap;

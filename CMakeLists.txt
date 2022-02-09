@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.10)
+cmake_minimum_required (VERSION 3.13)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
@@ -9,7 +9,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 project (VCA)
 
-option(ENABLE_ASSEMBLY "Enable use of nasm assembly" ON)
+option(ENABLE_NASM "Enable use of nasm assembly" ON)
 option(ENABLE_PERFORMANCE_TEST "Enable Performance Test" OFF)
 
 add_subdirectory(source/lib)

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 
 configure_file("${PROJECT_SOURCE_DIR}/source/lib/vca_config.h.in"
                "${PROJECT_BINARY_DIR}/vca_config.h")
@@ -76,6 +76,31 @@ else()
     message(STATUS "Please add this value near ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE}")
 endif()
 
+add_library(vcaLib "")
+target_sources(vcaLib
+    PRIVATE
+        vcaLib.cpp
+        vcaColorSpace.h
+        analyzer/Analyzer.h
+        analyzer/Analyzer.cpp
+        analyzer/common.h
+        analyzer/DCTTransforms.h
+        analyzer/DCTTransforms.cpp
+        analyzer/EnergyCalculation.h
+        analyzer/EnergyCalculation.cpp
+        analyzer/MultiThreadQueue.h
+        analyzer/MultiThreadQueue.cpp
+        analyzer/ProcessingThread.h
+        analyzer/ProcessingThread.cpp
+        analyzer/simd/cpu.h
+        analyzer/simd/cpu.cpp
+        analyzer/simd/dct-ssse3.h
+        analyzer/simd/dct-ssse3.cpp
+        analyzer/simd/dct8.h
+    PUBLIC
+        vcaLib.h
+)
+
 if(NOT X64)
     message(FATAL_ERROR "Only 64bit architecture is supported")
 endif()
@@ -84,40 +109,28 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     set(GCC 1)
 endif()
 
-find_program(NASM_EXECUTABLE 
- NAMES nasm nasm-2.13.0-win32 nasm-2.13.0-win64 nasm nasm-2.13.0-win32 nasm-2.13.0-win64
- HINTS $ENV{NASM_ROOT} ${NASM_ROOT}
- PATH_SUFFIXES bin
-)
-
-if(NASM_EXECUTABLE)
-        execute_process(COMMAND ${NASM_EXECUTABLE} -version
-            OUTPUT_VARIABLE nasm_version
-            ERROR_QUIET
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-            )
-    if(nasm_version MATCHES "^NASM version ([0-9\\.]*)")
-        set(NASM_VERSION_STRING "${CMAKE_MATCH_1}")
-    endif()
-    unset(nasm_version)
-endif()
-
-if(NASM_VERSION_STRING AND X86)
-    message(STATUS "Found Nasm ${NASM_VERSION_STRING} to build assembly primitives")
-    option(ENABLE_ASSEMBLY "Enable use of assembly coded primitives" ON)
-else()
-    option(ENABLE_ASSEMBLY "Enable use of assembly coded primitives" OFF)
-endif()
-
-if(ENABLE_ASSEMBLY)
-    set_source_files_properties(analyzer/Analyzer.cpp analyzer/EnergyCalculation.cpp analyzer/simd/cpu.cpp PROPERTIES COMPILE_FLAGS -DENABLE_ASSEMBLY=1)
-    message(STATUS "Activating nasm assembly")
+if(ENABLE_NASM)
     enable_language(ASM_NASM)
-    set(A_SRCS 
-        analyzer/simd/dct8.asm 
-        analyzer/simd/const-a.asm
-        analyzer/simd/cpu-a.asm)
-    
+    if(CMAKE_ASM_NASM_COMPILER_LOADED)
+        message(STATUS "Nasm found. Activating nasm assembly.")
+        set(BUILD_WITH_NASM 1)
+    else()
+        message(STATUS "Nasm could not be found. Disabling nasm assembly.")
+    endif(CMAKE_ASM_NASM_COMPILER_LOADED)
+else()
+    message(STATUS "Nasm disabled. Not looking for it or using it.")
+endif(ENABLE_NASM)
+
+if(BUILD_WITH_NASM)
+    set_source_files_properties(analyzer/Analyzer.cpp analyzer/EnergyCalculation.cpp analyzer/simd/cpu.cpp PROPERTIES COMPILE_FLAGS -DENABLE_NASM=1)
+    enable_language(ASM_NASM)
+    target_sources(vcaLib
+        PRIVATE
+            analyzer/simd/dct8.asm
+            analyzer/simd/const-a.asm
+            analyzer/simd/cpu-a.asm
+    )
+
     if(APPLE)
         set(CMAKE_ASM_NASM_FLAGS "-I\"${CMAKE_CURRENT_SOURCE_DIR}/analyzer/simd/\" -DPIC -DARCH_X86_64=1 -DPREFIX -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DVCA_NS=vca")
     else()
@@ -127,14 +140,19 @@ if(ENABLE_ASSEMBLY)
     if (GCC)
         set_source_files_properties(analyzer/simd/dct-ssse3.cpp PROPERTIES COMPILE_FLAGS "-mssse3")
     endif(GCC)
-endif(ENABLE_ASSEMBLY)
+else()
+    target_sources(vcaLib
+        PRIVATE
+            analyzer/simd/noAsmImpl.cpp
+    )
+endif(BUILD_WITH_NASM)
 
 file(GLOB_RECURSE vcaLib_source *.cpp)
 file(GLOB_RECURSE vcaLib_header *.h)
 
 include_directories(./)
 
-add_library(vcaLib ${vcaLib_source} ${vcaLib_header} ${A_SRCS})
+#add_library(vcaLib ${vcaLib_source} ${vcaLib_header} ${A_SRCS})
 target_link_libraries(vcaLib Threads::Threads)
 set_target_properties(vcaLib PROPERTIES OUTPUT_NAME vcaLib)
 set_target_properties(vcaLib PROPERTIES PUBLIC_HEADER "vcaLib.h")

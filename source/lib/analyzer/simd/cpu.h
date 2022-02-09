@@ -28,7 +28,7 @@
 #define VCA_CPU_AVX2   (1 << 3)
 
 // from primitives.cpp
-#if ENABLE_ASSEMBLY
+#if ENABLE_NASM
 extern "C" void vca_cpu_emms(void);
 #endif
 
