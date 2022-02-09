@@ -568,6 +568,7 @@ int main(int argc, char **argv)
             vca_log(LogLevel::Error, "Error opening shot CSV file " + options.shotCSVFilename);
             return 1;
         }
+        shotsFile << "ID, Start POC \n";
         writeShotDetectionResultsToFile(shotDetectFrames, shotsFile);
 
         vca_log(LogLevel::Info,
