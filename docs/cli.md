@@ -65,7 +65,7 @@ frame counts) are only applicable to the CLI application.
 	``` 
 	Input filename, only raw YUV or Y4M supported. Use single dash for stdin. ```
 
-- option:: **--y4m **
+- option:: **--y4m**
 
 	``` 
 	Parse input stream as YUV4MPEG2 regardless of file extension,	primarily intended for use with stdin (ie: :option:`--input` -
