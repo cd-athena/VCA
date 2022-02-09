@@ -85,12 +85,14 @@ void vca_intel_cpu_indicator_init(void) {}
 #endif // ifdef __INTEL_COMPILER
 }
 
+#if ENABLE_NASM
 extern "C" {
 /* cpu-a.asm */
 int vca_cpu_cpuid_test(void);
 void vca_cpu_cpuid(uint32_t op, uint32_t *eax, uint32_t *ebx, uint32_t *ecx, uint32_t *edx);
 uint64_t vca_cpu_xgetbv(int xcr);
 }
+#endif
 
 #if defined(_MSC_VER)
 #pragma warning(disable : 4309) // truncation of constant value
@@ -98,8 +100,8 @@ uint64_t vca_cpu_xgetbv(int xcr);
 
 CpuSimd cpuDetectMaxSimd()
 {
-    auto cpu = CpuSimd::None;
-
+    auto cpu = CpuSimd::SSSE3;
+#if ENABLE_NASM
     uint32_t eax, ebx, ecx, edx;
     uint32_t vendor[4] = {0};
     uint32_t max_basic_cap;
@@ -136,7 +138,7 @@ CpuSimd cpuDetectMaxSimd()
                 cpu = CpuSimd::AVX2;
         }
     }
-
+#endif
     return cpu;
 }
 

@@ -19,12 +19,10 @@
  *****************************************************************************/
 
 #include "EnergyCalculation.h"
+
 #include "DCTTransforms.h"
 #include "simd/dct-ssse3.h"
-
-extern "C" {
 #include "simd/dct8.h"
-}
 
 #include <algorithm>
 #include <cstdlib>
