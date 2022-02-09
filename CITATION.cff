@@ -9,8 +9,13 @@ authors:
 - family-names: "Amirpour"
   given-names: "Hadi"
   orcid: "https://orcid.org/0000-0001-9853-1720"
+- family-names: "Ghanbari"
+  given-names: "Mohammad"
+  orcid: "https://orcid.org/0000-0002-5482-8378"
+- family-names: "Timmerer"
+  given-names: "Christian"
+  orcid: "https://orcid.org/0000-0003-1114-2584"  
 title: "VCA"
 version: 1.0.0
-doi: 10.5281/zenodo.1234
-date-released: 2021-12-28
+date-released: 2022-02-14
 url: "https://github.com/cd-athena/VCA"
