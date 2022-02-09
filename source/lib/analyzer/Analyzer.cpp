@@ -31,7 +31,13 @@ const std::map<CpuSimd, std::string> cpuSimdNames = {{CpuSimd::None, "None"},
                                                      {CpuSimd::SSE4, "SSE4"},
                                                      {CpuSimd::AVX2, "AVX2"}};
 
-}
+const std::map<CpuSimd, unsigned> cpuSimdLevel = {{CpuSimd::None, 0},
+                                                  {CpuSimd::SSE2, 1},
+                                                  {CpuSimd::SSSE3, 2},
+                                                  {CpuSimd::SSE4, 3},
+                                                  {CpuSimd::AVX2, 4}};
+
+} // namespace
 
 namespace vca {
 
@@ -46,6 +52,18 @@ Analyzer::Analyzer(vca_param cfg)
     {
         this->cfg.cpuSimd = cpuDetectMaxSimd();
         log(cfg, LogLevel::Info, "Autodetected SIMD.");
+    }
+    else
+    {
+        auto selectedLevel = cpuSimdLevel.at(this->cfg.cpuSimd);
+        auto maxLevel      = cpuSimdLevel.at(cpuDetectMaxSimd());
+        if (selectedLevel > maxLevel)
+        {
+            this->cfg.cpuSimd = cpuDetectMaxSimd();
+            log(cfg,
+                LogLevel::Warning,
+                "The selected SIMD is not available on this CPU (). Lowering it.");
+        }
     }
     log(cfg, LogLevel::Info, "Using SIMD " + cpuSimdNames.at(this->cfg.cpuSimd));
 
