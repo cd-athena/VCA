@@ -5,7 +5,7 @@ The software is tested mostly in Linux and Windows OS. It requires some pre-requ
 Prerequisites
 =============
 
- 1. [CMake](https://cmake.org) version 3.1 or higher.
+ 1. [CMake](https://cmake.org) version 3.13 or higher.
  2. [Git](https://git-scm.com/).
  3. C++ compiler with C++11 support
  4. [NASM](https://nasm.us/) assembly compiler (for x86 SIMD support)
