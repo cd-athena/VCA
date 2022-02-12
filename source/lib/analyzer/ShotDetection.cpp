@@ -103,6 +103,8 @@ vca_result shot_detection(const vca_shot_detection_param &param,
     }
     catch (const std::exception &e)
     {
+        std::string exception_str = e.what();
+        log(param, LogLevel::Error, "Exception " + exception_str);
         return vca_result::VCA_ERROR;
     }
 
