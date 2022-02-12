@@ -92,6 +92,8 @@ target_sources(vcaLib
         analyzer/MultiThreadQueue.cpp
         analyzer/ProcessingThread.h
         analyzer/ProcessingThread.cpp
+        analyzer/ShotDetection.h
+        analyzer/ShotDetection.cpp
         analyzer/simd/cpu.h
         analyzer/simd/cpu.cpp
         analyzer/simd/dct-ssse3.h

@@ -557,9 +557,9 @@ int main(int argc, char **argv)
         if (options.shotDetectParam.fps == 0.0)
             options.shotDetectParam.fps = inputFile->getFPS();
 
-        vca_shot_detectection(options.shotDetectParam,
-                              shotDetectFrames.data(),
-                              shotDetectFrames.size());
+        vca_shot_detection(options.shotDetectParam,
+                           shotDetectFrames.data(),
+                           shotDetectFrames.size());
 
         std::ofstream shotsFile;
         shotsFile.open(options.shotCSVFilename);
