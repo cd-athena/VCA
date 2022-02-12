@@ -189,9 +189,9 @@ struct vca_shot_detect_frame
     bool isNewShot{};
 };
 
-DLL_PUBLIC vca_result vca_shot_detectection(const vca_shot_detection_param &param,
-                                            vca_shot_detect_frame *frames,
-                                            size_t num_frames);
+DLL_PUBLIC vca_result vca_shot_detection(const vca_shot_detection_param &param,
+                                         vca_shot_detect_frame *frames,
+                                         size_t num_frames);
 
 DLL_PUBLIC extern const char *vca_version_str;
 
