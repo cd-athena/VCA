@@ -40,10 +40,12 @@ YUViewStatsFile::YUViewStatsFile(const std::string &filename,
     this->file << "%;seq-specs;"s << inputFilename << ";layer0;"s << info.width << ";"s
                << info.height << ";24\n"s;
 
-    this->file << "%;type;0;BlockEnergy;range\n"s;
-    this->file << "%;defaultRange;0;10000;heat\n"s;
-    this->file << "%;type;1;SAD;range\n"s;
-    this->file << "%;defaultRange;0;3000;heat\n"s;
+    this->file << "%;type;0;BlockBrightness;range\n"s;
+    this->file << "%;defaultRange;0;300;heat\n"s;
+    this->file << "%;type;1;BlockEnergy;range\n"s;
+    this->file << "%;defaultRange;0;300;heat\n"s;
+    this->file << "%;type;2;SAD;range\n"s;
+    this->file << "%;defaultRange;0;300;heat\n"s;
 }
 
 void YUViewStatsFile::write(const vca_frame_results &results, unsigned blockSize)
