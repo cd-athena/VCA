@@ -19,15 +19,17 @@ Command Line Options
 - option:: **--complexity-csv < filename>** 
 
 	``` 	
-	Write the spatial (E) and temporal complexity (h) statistics to a Comma Separated Values log file. Creates the file if it doesn't already exist. The following statistics are available: ```
+	Write the spatial (E) and temporal complexity (h), epsilon, brightness (L) statistics to a Comma Separated Values log file. Creates the file if it doesn't already exist. The following statistics are available: ```
  
 	>  **POC** Picture Order Count - The display order of the frames
  
-	>  **E** Spatial complexity for the frame
+	>  **E** Spatial complexity of the frame
 
-	>  **h** Temporal complexity for the frame
+	>  **h** Temporal complexity of the frame
 
-	>  **epsilon** Gradient of the temporal complexity for the frame
+	>  **epsilon** Gradient of the temporal complexity of the frame
+	
+	>  **L** Brightness of the frame
 
 - option:: **--shot-csv < filename>** 
 
@@ -37,7 +39,7 @@ Command Line Options
 - option:: **--yuvview-stats < filename>** 
 
 	``` 
-	Write the per block results (E, h) to a stats file that can be visualized using YUView. ```
+	Write the per block results (L, E, h) to a stats file that can be visualized using YUView. ```
 	
 ******************
 
