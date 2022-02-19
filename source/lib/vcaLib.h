@@ -59,19 +59,12 @@ enum class CpuSimd
     AVX2
 };
 
-struct vca_frame_texture_t
-{
-    int32_t *m_ctuAbsoluteEnergy;
-    double *m_ctuRelativeEnergy;
-    int32_t m_variance;
-    int32_t m_avgEnergy;
-};
-
 /* Frame level statistics */
 struct vca_frame_stats
 {
     int poc;
-    int32_t e_value;
+    uint32_t l_value;
+    uint32_t e_value;
     double h_value;
     double epsilon;
 };
@@ -82,6 +75,9 @@ struct vca_frame_results
      * The caller must make sure that this is pointing to a valid and big enough block of memory.
      * These must not be pointing to memory. If they are nullptr, no data will be written.
      */
+    uint32_t *brightnessPerBlock{};
+    uint32_t averageBrightness;
+
     uint32_t *energyPerBlock{};
     uint32_t averageEnergy{};
 

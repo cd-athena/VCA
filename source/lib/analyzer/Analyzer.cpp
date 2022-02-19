@@ -131,9 +131,14 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
 
     outputResult->poc           = result->poc;
     outputResult->jobID         = result->jobID;
+    outputResult->averageBrightness = result->averageBrightness;
     outputResult->averageEnergy = result->averageEnergy;
     outputResult->sad           = result->sad;
     outputResult->epsilon       = result->epsilon;
+    if (outputResult->brightnessPerBlock)
+        std::memcpy(outputResult->brightnessPerBlock,
+                    result->brightnessPerBlock.data(),
+                    result->brightnessPerBlock.size() * sizeof(uint32_t));
     if (outputResult->energyPerBlock)
         std::memcpy(outputResult->energyPerBlock,
                     result->energyPerBlock.data(),

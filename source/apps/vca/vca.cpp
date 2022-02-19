@@ -124,12 +124,15 @@ struct Result
         auto widthInBlocks = (info.width + blockSize - 1) / blockSize;
         auto heightInBlock = (info.height + blockSize - 1) / blockSize;
         auto numberBlocks  = widthInBlocks * heightInBlock;
+        this->brightnessPerBlockData.resize(numberBlocks);
+        this->result.brightnessPerBlock = this->brightnessPerBlockData.data();
         this->energyPerBlockData.resize(numberBlocks);
         this->result.energyPerBlock = this->energyPerBlockData.data();
         this->sadPerBlockData.resize(numberBlocks);
         this->result.sadPerBlock = this->sadPerBlockData.data();
     }
 
+    std::vector<uint32_t> brightnessPerBlockData;
     std::vector<uint32_t> energyPerBlockData;
     std::vector<uint32_t> sadPerBlockData;
     vca_frame_results result;
@@ -305,7 +308,8 @@ void logResult(const Result &result, const vca_frame *frame, const unsigned resu
                     + std::to_string(resultsCounter) + ").");
 
     vca_log(LogLevel::Debug,
-            "Got results POC " + std::to_string(result.result.poc) + " averageEnergy "
+            "Got results POC " + std::to_string(result.result.poc) + "averageBrightness "
+                + std::to_string(result.result.averageBrightness) + " averageEnergy "
                 + std::to_string(result.result.averageEnergy) + " sad "
                 + std::to_string(result.result.sad));
 }
@@ -313,7 +317,7 @@ void logResult(const Result &result, const vca_frame *frame, const unsigned resu
 void writeComplexityStatsToFile(const Result &result, std::ofstream &file)
 {
     file << result.result.poc << ", " << result.result.averageEnergy << ", " << result.result.sad
-         << ", " << result.result.epsilon << "\n";
+         << ", " << result.result.epsilon << ", " << result.result.averageBrightness << "\n";
 }
 
 void writeShotDetectionResultsToFile(const std::vector<vca_shot_detect_frame> &shotDetectFrames,
@@ -421,7 +425,7 @@ int main(int argc, char **argv)
                     "Error opening complexity CSV file " + options.complexityCSVFilename);
             return 1;
         }
-        complexityFile << "POC, E, h, epsilon \n";
+        complexityFile << "POC, E, h, epsilon, L \n";
     }
 
     options.vcaParam.logFunction        = logLibraryMessage;
