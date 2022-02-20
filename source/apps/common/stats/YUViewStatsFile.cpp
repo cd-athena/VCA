@@ -40,10 +40,12 @@ YUViewStatsFile::YUViewStatsFile(const std::string &filename,
     this->file << "%;seq-specs;"s << inputFilename << ";layer0;"s << info.width << ";"s
                << info.height << ";24\n"s;
 
-    this->file << "%;type;0;BlockEnergy;range\n"s;
-    this->file << "%;defaultRange;0;10000;heat\n"s;
-    this->file << "%;type;1;SAD;range\n"s;
-    this->file << "%;defaultRange;0;3000;heat\n"s;
+    this->file << "%;type;0;BlockBrightness;range\n"s;
+    this->file << "%;defaultRange;0;300;heat\n"s;
+    this->file << "%;type;1;BlockEnergy;range\n"s;
+    this->file << "%;defaultRange;0;300;heat\n"s;
+    this->file << "%;type;2;SAD;range\n"s;
+    this->file << "%;defaultRange;0;300;heat\n"s;
 }
 
 void YUViewStatsFile::write(const vca_frame_results &results, unsigned blockSize)
@@ -51,19 +53,26 @@ void YUViewStatsFile::write(const vca_frame_results &results, unsigned blockSize
     auto widthInBlocks = (info.width + blockSize - 1) / blockSize;
     auto heightInBlock = (info.height + blockSize - 1) / blockSize;
 
-    if (auto data = results.energyPerBlock)
+    if (auto data = results.brightnessPerBlock)
     {
         for (unsigned y = 0; y < heightInBlock; y++)
             for (unsigned x = 0; x < widthInBlocks; x++)
                 this->file << results.poc << ";" << x * blockSize << ";" << y * blockSize << ";"
                            << blockSize << ";" << blockSize << ";0;" << *(data++) << "\n";
     }
-    if (auto data = results.sadPerBlock)
+    if (auto data = results.energyPerBlock)
     {
         for (unsigned y = 0; y < heightInBlock; y++)
             for (unsigned x = 0; x < widthInBlocks; x++)
                 this->file << results.poc << ";" << x * blockSize << ";" << y * blockSize << ";"
                            << blockSize << ";" << blockSize << ";1;" << *(data++) << "\n";
+    }
+    if (auto data = results.sadPerBlock)
+    {
+        for (unsigned y = 0; y < heightInBlock; y++)
+            for (unsigned x = 0; x < widthInBlocks; x++)
+                this->file << results.poc << ";" << x * blockSize << ";" << y * blockSize << ";"
+                           << blockSize << ";" << blockSize << ";2;" << *(data++) << "\n";
     }
 }
 

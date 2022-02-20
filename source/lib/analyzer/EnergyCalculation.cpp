@@ -28,6 +28,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <stdexcept>
+#include <cmath>
 
 namespace {
 
@@ -259,6 +260,8 @@ void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize
     auto widthInPixels                  = widthInBlocks * blockSize;
     auto heightInPixels                 = heightInBlock * blockSize;
 
+    if (result.brightnessPerBlock.size() < totalNumberBlocks)
+        result.brightnessPerBlock.resize(totalNumberBlocks);
     if (result.energyPerBlock.size() < totalNumberBlocks)
         result.energyPerBlock.resize(totalNumberBlocks);
 
@@ -272,6 +275,7 @@ void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize
     ALIGN_VAR_32(int16_t, coeffBuffer[32 * 32]);
 
     auto blockIndex       = 0u;
+    uint32_t frameBrightness = 0;
     uint32_t frameTexture = 0;
     for (unsigned blockY = 0; blockY < heightInPixels; blockY += blockSize)
     {
@@ -312,13 +316,16 @@ void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize
 
             performDCT(blockSize, pixelBuffer, coeffBuffer, cpuSimd);
 
+            result.brightnessPerBlock[blockIndex] = uint32_t(sqrt(coeffBuffer[0]));
             result.energyPerBlock[blockIndex] = calculateWeightedCoeffSum(blockSize, coeffBuffer);
+            frameBrightness += result.brightnessPerBlock[blockIndex];
             frameTexture += result.energyPerBlock[blockIndex];
 
             blockIndex++;
         }
     }
 
+    result.averageBrightness = uint32_t((double) (frameBrightness) / totalNumberBlocks);
     result.averageEnergy = uint32_t((double) (frameTexture) / (totalNumberBlocks * E_norm_factor));
 }
 
