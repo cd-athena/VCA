@@ -30,6 +30,14 @@ Command Line Options
 	>  **epsilon** Gradient of the temporal complexity of the frame
 	
 	>  **L** Brightness of the frame
+	
+	>  **avgU** Average U chroma component of the frame
+	
+	>  **energyU** Average U chroma texture of the frame
+	
+	>  **avgV** Average V chroma component of the frame
+	
+	>  **energyV** Average V chroma texture of the frame
 
 - option:: **--shot-csv < filename>** 
 
@@ -45,10 +53,15 @@ Command Line Options
 
 ## **Performance Options**
 
-- option:: **--[no-]asm** 
+- option:: **--no-chroma** 
 
 	```
-	VCA will use all detected CPU SIMD architectures by default. You can disable all assembly by using :option:`--no-asm`. Some higher architectures imply lower ones being present, this is handled implicitly. Default: enabled ```
+	VCA will analyze chroma planes by default. You can disable chroma analysis by using :option:`--no-chroma`. ```
+	
+- option:: **--no-simd** 
+
+	```
+	VCA will use all detected CPU SIMD architectures by default. You can disable all SIMD by using :option:`--no-simd`. ```
 	
 - option:: **--threads < integer>** 
 
