@@ -30,6 +30,9 @@ Command Line Options
 	>  **epsilon** Gradient of the temporal complexity of the frame
 	
 	>  **L** Brightness of the frame
+
+	``` 	
+	Unless option:`--no-chroma` is used, the following chroma statistics are also available: ```
 	
 	>  **avgU** Average U chroma component of the frame
 	
