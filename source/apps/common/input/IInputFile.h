@@ -38,7 +38,7 @@ protected:
     vca_frame_info frameInfo{};
     unsigned frameCount{};
 
-    std::ifstream input;
+    std::unique_ptr<std::istream> input;
 
 public:
     virtual ~IInputFile() {}
@@ -61,11 +61,11 @@ public:
 
     bool isEof() const
     {
-        return this->input.eof();
+        return !this->input || this->input->eof();
     }
     bool isFail()
     {
-        return this->input.fail();
+        return !this->input || this->input->fail();
     }
 
     vca_frame_info getFrameInfo() const

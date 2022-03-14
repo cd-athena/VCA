@@ -35,8 +35,8 @@ namespace vca {
 
 Y4MInput::Y4MInput(std::string &fileName, unsigned skipFrames)
 {
-    input.open(fileName, std::ios::binary);
-    if (!input.good())
+    this->input = std::make_unique<std::fstream>(fileName, std::ios::binary);
+    if (!this->input->good())
     {
         vca_log(LogLevel::Error, "Error opening file");
         return;
@@ -63,7 +63,7 @@ Y4MInput::Y4MInput(std::string &fileName, unsigned skipFrames)
 
 bool Y4MInput::parseHeader()
 {
-    auto it = std::istreambuf_iterator<char>(this->input);
+    auto it = std::istreambuf_iterator<char>(*this->input);
 
     auto getNextHeaderField = [&it]() {
         if (*it == '\n')
@@ -164,18 +164,18 @@ bool Y4MInput::parseHeader()
 bool Y4MInput::readFrame(FrameWithData &frame)
 {
     char c = 0;
-    while (this->input.get(c) && c != 'F')
+    while (this->input->get(c) && c != 'F')
     {}
 
-    if (this->input.eof())
+    if (this->input->eof())
         return false;
 
-    if (!this->input.good())
+    if (!this->input->good())
         throw std::runtime_error("Error reading from file");
 
     auto getNextChar = [this]() {
         char c;
-        if (!this->input.get(c))
+        if (!this->input->get(c))
             return char(0);
         return c;
     };
@@ -183,10 +183,10 @@ bool Y4MInput::readFrame(FrameWithData &frame)
     if (getNextChar() != 'R' || getNextChar() != 'A' || getNextChar() != 'M' || getNextChar() != 'E')
         throw std::runtime_error("Error reading FRAME tag");
 
-    while (this->input.get(c) && c != '\n')
+    while (this->input->get(c) && c != '\n')
     {}
 
-    this->input.read((char *) (frame.getData()), frame.getFrameSize());
+    this->input->read((char *) (frame.getData()), frame.getFrameSize());
 
     return true;
 }

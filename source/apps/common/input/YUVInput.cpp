@@ -43,8 +43,8 @@ YUVInput::YUVInput(std::string &fileName, vca_frame_info &openFrameInfo, unsigne
         return;
     }
 
-    input.open(fileName, std::ios::binary);
-    if (!input.good())
+    this->input = std::make_unique<std::fstream>(fileName, std::ios::binary);
+    if (!input->good())
     {
         vca_log(LogLevel::Error, "Error opening file");
         return;
@@ -62,16 +62,16 @@ YUVInput::YUVInput(std::string &fileName, vca_frame_info &openFrameInfo, unsigne
     {
         auto filePos = std::streampos(frameSizeBytes * skipFrames);
         vca_log(LogLevel::Info, "Seeking file to pos " + std::to_string(filePos));
-        input.seekg(filePos);
+        input->seekg(filePos);
     }
 }
 
 bool YUVInput::readFrame(FrameWithData &frame)
 {
-    if (!this->input.good() || this->input.eof())
+    if (!this->input->good() || this->input->eof())
         return false;
 
-    this->input.read((char *) (frame.getData()), frame.getFrameSize());
+    this->input->read((char *) (frame.getData()), frame.getFrameSize());
 
     if (!this->input)
         return false;
