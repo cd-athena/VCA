@@ -148,6 +148,27 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
                     result->sadPerBlock.data(),
                     result->sadPerBlock.size() * sizeof(uint32_t));
 
+    outputResult->averageU = result->averageU;
+    outputResult->averageV = result->averageV;
+    outputResult->energyU  = result->energyU;
+    outputResult->energyV  = result->energyV;
+    if (outputResult->averageUPerBlock)
+        std::memcpy(outputResult->averageUPerBlock,
+                    result->averageUPerBlock.data(),
+                    result->averageUPerBlock.size() * sizeof(uint32_t));
+    if (outputResult->averageVPerBlock)
+        std::memcpy(outputResult->averageVPerBlock,
+                    result->averageVPerBlock.data(),
+                    result->averageVPerBlock.size() * sizeof(uint32_t));
+    if (outputResult->energyUPerBlock)
+        std::memcpy(outputResult->energyUPerBlock,
+                    result->energyUPerBlock.data(),
+                    result->energyUPerBlock.size() * sizeof(uint32_t));
+    if (outputResult->energyVPerBlock)
+        std::memcpy(outputResult->energyVPerBlock,
+                    result->energyVPerBlock.data(),
+                    result->energyVPerBlock.size() * sizeof(uint32_t));
+
     this->previousResult = result;
 
     return vca_result::VCA_OK;

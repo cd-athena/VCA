@@ -49,6 +49,15 @@ inline std::pair<unsigned, unsigned> getFrameSizeInBlocks(unsigned blockSize,
     return {widthInBlocks, heightInBlock};
 }
 
+inline std::pair<unsigned, unsigned> getChromaFrameSizeInBlocks(unsigned blockSize,
+                                                                int width,
+                                                                int height)
+{
+    auto widthInBlocks = (width + blockSize - 1) / blockSize;
+    auto heightInBlock = (height + blockSize - 1) / blockSize;
+    return {widthInBlocks, heightInBlock};
+}
+
 struct MacroblockRange
 {
     unsigned start{};
@@ -74,8 +83,17 @@ struct Result
     std::vector<uint32_t> brightnessPerBlock;
     std::vector<uint32_t> energyPerBlock;
     std::vector<uint32_t> sadPerBlock;
+    std::vector<uint32_t> averageUPerBlock;
+    std::vector<uint32_t> averageVPerBlock;
+    std::vector<uint32_t> energyUPerBlock;
+    std::vector<uint32_t> energyVPerBlock;
     uint32_t averageBrightness{};
     uint32_t averageEnergy{};
+    uint32_t averageU{};
+    uint32_t averageV{};
+    uint32_t energyU{};
+    uint32_t energyV{};
+
     double sad{};
     double epsilon{};
     int poc{};
