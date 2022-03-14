@@ -84,6 +84,16 @@ struct vca_frame_results
     uint32_t *sadPerBlock{};
     double sad{};
 
+    uint32_t *averageUPerBlock{};
+    uint32_t *averageVPerBlock{};
+    uint32_t averageU{};
+    uint32_t averageV{};
+
+    uint32_t *energyUPerBlock{};
+    uint32_t *energyVPerBlock{};
+    uint32_t energyU{};
+    uint32_t energyV{};
+
     double epsilon{};
 
     int poc{};
@@ -111,6 +121,7 @@ struct vca_frame
 
     /* Stride is the number of bytes between row starts */
     int stride[3]{0, 0, 0};
+    int height[3]{0, 0, 0};
 
     vca_frame_stats stats;
     vca_frame_info info;
@@ -121,7 +132,8 @@ struct vca_frame
  */
 struct vca_param
 {
-    bool enableASM{true};
+    bool enableSIMD{true};
+    bool enableChroma{true};
 
     vca_frame_info frameInfo{};
 

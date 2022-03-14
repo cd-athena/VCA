@@ -190,57 +190,64 @@ std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
         }
 
         auto name = std::string(long_options[long_options_index].name);
-        auto arg  = std::string(optarg);
-        if (name == "asm")
-            options.vcaParam.enableASM = true;
-        else if (name == "no-asm")
-            options.vcaParam.enableASM = false;
-        else if (name == "input")
-            options.inputFilename = optarg;
-        else if (name == "input-depth")
-            options.vcaParam.frameInfo.bitDepth = std::stoul(optarg);
-        else if (name == "input-res")
+
+        if (name == "no-simd")
         {
-            auto posX = arg.find("x");
-            if (posX == std::string::npos)
+            options.vcaParam.enableSIMD = false;
+            options.vcaParam.cpuSimd = CpuSimd::None;
+        }
+        else if (name == "no-chroma")
+            options.vcaParam.enableChroma = false;
+        else
+        {
+            auto arg = std::string(optarg);
+            if (name == "input")
+                options.inputFilename = optarg;
+            else if (name == "input-depth")
+                options.vcaParam.frameInfo.bitDepth = std::stoul(optarg);
+            else if (name == "input-res")
             {
-                vca_log(LogLevel::Error, "Invalid resolution provided. Format WxH.");
-                return {};
+                auto posX = arg.find("x");
+                if (posX == std::string::npos)
+                {
+                    vca_log(LogLevel::Error, "Invalid resolution provided. Format WxH.");
+                    return {};
+                }
+                options.vcaParam.frameInfo.width  = std::stoul(arg.substr(0, posX));
+                options.vcaParam.frameInfo.height = std::stoul(arg.substr(posX + 1));
             }
-            options.vcaParam.frameInfo.width  = std::stoul(arg.substr(0, posX));
-            options.vcaParam.frameInfo.height = std::stoul(arg.substr(posX + 1));
+            else if (name == "input-csp")
+            {
+                if (arg == "400" || arg == "4:0:0")
+                    options.vcaParam.frameInfo.colorspace = vca_colorSpace::YUV400;
+                else if (arg == "420" || arg == "4:2:0")
+                    options.vcaParam.frameInfo.colorspace = vca_colorSpace::YUV420;
+                else if (arg == "422" || arg == "4:2:2")
+                    options.vcaParam.frameInfo.colorspace = vca_colorSpace::YUV422;
+                else if (arg == "444" || arg == "4:4:4")
+                    options.vcaParam.frameInfo.colorspace = vca_colorSpace::YUV444;
+            }
+            else if (name == "input-fps")
+                options.shotDetectParam.fps = std::stod(optarg);
+            else if (name == "skip")
+                options.skipFrames = std::stoul(optarg);
+            else if (name == "frames")
+                options.framesToBeAnalyzed = std::stoul(optarg);
+            else if (name == "complexity-csv")
+                options.complexityCSVFilename = optarg;
+            else if (name == "shot-csv")
+                options.shotCSVFilename = optarg;
+            else if (name == "yuview-stats")
+                options.yuviewStatsFilename = optarg;
+            else if (name == "max-thresh")
+                options.shotDetectParam.maxEpsilonThresh = std::stod(optarg);
+            else if (name == "min-thresh")
+                options.shotDetectParam.minEpsilonThresh = std::stod(optarg);
+            else if (name == "block-size")
+                options.vcaParam.blockSize = std::stoi(optarg);
+            else if (name == "threads")
+                options.vcaParam.nrFrameThreads = std::stoi(optarg);
         }
-        else if (name == "input-csp")
-        {
-            if (arg == "400" || arg == "4:0:0")
-                options.vcaParam.frameInfo.colorspace = vca_colorSpace::YUV400;
-            else if (arg == "420" || arg == "4:2:0")
-                options.vcaParam.frameInfo.colorspace = vca_colorSpace::YUV420;
-            else if (arg == "422" || arg == "4:2:2")
-                options.vcaParam.frameInfo.colorspace = vca_colorSpace::YUV422;
-            else if (arg == "444" || arg == "4:4:4")
-                options.vcaParam.frameInfo.colorspace = vca_colorSpace::YUV444;
-        }
-        else if (name == "input-fps")
-            options.shotDetectParam.fps = std::stod(optarg);
-        else if (name == "skip")
-            options.skipFrames = std::stoul(optarg);
-        else if (name == "frames")
-            options.framesToBeAnalyzed = std::stoul(optarg);
-        else if (name == "complexity-csv")
-            options.complexityCSVFilename = optarg;
-        else if (name == "shot-csv")
-            options.shotCSVFilename = optarg;
-        else if (name == "yuview-stats")
-            options.yuviewStatsFilename = optarg;
-        else if (name == "max-thresh")
-            options.shotDetectParam.maxEpsilonThresh = std::stod(optarg);
-        else if (name == "min-thresh")
-            options.shotDetectParam.minEpsilonThresh = std::stod(optarg);
-        else if (name == "block-size")
-            options.vcaParam.blockSize = std::stoi(optarg);
-        else if (name == "threads")
-            options.vcaParam.nrFrameThreads = std::stoi(optarg);
     }
 
     if (options.inputFilename.substr(options.inputFilename.size() - 4) == ".y4m")
@@ -287,6 +294,8 @@ void logOptions(const CLIOptions &options)
     vca_log(LogLevel::Info, "Options:   "s);
     vca_log(LogLevel::Info, "  Input file name:   "s + options.inputFilename);
     vca_log(LogLevel::Info, "  Open as Y4m:       "s + (options.openAsY4m ? "True"s : "False"s));
+    vca_log(LogLevel::Info, "  Enable SIMD:       "s + (options.vcaParam.enableSIMD ? "True"s : "False"s));
+    vca_log(LogLevel::Info, "  Enable chroma:     "s + (options.vcaParam.enableChroma ? "True"s : "False"s));
     vca_log(LogLevel::Info, "  Skip frames:       "s + std::to_string(options.skipFrames));
     vca_log(LogLevel::Info, "  Frames to analyze: "s + std::to_string(options.framesToBeAnalyzed));
     vca_log(LogLevel::Info, "  Complexity csv:    "s + options.complexityCSVFilename);
@@ -314,10 +323,15 @@ void logResult(const Result &result, const vca_frame *frame, const unsigned resu
                 + std::to_string(result.result.sad));
 }
 
-void writeComplexityStatsToFile(const Result &result, std::ofstream &file)
+void writeComplexityStatsToFile(const Result &result, std::ofstream &file, bool enableChroma)
 {
     file << result.result.poc << ", " << result.result.averageEnergy << ", " << result.result.sad
-         << ", " << result.result.epsilon << ", " << result.result.averageBrightness << "\n";
+         << ", " << result.result.epsilon << ", " << result.result.averageBrightness;
+    if (enableChroma)
+        file << ", " << result.result.averageU << ", " << result.result.energyU << ", "
+             << result.result.averageV << ", " << result.result.energyV << "\n";
+    else
+        file << "\n";
 }
 
 void writeShotDetectionResultsToFile(const std::vector<vca_shot_detect_frame> &shotDetectFrames,
@@ -425,7 +439,11 @@ int main(int argc, char **argv)
                     "Error opening complexity CSV file " + options.complexityCSVFilename);
             return 1;
         }
-        complexityFile << "POC, E, h, epsilon, L \n";
+        complexityFile << "POC, E, h, epsilon, L";
+        if (options.vcaParam.enableChroma)
+            complexityFile << ", avgU, energyU, avgV, energyV\n ";
+        else
+            complexityFile << "\n";
     }
 
     options.vcaParam.logFunction        = logLibraryMessage;
@@ -512,7 +530,7 @@ int main(int argc, char **argv)
             if (yuviewStatsFile)
                 yuviewStatsFile->write(result.result, options.vcaParam.blockSize);
             if (complexityFile.is_open())
-                writeComplexityStatsToFile(result, complexityFile);
+                writeComplexityStatsToFile(result, complexityFile, options.vcaParam.enableChroma);
             if (!options.shotCSVFilename.empty())
                 shotDetectFrames.push_back({result.result.epsilon, false});
 
@@ -541,7 +559,7 @@ int main(int argc, char **argv)
         if (yuviewStatsFile)
             yuviewStatsFile->write(result.result, options.vcaParam.blockSize);
         if (complexityFile.is_open())
-            writeComplexityStatsToFile(result, complexityFile);
+            writeComplexityStatsToFile(result, complexityFile, options.vcaParam.enableChroma);
         if (!options.shotCSVFilename.empty())
             shotDetectFrames.push_back({result.result.epsilon, false});
 

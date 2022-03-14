@@ -24,7 +24,8 @@
 
 namespace vca {
 
-void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize, CpuSimd cpuSimd);
+void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize, CpuSimd cpuSimd,
+                              bool enableChroma);
 void computeTextureSAD(Result &results, const Result &resultsPreviousFrame);
 
 } // namespace vca
