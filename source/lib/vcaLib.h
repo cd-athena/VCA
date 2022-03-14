@@ -132,7 +132,8 @@ struct vca_frame
  */
 struct vca_param
 {
-    bool enableASM{true};
+    bool enableSIMD{true};
+    bool enableChroma{true};
 
     vca_frame_info frameInfo{};
 

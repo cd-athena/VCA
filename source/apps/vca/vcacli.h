@@ -26,8 +26,8 @@
 
 static const char short_options[]         = "f:h?";
 static const struct option long_options[] = {{"help", no_argument, NULL, 'h'},
-                                             {"asm", required_argument, NULL, 0},
-                                             {"no-asm", no_argument, NULL, 0},
+                                             {"no-simd", no_argument, NULL, 0},
+                                             {"no-chroma", no_argument, NULL, 0},
                                              {"input", required_argument, NULL, 0},
                                              {"input-depth", required_argument, NULL, 0},
                                              {"input-res", required_argument, NULL, 0},
@@ -78,7 +78,8 @@ static void showHelp()
            "file\n");
     printf("                                 that can be visualized using YUView.\n");
     printf("\nOperation Options:\n");
-    printf("   --[no-]asm                    Enable / disable ASM. Default: Enabled\n");
+    printf("   --no-simd                     Disable SIMD. Default: Enabled\n");
+    printf("   --no-chroma                   Disable chroma. Default: Enabled\n");
     printf("   --max-thresh <float>          Maximum threshold of epsilon in shot detection\n");
     printf("   --min-thresh <float>          Minimum threshold of epsilon in shot detection\n");
     printf("   --block-size <integer>        Block size for DCT transform. Must be 8, 16 or 32 "

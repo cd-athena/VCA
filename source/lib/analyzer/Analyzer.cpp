@@ -53,7 +53,7 @@ Analyzer::Analyzer(vca_param cfg)
         this->cfg.cpuSimd = cpuDetectMaxSimd();
         log(cfg, LogLevel::Info, "Autodetected SIMD.");
     }
-    else
+    else if (this->cfg.cpuSimd != CpuSimd::None)
     {
         auto selectedLevel = cpuSimdLevel.at(this->cfg.cpuSimd);
         auto maxLevel      = cpuSimdLevel.at(cpuDetectMaxSimd());
