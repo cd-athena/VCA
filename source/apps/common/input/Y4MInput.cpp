@@ -33,12 +33,11 @@ namespace filesystem = std::filesystem;
 
 namespace vca {
 
-Y4MInput::Y4MInput(std::string &fileName, unsigned skipFrames)
+Y4MInput::Y4MInput(std::string &fileName)
 {
-    this->input = std::make_unique<std::fstream>(fileName, std::ios::binary);
-    if (!this->input->good())
+    if (!this->openInput(fileName))
     {
-        vca_log(LogLevel::Error, "Error opening file");
+        vca_log(LogLevel::Error, "Error opening input " + fileName);
         return;
     }
 
@@ -50,15 +49,11 @@ Y4MInput::Y4MInput(std::string &fileName, unsigned skipFrames)
 
     {
         const auto assumedHeaderSize = 6u;
-        auto estFrameSize            = IInputFile::calculateFrameBytesInInput(this->frameInfo)
-                            + assumedHeaderSize;
-        auto fileSize    = filesystem::file_size(fileName);
-        this->frameCount = unsigned(fileSize / estFrameSize);
+        auto estFrameSize = calculateFrameBytesInInput(this->frameInfo) + assumedHeaderSize;
+        auto fileSize     = filesystem::file_size(fileName);
+        this->frameCount  = unsigned(fileSize / estFrameSize);
         vca_log(LogLevel::Info, "Detected " + std::to_string(this->frameCount) + " frames in input");
     }
-
-    if (skipFrames)
-    {}
 }
 
 bool Y4MInput::parseHeader()

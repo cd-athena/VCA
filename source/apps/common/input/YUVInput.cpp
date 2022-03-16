@@ -32,7 +32,7 @@ namespace filesystem = std::filesystem;
 
 namespace vca {
 
-YUVInput::YUVInput(std::string &fileName, vca_frame_info &openFrameInfo, unsigned skipFrames)
+YUVInput::YUVInput(std::string &fileName, vca_frame_info &openFrameInfo)
 {
     frameInfo = openFrameInfo;
 
@@ -43,26 +43,18 @@ YUVInput::YUVInput(std::string &fileName, vca_frame_info &openFrameInfo, unsigne
         return;
     }
 
-    this->input = std::make_unique<std::fstream>(fileName, std::ios::binary);
-    if (!input->good())
+    if (!this->openInput(fileName))
     {
-        vca_log(LogLevel::Error, "Error opening file");
+        vca_log(LogLevel::Error, "Error opening input " + fileName);
         return;
     }
 
-    auto frameSizeBytes = IInputFile::calculateFrameBytesInInput(this->frameInfo);
+    auto frameSizeBytes = calculateFrameBytesInInput(this->frameInfo);
 
     {
         auto fileSize    = filesystem::file_size(fileName);
         this->frameCount = unsigned(fileSize / frameSizeBytes);
         vca_log(LogLevel::Info, "Detected " + std::to_string(this->frameCount) + " frames in input");
-    }
-
-    if (skipFrames)
-    {
-        auto filePos = std::streampos(frameSizeBytes * skipFrames);
-        vca_log(LogLevel::Info, "Seeking file to pos " + std::to_string(filePos));
-        input->seekg(filePos);
     }
 }
 
@@ -72,6 +64,8 @@ bool YUVInput::readFrame(FrameWithData &frame)
         return false;
 
     this->input->read((char *) (frame.getData()), frame.getFrameSize());
+    if (!this->input->good() || this->input->eof())
+        return false;
 
     if (!this->input)
         return false;

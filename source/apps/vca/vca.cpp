@@ -194,7 +194,7 @@ std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
         if (name == "no-simd")
         {
             options.vcaParam.enableSIMD = false;
-            options.vcaParam.cpuSimd = CpuSimd::None;
+            options.vcaParam.cpuSimd    = CpuSimd::None;
         }
         else if (name == "no-chroma")
             options.vcaParam.enableChroma = false;
@@ -250,7 +250,10 @@ std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
         }
     }
 
-    if (options.inputFilename.substr(options.inputFilename.size() - 4) == ".y4m")
+    if (options.inputFilename.size() >= 4
+        && options.inputFilename.substr(options.inputFilename.size() - 4) == ".y4m")
+        options.openAsY4m = true;
+    if (options.inputFilename == "stdin:y4m")
         options.openAsY4m = true;
 
     return options;
@@ -294,8 +297,10 @@ void logOptions(const CLIOptions &options)
     vca_log(LogLevel::Info, "Options:   "s);
     vca_log(LogLevel::Info, "  Input file name:   "s + options.inputFilename);
     vca_log(LogLevel::Info, "  Open as Y4m:       "s + (options.openAsY4m ? "True"s : "False"s));
-    vca_log(LogLevel::Info, "  Enable SIMD:       "s + (options.vcaParam.enableSIMD ? "True"s : "False"s));
-    vca_log(LogLevel::Info, "  Enable chroma:     "s + (options.vcaParam.enableChroma ? "True"s : "False"s));
+    vca_log(LogLevel::Info,
+            "  Enable SIMD:       "s + (options.vcaParam.enableSIMD ? "True"s : "False"s));
+    vca_log(LogLevel::Info,
+            "  Enable chroma:     "s + (options.vcaParam.enableChroma ? "True"s : "False"s));
     vca_log(LogLevel::Info, "  Skip frames:       "s + std::to_string(options.skipFrames));
     vca_log(LogLevel::Info, "  Frames to analyze: "s + std::to_string(options.framesToBeAnalyzed));
     vca_log(LogLevel::Info, "  Complexity csv:    "s + options.complexityCSVFilename);
@@ -396,7 +401,9 @@ int main(int argc, char **argv)
     get_argv_utf8(&argc, &argv);
 #endif
 
-    vca_log(LogLevel::Info, "VCA - Video Complexity Analyzer " + std::string(vca_version_str));
+    // This first logging command will set the global log level. So if you want to increase it,
+    // you can do so here.
+    vca_log(LogLevel::Debug, "VCA - Video Complexity Analyzer " + std::string(vca_version_str));
 
     CLIOptions options;
     if (auto cliOptions = parseCLIOptions(argc, argv))
@@ -417,17 +424,17 @@ int main(int argc, char **argv)
 
     std::unique_ptr<IInputFile> inputFile;
     if (options.openAsY4m)
-        inputFile = std::make_unique<Y4MInput>(options.inputFilename, options.skipFrames);
+        inputFile = std::make_unique<Y4MInput>(options.inputFilename);
     else
-        inputFile = std::make_unique<YUVInput>(options.inputFilename,
-                                               options.vcaParam.frameInfo,
-                                               options.skipFrames);
+        inputFile = std::make_unique<YUVInput>(options.inputFilename, options.vcaParam.frameInfo);
 
     if (inputFile->isFail())
     {
         vca_log(LogLevel::Error, "Error opening input file");
         return 1;
     }
+
+    vca_log(LogLevel::Debug, "File opened");
 
     std::ofstream complexityFile;
     if (!options.complexityCSVFilename.empty())
@@ -449,6 +456,8 @@ int main(int argc, char **argv)
     options.vcaParam.logFunction        = logLibraryMessage;
     options.shotDetectParam.logFunction = logLibraryMessage;
 
+    vca_log(LogLevel::Debug, "Open analyzer");
+
     auto analyzer = vca_analyzer_open(options.vcaParam);
     if (analyzer == nullptr)
     {
@@ -463,6 +472,8 @@ int main(int argc, char **argv)
 
     auto frameInfo = inputFile->getFrameInfo();
 
+    vca_log(LogLevel::Debug, "Start main analysis loop");
+
     using framePtr = std::unique_ptr<FrameWithData>;
     std::queue<framePtr> frameRecycling;
     std::queue<framePtr> activeFrames;
@@ -470,6 +481,7 @@ int main(int argc, char **argv)
     std::vector<vca_shot_detect_frame> shotDetectFrames;
     unsigned pushedFrames   = 0;
     unsigned resultsCounter = 0;
+    unsigned skippedFrames  = 0;
     while (!inputFile->isEof() && !inputFile->isFail()
            && (options.framesToBeAnalyzed == 0 || pushedFrames < options.framesToBeAnalyzed))
     {
@@ -486,14 +498,21 @@ int main(int argc, char **argv)
             try
             {
                 if (!inputFile->readFrame(*frame))
-                {
                     break;
-                }
             }
             catch (const std::exception &e)
             {
                 vca_log(LogLevel::Error, "Error reading frame from input: " + std::string(e.what()));
                 return 3;
+            }
+
+            if (options.skipFrames > 0)
+            {
+                frameRecycling.push(std::move(frame));
+                options.skipFrames--;
+                skippedFrames++;
+                vca_log(LogLevel::Debug, "Skipped frame " + std::to_string(skippedFrames));
+                continue;
             }
 
             frame->getFrame()->stats.poc = pushedFrames;

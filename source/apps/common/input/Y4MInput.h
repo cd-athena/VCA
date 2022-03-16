@@ -33,7 +33,7 @@ protected:
 
 public:
     Y4MInput() = delete;
-    Y4MInput(std::string &fileName, unsigned skipFrames);
+    Y4MInput(std::string &fileName);
     ~Y4MInput() = default;
 
     bool readFrame(FrameWithData &frame) override;

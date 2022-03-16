@@ -53,5 +53,6 @@ private:
 };
 
 void vca_log(LogLevel level, std::string error);
+size_t calculateFrameBytesInInput(const vca_frame_info &frameInfo);
 
 } // namespace vca

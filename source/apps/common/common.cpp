@@ -75,4 +75,18 @@ void vca_log(LogLevel level, std::string error)
         std::cout << logLevelName.at(level) << error << std::endl;
 }
 
+size_t calculateFrameBytesInInput(const vca_frame_info &frameInfo)
+{
+    size_t framesizeBytes = 0;
+    const auto colorspace = frameInfo.colorspace;
+    auto pixelbytes       = frameInfo.bitDepth > 8 ? 2u : 1u;
+    for (int i = 0; i < vca_cli_csps.at(colorspace).planes; i++)
+    {
+        uint32_t w = frameInfo.width >> vca_cli_csps.at(colorspace).width[i];
+        uint32_t h = frameInfo.height >> vca_cli_csps.at(colorspace).height[i];
+        framesizeBytes += w * h * pixelbytes;
+    }
+    return framesizeBytes;
+}
+
 } // namespace vca

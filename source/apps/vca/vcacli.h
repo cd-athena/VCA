@@ -55,7 +55,8 @@ static void showHelp()
     printf("\nExecutable Options:\n");
     printf("-h/--help                        Show this help text and exit\n");
     printf("\nInput Options:\n");
-    printf("   --input <filename>            Raw YUV or Y4M input file name. `-` for stdin\n");
+    printf("   --input <filename>            Raw YUV or Y4M input file name. `stdin` for stdin. "
+           "'stdin:y4m' for Y4M from stdin.\n");
     printf("   --y4m                         Force parsing of input stream as YUV4MPEG2 regardless "
            "of file extension\n");
     printf("   --input-res WxH               Source picture size [w x h], auto-detected if Y4M\n");
