@@ -198,6 +198,8 @@ std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
         }
         else if (name == "no-chroma")
             options.vcaParam.enableChroma = false;
+        else if (name == "y4m")
+            options.openAsY4m = true;
         else
         {
             auto arg = std::string(optarg);
@@ -252,8 +254,6 @@ std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
 
     if (options.inputFilename.size() >= 4
         && options.inputFilename.substr(options.inputFilename.size() - 4) == ".y4m")
-        options.openAsY4m = true;
-    if (options.inputFilename == "stdin:y4m")
         options.openAsY4m = true;
 
     return options;

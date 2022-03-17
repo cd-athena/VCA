@@ -50,7 +50,7 @@ vca_frame_info IInputFile::getFrameInfo() const
 
 bool IInputFile::openInput(std::string &fileName)
 {
-    if (fileName == "stdin" || fileName == "stdin:y4m")
+    if (fileName == "stdin")
     {
         vca_log(LogLevel::Info, "Opening input from pipe");
         this->input = &std::cin;
