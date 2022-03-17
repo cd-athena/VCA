@@ -1,5 +1,4 @@
-Related Publications
-============
+# Related Publications
 
 The spatial and temporal complexity features (E and h) were used in the context of content-adaptive encoding and per-title encoding in our research which yielded publications as listed below:
 
