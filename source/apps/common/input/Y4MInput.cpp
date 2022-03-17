@@ -47,6 +47,7 @@ Y4MInput::Y4MInput(std::string &fileName)
         return;
     }
 
+    if (!this->isStdin())
     {
         const auto assumedHeaderSize = 6u;
         auto estFrameSize = calculateFrameBytesInInput(this->frameInfo) + assumedHeaderSize;
@@ -160,7 +161,8 @@ bool Y4MInput::readFrame(FrameWithData &frame)
 {
     char c = 0;
     while (this->input->get(c) && c != 'F')
-    {}
+    {
+    }
 
     if (this->input->eof())
         return false;
@@ -179,7 +181,8 @@ bool Y4MInput::readFrame(FrameWithData &frame)
         throw std::runtime_error("Error reading FRAME tag");
 
     while (this->input->get(c) && c != '\n')
-    {}
+    {
+    }
 
     this->input->read((char *) (frame.getData()), frame.getFrameSize());
 

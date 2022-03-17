@@ -51,6 +51,7 @@ YUVInput::YUVInput(std::string &fileName, vca_frame_info &openFrameInfo)
 
     auto frameSizeBytes = calculateFrameBytesInInput(this->frameInfo);
 
+    if (!this->isStdin())
     {
         auto fileSize    = filesystem::file_size(fileName);
         this->frameCount = unsigned(fileSize / frameSizeBytes);

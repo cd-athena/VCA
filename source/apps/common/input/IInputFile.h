@@ -53,6 +53,7 @@ public:
     virtual double getFPS() const = 0;
 
     bool openInput(std::string &fileName);
+    bool isStdin() const;
 };
 
 } // namespace vca

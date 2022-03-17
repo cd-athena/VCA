@@ -403,7 +403,7 @@ int main(int argc, char **argv)
 
     // This first logging command will set the global log level. So if you want to increase it,
     // you can do so here.
-    vca_log(LogLevel::Debug, "VCA - Video Complexity Analyzer " + std::string(vca_version_str));
+    vca_log(LogLevel::Info, "VCA - Video Complexity Analyzer " + std::string(vca_version_str));
 
     CLIOptions options;
     if (auto cliOptions = parseCLIOptions(argc, argv))

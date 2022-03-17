@@ -68,4 +68,9 @@ bool IInputFile::openInput(std::string &fileName)
     return this->input && this->input->good();
 }
 
+bool IInputFile::isStdin() const
+{
+    return this->input == &std::cin;
+}
+
 } // namespace vca
