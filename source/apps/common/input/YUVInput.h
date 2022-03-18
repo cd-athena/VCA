@@ -21,8 +21,6 @@
 
 #include "IInputFile.h"
 
-#include <fstream>
-
 namespace vca {
 
 class YUVInput : public IInputFile
