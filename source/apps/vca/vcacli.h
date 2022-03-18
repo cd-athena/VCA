@@ -29,6 +29,7 @@ static const struct option long_options[] = {{"help", no_argument, NULL, 'h'},
                                              {"no-simd", no_argument, NULL, 0},
                                              {"no-chroma", no_argument, NULL, 0},
                                              {"input", required_argument, NULL, 0},
+                                             {"y4m", no_argument, NULL, 0},
                                              {"input-depth", required_argument, NULL, 0},
                                              {"input-res", required_argument, NULL, 0},
                                              {"input-csp", required_argument, NULL, 0},
@@ -55,7 +56,7 @@ static void showHelp()
     printf("\nExecutable Options:\n");
     printf("-h/--help                        Show this help text and exit\n");
     printf("\nInput Options:\n");
-    printf("   --input <filename>            Raw YUV or Y4M input file name. `-` for stdin\n");
+    printf("   --input <filename>            Raw YUV or Y4M input file name. `stdin` for stdin.");
     printf("   --y4m                         Force parsing of input stream as YUV4MPEG2 regardless "
            "of file extension\n");
     printf("   --input-res WxH               Source picture size [w x h], auto-detected if Y4M\n");
