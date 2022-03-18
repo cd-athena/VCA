@@ -241,7 +241,8 @@ void performDCT(unsigned blockSize, int16_t *pixelBuffer, int16_t *coeffBuffer, 
 
 namespace vca {
 
-void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize, CpuSimd cpuSimd)
+void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize, CpuSimd cpuSimd,
+                              bool enableChroma)
 {
     const auto frame = job.frame;
     if (frame == nullptr)
@@ -327,6 +328,137 @@ void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize
 
     result.averageBrightness = uint32_t((double) (frameBrightness) / totalNumberBlocks);
     result.averageEnergy = uint32_t((double) (frameTexture) / (totalNumberBlocks * E_norm_factor));
+
+    if (enableChroma)
+    {
+        auto srcU       = frame->planes[1];
+        auto srcV       = frame->planes[2];
+        auto srcUStride = frame->stride[1];
+        auto srcUHeight = frame->height[1];
+
+        auto [widthInBlocksC, heightInBlockC] = getChromaFrameSizeInBlocks(blockSize, srcUStride, srcUHeight);
+        auto totalNumberBlocksC               = widthInBlocksC * heightInBlockC;
+        auto widthInPixelsC                   = widthInBlocksC * blockSize;
+        auto heightInPixelsC                  = heightInBlockC * blockSize;
+
+        if (result.averageUPerBlock.size() < totalNumberBlocksC)
+            result.averageUPerBlock.resize(totalNumberBlocksC);
+        if (result.averageVPerBlock.size() < totalNumberBlocksC)
+            result.averageVPerBlock.resize(totalNumberBlocksC);
+        if (result.energyUPerBlock.size() < totalNumberBlocksC)
+            result.energyUPerBlock.resize(totalNumberBlocksC);
+        if (result.energyVPerBlock.size() < totalNumberBlocksC)
+            result.energyVPerBlock.resize(totalNumberBlocksC);
+
+        ALIGN_VAR_32(int16_t, pixelBufferC[32 * 32]);
+        ALIGN_VAR_32(int16_t, coeffBufferC[32 * 32]);
+
+        auto blockIndexC         = 0u;
+        uint32_t frameU          = 0;
+        uint32_t frameV          = 0;
+        uint32_t frameEnergyU    = 0;
+        uint32_t frameEnergyV    = 0;
+        for (unsigned blockY = 0; blockY < heightInPixelsC; blockY += blockSize)
+        {
+            auto paddingBottom = std::max(int(blockY + blockSize) - int(srcUHeight), 0);
+            for (unsigned blockX = 0; blockX < widthInPixelsC; blockX += blockSize)
+            {
+                auto paddingRight    = std::max(int(blockX + blockSize) - int(srcUStride), 0);
+                auto blockOffsetChroma = blockX + (blockY * srcUStride);
+
+                if (paddingRight > 0 || paddingBottom > 0)
+                {
+                    if (bitDepth == 8)
+                        copyPixelValuesToBufferWithPadding<8>(blockOffsetChroma,
+                                                            blockSize,
+                                                            srcU,
+                                                            srcUStride,
+                                                            pixelBufferC,
+                                                            unsigned(paddingRight),
+                                                            unsigned(paddingBottom));
+                    else
+                        copyPixelValuesToBufferWithPadding<16>(blockOffsetChroma,
+                                                            blockSize,
+                                                            srcU,
+                                                            srcUStride / 2,
+                                                            pixelBufferC,
+                                                            unsigned(paddingRight),
+                                                            unsigned(paddingBottom));
+                }
+                else
+                {
+                    copyPixelValuesToBuffer(blockOffsetChroma,
+                                            blockSize,
+                                            bitDepth,
+                                            srcU,
+                                            srcUStride,
+                                            pixelBufferC);
+                }
+
+                performDCT(blockSize, pixelBufferC, coeffBufferC, cpuSimd);
+
+                result.averageUPerBlock[blockIndexC] = uint32_t(sqrt(coeffBufferC[0]));
+                result.energyUPerBlock[blockIndexC] = calculateWeightedCoeffSum(blockSize, coeffBufferC);
+                frameU += result.averageUPerBlock[blockIndexC];
+                frameEnergyU += result.energyUPerBlock[blockIndexC];
+
+                blockIndexC++;
+            }
+        }
+        result.averageU = uint32_t((double) (frameU) / totalNumberBlocksC);
+        result.energyU  = uint32_t((double) (frameEnergyU) / (totalNumberBlocksC * E_norm_factor));
+
+        blockIndexC = 0u;
+        for (unsigned blockY = 0; blockY < heightInPixelsC; blockY += blockSize)
+        {
+            auto paddingBottom = std::max(int(blockY + blockSize) - int(srcUHeight), 0);
+            for (unsigned blockX = 0; blockX < widthInPixelsC; blockX += blockSize)
+            {
+                auto paddingRight      = std::max(int(blockX + blockSize) - int(srcUStride), 0);
+                auto blockOffsetChroma = blockX + (blockY * srcUStride);
+
+                if (paddingRight > 0 || paddingBottom > 0)
+                {
+                    if (bitDepth == 8)
+                        copyPixelValuesToBufferWithPadding<8>(blockOffsetChroma,
+                                                            blockSize,
+                                                            srcV,
+                                                            srcUStride,
+                                                            pixelBufferC,
+                                                            unsigned(paddingRight),
+                                                            unsigned(paddingBottom));
+                    else
+                        copyPixelValuesToBufferWithPadding<16>(blockOffsetChroma,
+                                                            blockSize,
+                                                            srcV,
+                                                            srcUStride / 2,
+                                                            pixelBufferC,
+                                                            unsigned(paddingRight),
+                                                            unsigned(paddingBottom));
+                }
+                else
+                {
+                    copyPixelValuesToBuffer(blockOffsetChroma,
+                                            blockSize,
+                                            bitDepth,
+                                            srcV,
+                                            srcUStride,
+                                            pixelBufferC);
+                }
+
+                performDCT(blockSize, pixelBufferC, coeffBufferC, cpuSimd);
+
+                result.averageVPerBlock[blockIndexC] = uint32_t(sqrt(coeffBufferC[0]));
+                result.energyVPerBlock[blockIndexC]  = calculateWeightedCoeffSum(blockSize, coeffBufferC);
+                frameV += result.averageVPerBlock[blockIndexC];
+                frameEnergyV += result.energyVPerBlock[blockIndexC];
+
+                blockIndexC++;
+            }
+        }
+        result.averageV = uint32_t((double) (frameV) / totalNumberBlocksC);
+        result.energyV  = uint32_t((double) (frameEnergyV) / (totalNumberBlocksC * E_norm_factor));
+    }
 }
 
 void computeTextureSAD(Result &result, const Result &resultsPreviousFrame)

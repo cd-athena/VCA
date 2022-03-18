@@ -52,7 +52,8 @@ void ProcessingThread::threadFunction(MultiThreadQueue<Job> &jobQueue,
         Result result;
         result.poc = job->frame->stats.poc;
         result.jobID = job->jobID;
-        computeWeightedDCTEnergy(*job, result, this->cfg.blockSize, this->cfg.cpuSimd);
+        computeWeightedDCTEnergy(*job, result, this->cfg.blockSize, this->cfg.cpuSimd,
+                                 this->cfg.enableChroma);
 
         log(this->cfg,
             LogLevel::Debug,

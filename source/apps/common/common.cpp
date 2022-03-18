@@ -44,6 +44,7 @@ FrameWithData::FrameWithData(const vca_frame_info &frameInfo)
 
     this->vcaFrame.planes[0] = this->data.data();
     this->vcaFrame.stride[0] = frameInfo.width;
+    this->vcaFrame.height[0] = frameInfo.height;
 
     if (vca_cli_csps.at(colorspace).planes > 1)
     {
@@ -54,6 +55,8 @@ FrameWithData::FrameWithData(const vca_frame_info &frameInfo)
         this->vcaFrame.planes[2] = this->data.data() + planeSizeBytes[0] + planeSizeBytes[1];
         this->vcaFrame.stride[1] = widthChroma;
         this->vcaFrame.stride[2] = widthChroma;
+        this->vcaFrame.height[1] = heightChroma;
+        this->vcaFrame.height[2] = heightChroma;
     }
 }
 
@@ -70,6 +73,20 @@ void vca_log(LogLevel level, std::string error)
 
     if (logLevelToInt.at(level) >= logLevelToInt.at(appLogLevel))
         std::cout << logLevelName.at(level) << error << std::endl;
+}
+
+size_t calculateFrameBytesInInput(const vca_frame_info &frameInfo)
+{
+    size_t framesizeBytes = 0;
+    const auto colorspace = frameInfo.colorspace;
+    auto pixelbytes       = frameInfo.bitDepth > 8 ? 2u : 1u;
+    for (int i = 0; i < vca_cli_csps.at(colorspace).planes; i++)
+    {
+        uint32_t w = frameInfo.width >> vca_cli_csps.at(colorspace).width[i];
+        uint32_t h = frameInfo.height >> vca_cli_csps.at(colorspace).height[i];
+        framesizeBytes += w * h * pixelbytes;
+    }
+    return framesizeBytes;
 }
 
 } // namespace vca

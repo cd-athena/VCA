@@ -21,15 +21,13 @@
 
 #include "IInputFile.h"
 
-#include <fstream>
-
 namespace vca {
 
 class YUVInput : public IInputFile
 {
 public:
     YUVInput() = delete;
-    YUVInput(std::string &fileName, vca_frame_info &openFrameInfo, unsigned skipFrames);
+    YUVInput(std::string &fileName, vca_frame_info &openFrameInfo);
     ~YUVInput() = default;
 
     bool readFrame(FrameWithData &frame) override;
