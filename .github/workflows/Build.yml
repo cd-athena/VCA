@@ -32,8 +32,7 @@ jobs:
       if: matrix.os == 'windows-2019' || matrix.os == 'windows-2022'
     - name: Build
       run: |
-        cd $GITHUB_WORKSPACE
         mkdir build
         cd build
-        cmake ../
+        cmake ..
         cmake --build .
