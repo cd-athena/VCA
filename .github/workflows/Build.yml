@@ -12,6 +12,8 @@ jobs:
           - os: ubuntu-20.04
           - os: macos-10.15
           - os: macos-11
+          - os: windows-2019
+          - os: windows-2022
     steps:
     - uses: actions/checkout@v3
     - run: git fetch --prune --unshallow
@@ -24,6 +26,10 @@ jobs:
       run: |
         brew install nasm
       if: matrix.os == 'macos-10.15' || matrix.os == 'macos-11'
+    - name: Install Windows packages
+      run: |
+        choco install nasm
+      if: matrix.os == 'windows-2019' || matrix.os == 'windows-2022'
     - name: Build
       run: |
         cd $GITHUB_WORKSPACE
