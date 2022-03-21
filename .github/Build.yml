@@ -1,0 +1,23 @@
+name: CI build
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include: 
+          - os: ubuntu-18.04
+          # - os: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - run: git fetch --prune --unshallow
+    - name: Install Linux packages
+      run: |
+        sudo apt-get update
+    - name: Build
+      run: |
+        cd $GITHUB_WORKSPACE
+        mkdir build
+        cd build
+        cmake ../
+        cmake --build .
