@@ -16,6 +16,7 @@ jobs:
     - name: Install Linux packages
       run: |
         sudo apt-get update
+        sudo apt-get install nasm
     - name: Build
       run: |
         cd $GITHUB_WORKSPACE
