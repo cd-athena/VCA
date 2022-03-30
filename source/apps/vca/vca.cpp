@@ -25,6 +25,7 @@
 #include <common/stats/YUViewStatsFile.h>
 #include <lib/vcaLib.h>
 
+#include <algorithm>
 #include <chrono>
 #include <cstring>
 #include <memory>
