@@ -339,19 +339,65 @@ void writeComplexityStatsToFile(const Result &result, std::ofstream &file, bool 
         file << "\n";
 }
 
-void writeShotDetectionResultsToFile(const std::vector<vca_shot_detect_frame> &shotDetectFrames,
+void writeShotDetectionResultsToFile(const std::vector<vca_frame_results> &shotDetectFrames,
                                      std::ofstream &file)
 {
     size_t shotCounter = 0;
-    for (size_t i = 0; i < shotDetectFrames.size(); i++)
+
+    struct AverageValuesShot
     {
-        auto &frame = shotDetectFrames.at(i);
+        uint64_t brightness{};
+        uint64_t energy{};
+        double sad{};
+        uint64_t u{};
+        uint64_t v{};
+        uint64_t energyU{};
+        uint64_t energyV{};
+        double epsilon;
+        int poc{};
+        unsigned nrFramesInAverage{};
+    };
+    std::optional<AverageValuesShot> averageValuesShot{};
+
+    auto writeToFile = [&file](const AverageValuesShot &averageValuesShot, size_t shotCounter) {
+        const auto nrFrames = averageValuesShot.nrFramesInAverage;
+        file << shotCounter << ", "                             //
+             << averageValuesShot.poc << ", "                   //
+             << averageValuesShot.brightness / nrFrames << ", " //
+             << averageValuesShot.energy / nrFrames << ", "     //
+             << averageValuesShot.sad / nrFrames << ", "        //
+             << averageValuesShot.u / nrFrames << ", "          //
+             << averageValuesShot.v / nrFrames << ", "          //
+             << averageValuesShot.energyU / nrFrames << ", "    //
+             << averageValuesShot.energyV / nrFrames << ", "    //
+             << averageValuesShot.epsilon / nrFrames << "\n";
+    };
+
+    for (const auto &frame : shotDetectFrames)
+    {
         if (frame.isNewShot)
         {
-            file << shotCounter << ", " << i << "\n";
-            shotCounter++;
+            if (averageValuesShot)
+            {
+                writeToFile(*averageValuesShot, shotCounter);
+                shotCounter++;
+            }
+            averageValuesShot      = AverageValuesShot();
+            averageValuesShot->poc = frame.poc;
         }
+        averageValuesShot->brightness += frame.averageBrightness;
+        averageValuesShot->energy += frame.averageEnergy;
+        averageValuesShot->sad += frame.sad;
+        averageValuesShot->u += frame.averageU;
+        averageValuesShot->v += frame.averageV;
+        averageValuesShot->energyU += frame.energyU;
+        averageValuesShot->energyV += frame.energyV;
+        averageValuesShot->epsilon += frame.epsilon;
+        averageValuesShot->nrFramesInAverage++;
     }
+
+    if (averageValuesShot)
+        writeToFile(*averageValuesShot, shotCounter);
 }
 
 #ifdef _WIN32
@@ -478,7 +524,7 @@ int main(int argc, char **argv)
     std::queue<framePtr> frameRecycling;
     std::queue<framePtr> activeFrames;
     std::unique_ptr<YUViewStatsFile> yuviewStatsFile;
-    std::vector<vca_shot_detect_frame> shotDetectFrames;
+    std::vector<vca_frame_results> shotDetectFrames;
     unsigned pushedFrames   = 0;
     unsigned resultsCounter = 0;
     unsigned skippedFrames  = 0;
@@ -551,7 +597,7 @@ int main(int argc, char **argv)
             if (complexityFile.is_open())
                 writeComplexityStatsToFile(result, complexityFile, options.vcaParam.enableChroma);
             if (!options.shotCSVFilename.empty())
-                shotDetectFrames.push_back({result.result.epsilon, false});
+                shotDetectFrames.push_back(result.result);
 
             auto processedFrame = std::move(activeFrames.front());
             activeFrames.pop();
@@ -580,7 +626,7 @@ int main(int argc, char **argv)
         if (complexityFile.is_open())
             writeComplexityStatsToFile(result, complexityFile, options.vcaParam.enableChroma);
         if (!options.shotCSVFilename.empty())
-            shotDetectFrames.push_back({result.result.epsilon, false});
+            shotDetectFrames.push_back(result.result);
 
         auto processedFrame = std::move(activeFrames.front());
         activeFrames.pop();
@@ -609,12 +655,16 @@ int main(int argc, char **argv)
             vca_log(LogLevel::Error, "Error opening shot CSV file " + options.shotCSVFilename);
             return 1;
         }
-        shotsFile << "ID, Start POC \n";
+        shotsFile << "ID, Start POC, avg brightness, avg energy, avg sad, avg u, avg v, avg energy "
+                     "u, avg energy v, avg epsilon\n";
         writeShotDetectionResultsToFile(shotDetectFrames, shotsFile);
 
+        auto nrShots = std::count_if(shotDetectFrames.begin(),
+                                     shotDetectFrames.end(),
+                                     [](auto frame) { return frame.isNewShot; });
         vca_log(LogLevel::Info,
                 "Performed shot detection for " + std::to_string(shotDetectFrames.size())
-                    + " frames.");
+                    + " frames. Detected " + std::to_string(nrShots) + " shots.");
     }
 
     return 0;
