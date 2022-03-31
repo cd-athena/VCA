@@ -242,10 +242,12 @@ std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
                 options.shotCSVFilename = optarg;
             else if (name == "yuview-stats")
                 options.yuviewStatsFilename = optarg;
-            else if (name == "max-thresh")
+            else if (name == "max-epsthresh")
                 options.shotDetectParam.maxEpsilonThresh = std::stod(optarg);
-            else if (name == "min-thresh")
+            else if (name == "min-epsthresh")
                 options.shotDetectParam.minEpsilonThresh = std::stod(optarg);
+            else if (name == "max-sadthresh")
+                options.shotDetectParam.maxSadThresh = std::stod(optarg);
             else if (name == "block-size")
                 options.vcaParam.blockSize = std::stoi(optarg);
             else if (name == "threads")
