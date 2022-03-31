@@ -23,7 +23,7 @@
 namespace vca {
 
 vca_result shot_detection(const vca_shot_detection_param &param,
-                          vca_shot_detect_frame *frames,
+                          vca_frame_results *frames,
                           size_t num_frames);
 
 }

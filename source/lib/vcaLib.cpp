@@ -67,7 +67,7 @@ DLL_PUBLIC void vca_analyzer_close(vca_analyzer *enc)
 }
 
 DLL_PUBLIC vca_result vca_shot_detection(const vca_shot_detection_param &param,
-                                         vca_shot_detect_frame *frames,
+                                         vca_frame_results *frames,
                                          size_t num_frames)
 {
     if (frames == nullptr)

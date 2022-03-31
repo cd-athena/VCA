@@ -29,7 +29,7 @@ inline void log(const vca_shot_detection_param &cfg, LogLevel level, const std::
         cfg.logFunction(cfg.logFunctionPrivateData, level, message.c_str());
 }
 
-void detect(const vca_shot_detection_param &param, vca_shot_detect_frame *frames, size_t num_frames)
+void detect(const vca_shot_detection_param &param, vca_frame_results *frames, size_t num_frames)
 {
     struct UnsureFrame
     {
@@ -85,7 +85,7 @@ void detect(const vca_shot_detection_param &param, vca_shot_detect_frame *frames
 namespace vca {
 
 vca_result shot_detection(const vca_shot_detection_param &param,
-                          vca_shot_detect_frame *frames,
+                          vca_frame_results *frames,
                           size_t num_frames)
 {
     log(param,

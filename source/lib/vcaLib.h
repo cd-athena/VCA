@@ -71,9 +71,9 @@ struct vca_frame_stats
 
 struct vca_frame_results
 {
-    /* Pointer to storage for one value per block in the frame.
+    /* The pointers are pointers to memory for storage of one value per block in the frame.
      * The caller must make sure that this is pointing to a valid and big enough block of memory.
-     * These must not be pointing to memory. If they are nullptr, no data will be written.
+     * If they are nullptr, no data will be written.
      */
     uint32_t *brightnessPerBlock{};
     uint32_t averageBrightness;
@@ -97,6 +97,7 @@ struct vca_frame_results
     double epsilon{};
 
     int poc{};
+    bool isNewShot{};
 
     // An increasing counter that is incremented with each call to 'vca_analyzer_push'.
     // So with this one can double check that the results are recieved in the right order.
@@ -191,14 +192,8 @@ struct vca_shot_detection_param
     void *logFunctionPrivateData{};
 };
 
-struct vca_shot_detect_frame
-{
-    double epsilon{};
-    bool isNewShot{};
-};
-
 DLL_PUBLIC vca_result vca_shot_detection(const vca_shot_detection_param &param,
-                                         vca_shot_detect_frame *frames,
+                                         vca_frame_results *frames,
                                          size_t num_frames);
 
 DLL_PUBLIC extern const char *vca_version_str;

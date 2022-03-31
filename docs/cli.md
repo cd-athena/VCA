@@ -58,7 +58,7 @@
 	Input filename. Raw YUV or Y4M supported. Use `stdin` for stdin. For example piping input from ffmpeg works like this:
 
 	```
-	ffmpeg.exe -i Sintel.2010.1080p.mkv -f yuv4mpegpipe - | vca.exe --input stdin
+	ffmpeg.exe -i Sintel.2010.1080p.mkv -f yuv4mpegpipe - | vca.exe --y4m --input stdin
 	```
 
 - `--y4m`
