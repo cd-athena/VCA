@@ -95,10 +95,14 @@
 
 	Size of the non-overlapping blocks used to determine the E, h features. Default: 32.
 
-- `--min-thresh <double>` 
+- `--min-epsthresh <double>` 
 
 	Minimum threshold of epsilon for shot detection.
 
-- `--max-thresh <double>`
+- `--max-epsthresh <double>`
  
 	Maximum threshold of epsilon for shot detection.
+
+- `--max-sadthresh <double>`
+ 
+	Maximum threshold of h for shot detection.
