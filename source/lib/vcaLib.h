@@ -23,6 +23,7 @@
 #pragma once
 
 #include "vcaColorSpace.h"
+#include <cstddef>
 #include <stdint.h>
 
 #if defined(_MSC_VER) && !defined(VCA_STATIC_BUILD)
