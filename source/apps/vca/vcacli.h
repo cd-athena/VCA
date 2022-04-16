@@ -39,8 +39,9 @@ static const struct option long_options[] = {{"help", no_argument, NULL, 'h'},
                                              {"complexity-csv", required_argument, NULL, 0},
                                              {"shot-csv", required_argument, NULL, 0},
                                              {"yuview-stats", required_argument, NULL, 0},
-                                             {"max-thresh", required_argument, NULL, 0},
-                                             {"min-thresh", required_argument, NULL, 0},
+                                             {"max-epsthresh", required_argument, NULL, 0},
+                                             {"min-epsthresh", required_argument, NULL, 0},
+                                             {"max-sadthresh", required_argument, NULL, 0},
                                              {"block-size", required_argument, NULL, 0},
                                              {"threads", required_argument, NULL, 0},
                                              {0, 0, 0, 0},
@@ -81,8 +82,9 @@ static void showHelp()
     printf("\nOperation Options:\n");
     printf("   --no-simd                     Disable SIMD. Default: Enabled\n");
     printf("   --no-chroma                   Disable chroma. Default: Enabled\n");
-    printf("   --max-thresh <float>          Maximum threshold of epsilon in shot detection\n");
-    printf("   --min-thresh <float>          Minimum threshold of epsilon in shot detection\n");
+    printf("   --max-epsthresh <float>       Maximum threshold of epsilon in shot detection\n");
+    printf("   --min-epsthresh <float>       Minimum threshold of epsilon in shot detection\n");
+    printf("   --min-sadthresh <float>       Minimum threshold of h in shot detection\n");
     printf("   --block-size <integer>        Block size for DCT transform. Must be 8, 16 or 32 "
            "(Default).\n");
     printf("   --threads <integer>           Nr of threads to use. (Default: 0 (autodetect))\n");

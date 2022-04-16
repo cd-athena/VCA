@@ -54,7 +54,7 @@ void detect(const vca_shot_detection_param &param, vca_frame_results *frames, si
         else
         {
             frames[i].isNewShot = false;
-            if (frames[i].epsilon >= param.minEpsilonThresh)
+            if (frames[i].epsilon >= param.minEpsilonThresh && frames[i].sad >=param.maxSadThresh)
             {
                 auto previousShotDistance = i - prevShotPos;
                 unsureFrames.push_back({i, previousShotDistance});

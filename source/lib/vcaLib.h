@@ -23,6 +23,7 @@
 #pragma once
 
 #include "vcaColorSpace.h"
+#include <cstddef>
 #include <stdint.h>
 
 #if defined(_MSC_VER) && !defined(VCA_STATIC_BUILD)
@@ -183,8 +184,9 @@ DLL_PUBLIC void vca_analyzer_close(vca_analyzer *enc);
 
 struct vca_shot_detection_param
 {
-    double minEpsilonThresh{10};
+    double minEpsilonThresh{1.5};
     double maxEpsilonThresh{50};
+    double maxSadThresh{100};
 
     double fps{};
 
