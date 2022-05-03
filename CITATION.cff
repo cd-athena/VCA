@@ -1,21 +1,36 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite it as below."
-authors:
-- family-names: "Menon"
-  given-names:  "Vignesh V"
-  orcid: "https://orcid.org/0000-0003-1454-6146"
-- family-names: "Feldmann"
-  given-names: "Christian"  
-- family-names: "Amirpour"
-  given-names: "Hadi"
-  orcid: "https://orcid.org/0000-0001-9853-1720"
-- family-names: "Ghanbari"
-  given-names: "Mohammad"
-  orcid: "https://orcid.org/0000-0002-5482-8378"
-- family-names: "Timmerer"
-  given-names: "Christian"
-  orcid: "https://orcid.org/0000-0003-1114-2584"  
-title: "VCA"
-version: 1.0.0
-date-released: 2022-02-14
+message: "If you use this software, please cite both the article from preferred-citation and the software itself."
+preferred-citation:
+  authors:
+  - family-names: "Menon"
+    given-names:  "Vignesh V"
+    orcid: "https://orcid.org/0000-0003-1454-6146"
+  - family-names: "Feldmann"
+    given-names: "Christian"  
+  - family-names: "Amirpour"
+    given-names: "Hadi"
+    orcid: "https://orcid.org/0000-0001-9853-1720"
+  - family-names: "Ghanbari"
+    given-names: "Mohammad"
+    orcid: "https://orcid.org/0000-0002-5482-8378"
+  - family-names: "Timmerer"
+    given-names: "Christian"
+    orcid: "https://orcid.org/0000-0003-1114-2584"
+  title: "VCA: Video Complexity Analyzer"
+  doi: 10.1145/3524273.3532896
+  type: conference-paper
+  year: "2022"
+  isbn: "978-1-4503-9283-9"
+  collection-title: "Proceedings of the 13th ACM Multimedia Systems Conference"
+  collection-type: proceedings
+  location:
+        name: "Athlone, Ireland"
+  conference:
+        name: "MMSys '22"
+  publisher:
+        name: "Association for Computing Machinery"
+        address: "New York, NY, USA"  
+title: "VCA: Video Complexity Analyzer"
+version: 1.5
+date-released: 2022-04-14
 url: "https://github.com/cd-athena/VCA"
