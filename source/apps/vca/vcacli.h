@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <common/getopt/getopt.h>
+#include <getopt.h>
 
 #include <stdio.h>
 
