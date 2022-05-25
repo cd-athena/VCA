@@ -33,7 +33,7 @@
 
 	Write the shot id, the first POC of every shot to a Comma Separated Values log file. Creates the file if it doesn't already exist.
 
-- `--yuvview-stats <filename>`
+- `--yuview-stats <filename>`
 
 	Write the per block results (L, E, h) to a stats file that can be visualized using YUView.
 
