@@ -12,3 +12,5 @@ While VCA is primarily designed as a video complexity analyzer library, a comman
  - [How to build?](build.md)
  - [CLI options](cli.md)
  - [API functions](api.md)
+
+![ATHENA](https://athena.wp.itec.aau.at/wp-content/uploads/sites/12/2020/02/athena-logo-notagline-300x51.png)
