@@ -162,13 +162,13 @@ void copyPixelValuesToBuffer(unsigned blockOffsetLuma,
     }
     else
     {
-        auto input             = (int16_t *) (src) + blockOffsetLuma;
+        auto input             = (uint16_t *) (src) + blockOffsetLuma;
         const auto shiftTo8Bit = (bitDepth - 8);
         for (unsigned y = 0; y < blockSize; ++y)
         {
             for (unsigned x = 0; x < blockSize; ++x)
             {
-                buffer[x] = (input[x] >> shiftTo8Bit);
+                buffer[x] = int16_t(input[x] >> shiftTo8Bit);
             }
             input += srcStride / 2;
             buffer += blockSize;
