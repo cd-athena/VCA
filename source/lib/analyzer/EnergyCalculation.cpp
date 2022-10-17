@@ -25,10 +25,10 @@
 #include "simd/dct8.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <cstring>
 #include <stdexcept>
-#include <cmath>
 
 namespace {
 
@@ -146,7 +146,7 @@ uint32_t calculateWeightedCoeffSum(unsigned blockSize, int16_t *coeffBuffer)
     return weightedSum;
 }
 
-void copyPixelValuesToBuffer(unsigned blockOffsetLuma,
+void copyPixelValuesToBuffer(unsigned blockOffsetLumaBytes,
                              unsigned blockSize,
                              unsigned bitDepth,
                              uint8_t *src,
@@ -155,21 +155,29 @@ void copyPixelValuesToBuffer(unsigned blockOffsetLuma,
 {
     if (bitDepth == 8)
     {
-        src += blockOffsetLuma;
+        src += blockOffsetLumaBytes;
         for (unsigned y = 0; y < blockSize; y++, src += srcStride)
             for (unsigned x = 0; x < blockSize; x++)
                 *(buffer++) = int16_t(src[x]);
     }
     else
     {
-        auto input = (int16_t *) (src) + blockOffsetLuma;
-        for (unsigned y = 0; y < blockSize; y++, input += srcStride / 2, buffer += blockSize)
-            std::memcpy(buffer, input, blockSize * sizeof(int16_t));
+        auto input             = (uint16_t *) (src + blockOffsetLumaBytes);
+        const auto shiftTo8Bit = (bitDepth - 8);
+        for (unsigned y = 0; y < blockSize; ++y)
+        {
+            for (unsigned x = 0; x < blockSize; ++x)
+            {
+                buffer[x] = int16_t(input[x] >> shiftTo8Bit);
+            }
+            input += srcStride / 2;
+            buffer += blockSize;
+        }
     }
 }
 
 template<int bitDepth>
-void copyPixelValuesToBufferWithPadding(unsigned blockOffsetLuma,
+void copyPixelValuesToBufferWithPadding(unsigned blockOffsetLumaBytes,
                                         unsigned blockSize,
                                         uint8_t *srcData,
                                         unsigned srcStride,
@@ -177,12 +185,12 @@ void copyPixelValuesToBufferWithPadding(unsigned blockOffsetLuma,
                                         unsigned paddingRight,
                                         unsigned paddingBottom)
 {
-    typedef typename std::conditional<bitDepth == 8, uint8_t *, int16_t *>::type InValueType;
+    typedef typename std::conditional<bitDepth == 8, uint8_t *, uint16_t *>::type InValueType;
     static_assert(bitDepth >= 8 && bitDepth <= 16);
 
-    const auto *__restrict src = InValueType(srcData);
+    const auto *__restrict src = InValueType(srcData + blockOffsetLumaBytes);
+    const auto shiftTo8Bit     = (bitDepth - 8);
 
-    src += blockOffsetLuma;
     unsigned y          = 0;
     auto bufferLastLine = buffer;
     for (; y < blockSize - paddingBottom; y++, src += srcStride)
@@ -190,15 +198,15 @@ void copyPixelValuesToBufferWithPadding(unsigned blockOffsetLuma,
         unsigned x     = 0;
         bufferLastLine = buffer;
         for (; x < blockSize - paddingRight; x++)
-            *(buffer++) = int16_t(src[x]);
-        const auto lastValue = int16_t(src[x]);
+            *(buffer++) = int16_t(src[x] >> shiftTo8Bit);
+        const auto lastValue = int16_t(src[x] >> shiftTo8Bit);
         for (; x < blockSize; x++)
             *(buffer++) = lastValue;
     }
     for (; y < blockSize; y++)
     {
         for (unsigned x = 0; x < blockSize; x++)
-            *(buffer++) = bufferLastLine[x];
+            *(buffer++) = (bufferLastLine[x] >> shiftTo8Bit);
     }
 }
 
@@ -241,17 +249,18 @@ void performDCT(unsigned blockSize, int16_t *pixelBuffer, int16_t *coeffBuffer, 
 
 namespace vca {
 
-void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize, CpuSimd cpuSimd,
+void computeWeightedDCTEnergy(const Job &job,
+                              Result &result,
+                              unsigned blockSize,
+                              CpuSimd cpuSimd,
                               bool enableChroma)
 {
     const auto frame = job.frame;
     if (frame == nullptr)
         throw std::invalid_argument("Invalid frame pointer");
 
-    const auto bitDepth = frame->info.bitDepth;
-
-    if (frame->info.bitDepth > 8)
-        throw std::invalid_argument("16 bit input not implemented yet");
+    const auto bitDepth      = frame->info.bitDepth;
+    const auto bytesPerPixel = (bitDepth > 8) ? 2 : 1;
 
     auto src       = frame->planes[0];
     auto srcStride = frame->stride[0];
@@ -275,21 +284,21 @@ void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize
     ALIGN_VAR_32(int16_t, pixelBuffer[32 * 32]);
     ALIGN_VAR_32(int16_t, coeffBuffer[32 * 32]);
 
-    auto blockIndex       = 0u;
+    auto blockIndex          = 0u;
     uint32_t frameBrightness = 0;
-    uint32_t frameTexture = 0;
+    uint32_t frameTexture    = 0;
     for (unsigned blockY = 0; blockY < heightInPixels; blockY += blockSize)
     {
         auto paddingBottom = std::max(int(blockY + blockSize) - int(frame->info.height), 0);
         for (unsigned blockX = 0; blockX < widthInPixels; blockX += blockSize)
         {
-            auto paddingRight    = std::max(int(blockX + blockSize) - int(frame->info.width), 0);
-            auto blockOffsetLuma = blockX + (blockY * srcStride);
+            auto paddingRight = std::max(int(blockX + blockSize) - int(frame->info.width), 0);
+            auto blockOffsetLumaBytes = blockX * bytesPerPixel + (blockY * srcStride);
 
             if (paddingRight > 0 || paddingBottom > 0)
             {
                 if (bitDepth == 8)
-                    copyPixelValuesToBufferWithPadding<8>(blockOffsetLuma,
+                    copyPixelValuesToBufferWithPadding<8>(blockOffsetLumaBytes,
                                                           blockSize,
                                                           src,
                                                           srcStride,
@@ -297,7 +306,7 @@ void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize
                                                           unsigned(paddingRight),
                                                           unsigned(paddingBottom));
                 else
-                    copyPixelValuesToBufferWithPadding<16>(blockOffsetLuma,
+                    copyPixelValuesToBufferWithPadding<16>(blockOffsetLumaBytes,
                                                            blockSize,
                                                            src,
                                                            srcStride / 2,
@@ -307,7 +316,7 @@ void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize
             }
             else
             {
-                copyPixelValuesToBuffer(blockOffsetLuma,
+                copyPixelValuesToBuffer(blockOffsetLumaBytes,
                                         blockSize,
                                         bitDepth,
                                         src,
@@ -336,7 +345,9 @@ void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize
         auto srcUStride = frame->stride[1];
         auto srcUHeight = frame->height[1];
 
-        auto [widthInBlocksC, heightInBlockC] = getChromaFrameSizeInBlocks(blockSize, srcUStride, srcUHeight);
+        auto [widthInBlocksC, heightInBlockC] = getChromaFrameSizeInBlocks(blockSize,
+                                                                           srcUStride,
+                                                                           srcUHeight);
         auto totalNumberBlocksC               = widthInBlocksC * heightInBlockC;
         auto widthInPixelsC                   = widthInBlocksC * blockSize;
         auto heightInPixelsC                  = heightInBlockC * blockSize;
@@ -353,41 +364,41 @@ void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize
         ALIGN_VAR_32(int16_t, pixelBufferC[32 * 32]);
         ALIGN_VAR_32(int16_t, coeffBufferC[32 * 32]);
 
-        auto blockIndexC         = 0u;
-        uint32_t frameU          = 0;
-        uint32_t frameV          = 0;
-        uint32_t frameEnergyU    = 0;
-        uint32_t frameEnergyV    = 0;
+        auto blockIndexC      = 0u;
+        uint32_t frameU       = 0;
+        uint32_t frameV       = 0;
+        uint32_t frameEnergyU = 0;
+        uint32_t frameEnergyV = 0;
         for (unsigned blockY = 0; blockY < heightInPixelsC; blockY += blockSize)
         {
             auto paddingBottom = std::max(int(blockY + blockSize) - int(srcUHeight), 0);
             for (unsigned blockX = 0; blockX < widthInPixelsC; blockX += blockSize)
             {
-                auto paddingRight    = std::max(int(blockX + blockSize) - int(srcUStride), 0);
-                auto blockOffsetChroma = blockX + (blockY * srcUStride);
+                auto paddingRight = std::max(int(blockX + blockSize) - int(srcUStride), 0);
+                auto blockOffsetChromaBytes = blockX * bytesPerPixel + (blockY * srcUStride);
 
                 if (paddingRight > 0 || paddingBottom > 0)
                 {
                     if (bitDepth == 8)
-                        copyPixelValuesToBufferWithPadding<8>(blockOffsetChroma,
-                                                            blockSize,
-                                                            srcU,
-                                                            srcUStride,
-                                                            pixelBufferC,
-                                                            unsigned(paddingRight),
-                                                            unsigned(paddingBottom));
+                        copyPixelValuesToBufferWithPadding<8>(blockOffsetChromaBytes,
+                                                              blockSize,
+                                                              srcU,
+                                                              srcUStride,
+                                                              pixelBufferC,
+                                                              unsigned(paddingRight),
+                                                              unsigned(paddingBottom));
                     else
-                        copyPixelValuesToBufferWithPadding<16>(blockOffsetChroma,
-                                                            blockSize,
-                                                            srcU,
-                                                            srcUStride / 2,
-                                                            pixelBufferC,
-                                                            unsigned(paddingRight),
-                                                            unsigned(paddingBottom));
+                        copyPixelValuesToBufferWithPadding<16>(blockOffsetChromaBytes,
+                                                               blockSize,
+                                                               srcU,
+                                                               srcUStride / 2,
+                                                               pixelBufferC,
+                                                               unsigned(paddingRight),
+                                                               unsigned(paddingBottom));
                 }
                 else
                 {
-                    copyPixelValuesToBuffer(blockOffsetChroma,
+                    copyPixelValuesToBuffer(blockOffsetChromaBytes,
                                             blockSize,
                                             bitDepth,
                                             srcU,
@@ -398,7 +409,8 @@ void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize
                 performDCT(blockSize, pixelBufferC, coeffBufferC, cpuSimd);
 
                 result.averageUPerBlock[blockIndexC] = uint32_t(sqrt(coeffBufferC[0]));
-                result.energyUPerBlock[blockIndexC] = calculateWeightedCoeffSum(blockSize, coeffBufferC);
+                result.energyUPerBlock[blockIndexC]  = calculateWeightedCoeffSum(blockSize,
+                                                                                coeffBufferC);
                 frameU += result.averageUPerBlock[blockIndexC];
                 frameEnergyU += result.energyUPerBlock[blockIndexC];
 
@@ -414,31 +426,31 @@ void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize
             auto paddingBottom = std::max(int(blockY + blockSize) - int(srcUHeight), 0);
             for (unsigned blockX = 0; blockX < widthInPixelsC; blockX += blockSize)
             {
-                auto paddingRight      = std::max(int(blockX + blockSize) - int(srcUStride), 0);
-                auto blockOffsetChroma = blockX + (blockY * srcUStride);
+                auto paddingRight = std::max(int(blockX + blockSize) - int(srcUStride), 0);
+                auto blockOffsetChromaBytes = blockX * bytesPerPixel + (blockY * srcUStride);
 
                 if (paddingRight > 0 || paddingBottom > 0)
                 {
                     if (bitDepth == 8)
-                        copyPixelValuesToBufferWithPadding<8>(blockOffsetChroma,
-                                                            blockSize,
-                                                            srcV,
-                                                            srcUStride,
-                                                            pixelBufferC,
-                                                            unsigned(paddingRight),
-                                                            unsigned(paddingBottom));
+                        copyPixelValuesToBufferWithPadding<8>(blockOffsetChromaBytes,
+                                                              blockSize,
+                                                              srcV,
+                                                              srcUStride,
+                                                              pixelBufferC,
+                                                              unsigned(paddingRight),
+                                                              unsigned(paddingBottom));
                     else
-                        copyPixelValuesToBufferWithPadding<16>(blockOffsetChroma,
-                                                            blockSize,
-                                                            srcV,
-                                                            srcUStride / 2,
-                                                            pixelBufferC,
-                                                            unsigned(paddingRight),
-                                                            unsigned(paddingBottom));
+                        copyPixelValuesToBufferWithPadding<16>(blockOffsetChromaBytes,
+                                                               blockSize,
+                                                               srcV,
+                                                               srcUStride / 2,
+                                                               pixelBufferC,
+                                                               unsigned(paddingRight),
+                                                               unsigned(paddingBottom));
                 }
                 else
                 {
-                    copyPixelValuesToBuffer(blockOffsetChroma,
+                    copyPixelValuesToBuffer(blockOffsetChromaBytes,
                                             blockSize,
                                             bitDepth,
                                             srcV,
@@ -449,7 +461,8 @@ void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize
                 performDCT(blockSize, pixelBufferC, coeffBufferC, cpuSimd);
 
                 result.averageVPerBlock[blockIndexC] = uint32_t(sqrt(coeffBufferC[0]));
-                result.energyVPerBlock[blockIndexC]  = calculateWeightedCoeffSum(blockSize, coeffBufferC);
+                result.energyVPerBlock[blockIndexC]  = calculateWeightedCoeffSum(blockSize,
+                                                                                coeffBufferC);
                 frameV += result.averageVPerBlock[blockIndexC];
                 frameEnergyV += result.energyVPerBlock[blockIndexC];
 

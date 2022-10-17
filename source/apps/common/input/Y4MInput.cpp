@@ -28,11 +28,20 @@ namespace filesystem = std::experimental::filesystem;
 namespace filesystem = std::filesystem;
 #endif
 
+#include <common/EnumMapper.h>
 #include <iterator>
 #include <string>
 
-namespace vca {
+namespace {
 
+const auto vca_colorSpaceMapper = EnumMapper<vca_colorSpace>({{vca_colorSpace::YUV400, "4:0:0"},
+                                                              {vca_colorSpace::YUV420, "4:2:0"},
+                                                              {vca_colorSpace::YUV422, "4:2:2"},
+                                                              {vca_colorSpace::YUV444, "4:4:4"}});
+
+}
+
+namespace vca {
 Y4MInput::Y4MInput(std::string &fileName)
 {
     if (!this->openInput(fileName))
@@ -109,25 +118,45 @@ bool Y4MInput::parseHeader()
         }
         else if (parameterIndicator == 'C')
         {
-            auto indicator = field.substr(1, 3);
-            if (indicator == "420")
-            {
+            auto subsamplingIndicator = field.substr(1, 3);
+            if (subsamplingIndicator == "420")
                 this->frameInfo.colorspace = vca_colorSpace::YUV420;
-                vca_log(LogLevel::Info, "Y4M Detected colorspace 4:2:0");
-            }
-            else if (indicator == "422")
-            {
+            else if (subsamplingIndicator == "422")
                 this->frameInfo.colorspace = vca_colorSpace::YUV422;
-                vca_log(LogLevel::Info, "Y4M Detected colorspace 4:2:2");
-            }
-            else if (indicator == "444")
-            {
+            else if (subsamplingIndicator == "444")
                 this->frameInfo.colorspace = vca_colorSpace::YUV444;
-                vca_log(LogLevel::Info, "Y4M Detected colorspace 4:4:4");
-            }
             else
+            {
                 vca_log(LogLevel::Info,
-                        "Y4M invalid colorspace indicator (" + indicator + "). Assuming 4:2:0.");
+                        "Y4M invalid colorspace indicator (" + subsamplingIndicator
+                            + "). Assuming 4:2:0.");
+                this->frameInfo.colorspace = vca_colorSpace::YUV420;
+            }
+
+            if (field.size() > 3)
+            {
+                auto additionalPart = field.substr(4);
+                if (additionalPart == "p10")
+                    this->frameInfo.bitDepth = 10;
+                else if (additionalPart == "p12")
+                    this->frameInfo.bitDepth = 12;
+                else if (additionalPart == "p14")
+                    this->frameInfo.bitDepth = 14;
+                else if (additionalPart == "p16")
+                    this->frameInfo.bitDepth = 16;
+                else
+                {
+                    vca_log(LogLevel::Info,
+                            "Y4M invalid additional part in colorspace indicator (" + additionalPart
+                                + "). Assuming 8 bit.");
+                    this->frameInfo.bitDepth = 8;
+                }
+            }
+
+            vca_log(LogLevel::Info,
+                    "Y4M Detected colorspace "
+                        + vca_colorSpaceMapper.getName(this->frameInfo.colorspace)
+                        + " with bit depth " + std::to_string(this->frameInfo.bitDepth));
         }
         else if (parameterIndicator == 'F')
         {
@@ -161,8 +190,7 @@ bool Y4MInput::readFrame(FrameWithData &frame)
 {
     char c = 0;
     while (this->input->get(c) && c != 'F')
-    {
-    }
+    {}
 
     if (this->input->eof())
         return false;
@@ -181,8 +209,7 @@ bool Y4MInput::readFrame(FrameWithData &frame)
         throw std::runtime_error("Error reading FRAME tag");
 
     while (this->input->get(c) && c != '\n')
-    {
-    }
+    {}
 
     this->input->read((char *) (frame.getData()), frame.getFrameSize());
 

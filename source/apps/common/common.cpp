@@ -43,7 +43,7 @@ FrameWithData::FrameWithData(const vca_frame_info &frameInfo)
         this->data.resize(frameSizeBytes);
 
     this->vcaFrame.planes[0] = this->data.data();
-    this->vcaFrame.stride[0] = frameInfo.width;
+    this->vcaFrame.stride[0] = frameInfo.width * pixelbytes;
     this->vcaFrame.height[0] = frameInfo.height;
 
     if (vca_cli_csps.at(colorspace).planes > 1)
@@ -53,8 +53,8 @@ FrameWithData::FrameWithData(const vca_frame_info &frameInfo)
 
         this->vcaFrame.planes[1] = this->data.data() + planeSizeBytes[0];
         this->vcaFrame.planes[2] = this->data.data() + planeSizeBytes[0] + planeSizeBytes[1];
-        this->vcaFrame.stride[1] = widthChroma;
-        this->vcaFrame.stride[2] = widthChroma;
+        this->vcaFrame.stride[1] = widthChroma * pixelbytes;
+        this->vcaFrame.stride[2] = widthChroma * pixelbytes;
         this->vcaFrame.height[1] = heightChroma;
         this->vcaFrame.height[2] = heightChroma;
     }
