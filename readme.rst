@@ -9,3 +9,7 @@ VCA
 The primary objective of VCA is to become the best spatial and temporal complexity predictor for every frame/ video segment/ video which aids in predicting encoding parameters for applications like online per-title encoding.
 
 VCA is available as an open source library, published under the GPLv3 license.
+
+Please use "Cite this repository" to extract proper citation options for this repository or use the following:
+
+Vignesh V Menon, Christian Feldmann, Hadi Amirpour, Mohammad Ghanbari, and Christian Timmerer. 2022. VCA: video complexity analyzer. In Proceedings of the 13th ACM Multimedia Systems Conference (MMSys '22). Association for Computing Machinery, New York, NY, USA, 259–264. `https://doi.org/10.1145/3524273.3532896 <https://doi.org/10.1145/3524273.3532896>`_
