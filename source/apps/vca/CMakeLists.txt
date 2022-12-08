@@ -14,7 +14,7 @@ if(NOT HAVE_GETOPT_H)
     message(STATUS "Using compatibility getopt")
 endif(NOT HAVE_GETOPT_H)
 
-if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
+if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.1)
     add_definitions(-DFILESYSTEM_EXPERIMENTAL=1)
     message(STATUS "Including filesystem as experimental because of old GCC")
     set(EXPERIMENTAL_FILESYSTEM_LINK stdc++fs)
