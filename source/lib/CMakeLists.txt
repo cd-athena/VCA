@@ -132,7 +132,8 @@ target_sources(vcaLib
 )
 
 if((X86 AND NOT X64) OR (POWER AND NOT PPC64) OR (ARM AND NOT ARM64))
-    message(FATAL_ERROR "Only 64bit architecture is supported")
+    message(STATUS "SIMD is supported for only 64bit architecture")
+	set(ENABLE_NASM 0)
 endif()
 
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
