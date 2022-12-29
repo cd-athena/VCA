@@ -304,9 +304,9 @@ namespace vca {
 // TODO: I think for the other bit depths (10, 12), we just have to adapt the shift (shift_1st) in
 // these functions.
 
-void dct8_c(const int16_t *src, int16_t *dst, intptr_t srcStride)
+void dct8_c(const int16_t *src, int16_t *dst, intptr_t srcStride, const unsigned bitDepth)
 {
-    const int shift_1st = 2;
+    const int shift_1st = 2 + bitDepth - 8;
     const int shift_2nd = 9;
 
     ALIGN_VAR_32(int16_t, coef[8 * 8]);
@@ -321,9 +321,9 @@ void dct8_c(const int16_t *src, int16_t *dst, intptr_t srcStride)
     partialButterfly8(coef, dst, shift_2nd, 8);
 }
 
-void dct16_c(const int16_t *src, int16_t *dst, intptr_t srcStride)
+void dct16_c(const int16_t *src, int16_t *dst, intptr_t srcStride, const unsigned bitDepth)
 {
-    const int shift_1st = 3;
+    const int shift_1st = 3 + bitDepth - 8;
     const int shift_2nd = 10;
 
     ALIGN_VAR_32(int16_t, coef[16 * 16]);
@@ -338,9 +338,9 @@ void dct16_c(const int16_t *src, int16_t *dst, intptr_t srcStride)
     partialButterfly16(coef, dst, shift_2nd, 16);
 }
 
-void dct32_c(const int16_t *src, int16_t *dst, intptr_t srcStride)
+void dct32_c(const int16_t *src, int16_t *dst, intptr_t srcStride, const unsigned bitDepth)
 {
-    const int shift_1st = 4;
+    const int shift_1st = 4 + bitDepth - 8;
     const int shift_2nd = 11;
 
     ALIGN_VAR_32(int16_t, coef[32 * 32]);

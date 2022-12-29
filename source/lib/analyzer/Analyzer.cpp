@@ -46,7 +46,20 @@ Analyzer::Analyzer(vca_param cfg)
     this->cfg = cfg;
     this->jobs.setMaximumQueueSize(5);
 
+    const auto blockSize = this->cfg.blockSize;
+    if (blockSize != 8 && blockSize != 16 && blockSize != 32)
+    {
+        log(cfg, LogLevel::Error, "Invalid block size: " + std::to_string(this->cfg.blockSize));
+        throw std::invalid_argument("Invalid block size");
+    }
     log(cfg, LogLevel::Info, "Block size: " + std::to_string(this->cfg.blockSize));
+
+    const auto bitDepth = this->cfg.frameInfo.bitDepth;
+    if (bitDepth != 8 && bitDepth != 10 && bitDepth != 12)
+    {
+        log(cfg, LogLevel::Error, "Invalid bit depth: " + std::to_string(bitDepth));
+        throw std::invalid_argument("Invalid bit depth");
+    }
 
     if (this->cfg.cpuSimd == CpuSimd::Autodetect)
     {
@@ -129,12 +142,12 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
             result->epsilon = abs(sadNormalizedPrev - sadNormalized) / sadNormalizedPrev;
     }
 
-    outputResult->poc           = result->poc;
-    outputResult->jobID         = result->jobID;
+    outputResult->poc               = result->poc;
+    outputResult->jobID             = result->jobID;
     outputResult->averageBrightness = result->averageBrightness;
-    outputResult->averageEnergy = result->averageEnergy;
-    outputResult->sad           = result->sad;
-    outputResult->epsilon       = result->epsilon;
+    outputResult->averageEnergy     = result->averageEnergy;
+    outputResult->sad               = result->sad;
+    outputResult->epsilon           = result->epsilon;
     if (outputResult->brightnessPerBlock)
         std::memcpy(outputResult->brightnessPerBlock,
                     result->brightnessPerBlock.data(),
@@ -192,11 +205,12 @@ bool Analyzer::checkFrame(const vca_frame *frame)
 
     if (!this->frameInfo)
     {
-        if (info.bitDepth < 8 || info.bitDepth > 16)
+        if (info.bitDepth != 8 && info.bitDepth != 10 && info.bitDepth != 12)
         {
             log(this->cfg,
                 LogLevel::Error,
-                "Frame with invalid bit " + std::to_string(info.bitDepth) + " depth provided");
+                "Frame with invalid bit " + std::to_string(info.bitDepth)
+                    + " depth provided. Must be 8, 10, or 12.");
             return false;
         }
         if (info.width == 0 || info.width % 2 != 0 || info.height == 0 || info.height % 2 != 0)
@@ -213,7 +227,9 @@ bool Analyzer::checkFrame(const vca_frame *frame)
     if (info.bitDepth != this->frameInfo->bitDepth || info.width != this->frameInfo->width
         || info.height != this->frameInfo->height || info.colorspace != this->frameInfo->colorspace)
     {
-        log(this->cfg, LogLevel::Error, "Frame with different settings revieved");
+        log(this->cfg,
+            LogLevel::Error,
+            "Frame settings differ from the settings that the library was configured with");
         return false;
     }
 

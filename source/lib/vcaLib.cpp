@@ -27,7 +27,15 @@
 
 DLL_PUBLIC vca_analyzer *vca_analyzer_open(vca_param param)
 {
-    return new vca::Analyzer(param);
+    try
+    {
+        auto newAnalyzer = new vca::Analyzer(param);
+        return newAnalyzer;
+    }
+    catch (const std::exception &)
+    {
+        return nullptr;
+    }
 }
 
 DLL_PUBLIC vca_result vca_analyzer_push(vca_analyzer *enc, vca_frame *frame)
