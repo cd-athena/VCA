@@ -119,7 +119,7 @@ static const int16_t weights_dct32[1024] = {
 static const double E_norm_factor = 90;
 static const double h_norm_factor = 18;
 
-uint32_t calculateWeightedCoeffSum(unsigned blockSize, int16_t *coeffBuffer)
+uint32_t calculateWeightedCoeffSum(unsigned blockSize, int16_t *coeffBuffer, bool enableLowpassDCT)
 {
     uint32_t weightedSum = 0;
 
@@ -142,6 +142,8 @@ uint32_t calculateWeightedCoeffSum(unsigned blockSize, int16_t *coeffBuffer)
         auto weightedCoeff = (uint32_t)((weightFactorMatrix[i] * std::abs(coeffBuffer[i])) >> 8);
         weightedSum += weightedCoeff;
     }
+    if (blockSize >= 16 && enableLowpassDCT)
+        weightedSum *= 2;
 
     return weightedSum;
 }
@@ -557,7 +559,7 @@ void computeWeightedDCTEnergy(const Job &job,
             performDCT(blockSize, bitDepth, pixelBuffer, coeffBuffer, cpuSimd, enableLowpassDCT);
 
             result.brightnessPerBlock[blockIndex] = uint32_t(sqrt(coeffBuffer[0]));
-            result.energyPerBlock[blockIndex] = calculateWeightedCoeffSum(blockSize, coeffBuffer);
+            result.energyPerBlock[blockIndex] = calculateWeightedCoeffSum(blockSize, coeffBuffer, enableLowpassDCT);
             frameBrightness += result.brightnessPerBlock[blockIndex];
             frameTexture += result.energyPerBlock[blockIndex];
 
@@ -626,7 +628,8 @@ void computeWeightedDCTEnergy(const Job &job,
 
                 result.averageUPerBlock[blockIndexC] = uint32_t(sqrt(coeffBufferC[0]));
                 result.energyUPerBlock[blockIndexC]  = calculateWeightedCoeffSum(blockSize,
-                                                                                coeffBufferC);
+                                                                                 coeffBufferC,
+                                                                                 enableLowpassDCT);
                 frameU += result.averageUPerBlock[blockIndexC];
                 frameEnergyU += result.energyUPerBlock[blockIndexC];
 
@@ -663,7 +666,8 @@ void computeWeightedDCTEnergy(const Job &job,
 
                 result.averageVPerBlock[blockIndexC] = uint32_t(sqrt(coeffBufferC[0]));
                 result.energyVPerBlock[blockIndexC]  = calculateWeightedCoeffSum(blockSize,
-                                                                                coeffBufferC);
+                                                                                 coeffBufferC,
+                                                                                 enableLowpassDCT);
                 frameV += result.averageVPerBlock[blockIndexC];
                 frameEnergyV += result.energyVPerBlock[blockIndexC];
 
