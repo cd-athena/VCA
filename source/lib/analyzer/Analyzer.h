@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "vcaLib.h"
+#include "../vcaLib.h"
 
 #include "common.h"
 #include "MultiThreadQueue.h"

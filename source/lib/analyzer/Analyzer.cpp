@@ -21,6 +21,7 @@
 #include "simd/cpu.h"
 
 #include <cstring>
+#include <map>
 #include <string>
 
 namespace {

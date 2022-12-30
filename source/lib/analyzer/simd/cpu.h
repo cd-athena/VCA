@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <vcaLib.h>
+#include "../../vcaLib.h"
 
 #define VCA_CPU_SSE2   (1 << 0)
 #define VCA_CPU_SSSE3  (1 << 1)

@@ -143,7 +143,7 @@ CpuSimd cpuDetectMaxSimd()
 }
 
 #else
-uint32_t cpuDetectMaxSimd()
+CpuSimd cpuDetectMaxSimd()
 {
     return CpuSimd::None;
 }
