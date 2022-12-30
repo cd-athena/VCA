@@ -134,11 +134,6 @@ target_sources(vcaLib
     vcaLib.h
 )
 
-if((X86 AND NOT X64) OR(POWER AND NOT PPC64) OR(ARM AND NOT ARM64))
-    message(STATUS "SIMD is supported for only 64bit architecture")
-    set(ENABLE_NASM 0)
-endif()
-
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     set(GCC 1)
 endif()
@@ -152,6 +147,7 @@ if(ENABLE_NASM)
     else()
         message(STATUS "Nasm could not be found. Disabling nasm assembly.")
     endif(CMAKE_ASM_NASM_COMPILER_LOADED)
+    set_source_files_properties(analyzer/simd/cpu.cpp PROPERTIES COMPILE_FLAGS -DENABLE_NASM=1)
 else()
     message(STATUS "Nasm disabled. Not looking for it or using it.")
 endif(ENABLE_NASM)
