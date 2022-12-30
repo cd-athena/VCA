@@ -147,13 +147,11 @@ uint32_t calculateWeightedCoeffSum(unsigned blockSize, int16_t *coeffBuffer)
 }
 
 void copyPixelValuesToBufferNoPadding(unsigned bitDepth,
-                                      unsigned blockOffsetLumaBytes,
                                       unsigned blockSize,
                                       uint8_t *srcData,
                                       unsigned srcStrideBytes,
                                       int16_t *buffer)
 {
-    srcData += blockOffsetLumaBytes;
     if (bitDepth == 8)
     {
         auto *__restrict src = srcData;
@@ -174,15 +172,14 @@ void copyPixelValuesToBufferNoPadding(unsigned bitDepth,
     }
 }
 
-void copyPixelValuesToBufferWithPadding8Bit(unsigned blockOffsetLumaBytes,
-                                            unsigned blockSize,
+void copyPixelValuesToBufferWithPadding8Bit(unsigned blockSize,
                                             uint8_t *srcData,
                                             unsigned srcStrideBytes,
                                             int16_t *buffer,
                                             unsigned paddingRight,
                                             unsigned paddingBottom)
 {
-    auto *__restrict src = srcData + blockOffsetLumaBytes;
+    auto *__restrict src = srcData;
 
     unsigned y          = 0;
     auto bufferLastLine = buffer;
@@ -203,15 +200,14 @@ void copyPixelValuesToBufferWithPadding8Bit(unsigned blockOffsetLumaBytes,
     }
 }
 
-void copyPixelValuesToBufferWithPaddingHighBitDepth(unsigned blockOffsetLumaBytes,
-                                                    unsigned blockSize,
+void copyPixelValuesToBufferWithPaddingHighBitDepth(unsigned blockSize,
                                                     uint8_t *srcData,
                                                     unsigned srcStrideBytes,
                                                     int16_t *buffer,
                                                     unsigned paddingRight,
                                                     unsigned paddingBottom)
 {
-    auto *__restrict src = reinterpret_cast<uint16_t *>(srcData + blockOffsetLumaBytes);
+    auto *__restrict src = reinterpret_cast<uint16_t *>(srcData);
 
     unsigned y          = 0;
     auto bufferLastLine = buffer;
@@ -240,7 +236,7 @@ void copyPixelValuesToBufferWithPaddingHighBitDepth(unsigned blockOffsetLumaByte
 }
 
 void copyPixelValuesToBuffer(unsigned bitDepth,
-                             unsigned blockOffsetLumaBytes,
+                             unsigned blockOffsetBytes,
                              unsigned blockSize,
                              uint8_t *srcData,
                              unsigned srcStrideBytes,
@@ -251,31 +247,26 @@ void copyPixelValuesToBuffer(unsigned bitDepth,
     if (bitDepth < 8 || bitDepth > 16)
         throw std::invalid_argument("Invalid bit depth " + std::to_string(bitDepth));
 
+    srcData += blockOffsetBytes;
+
     if (paddingRight == 0 && paddingBottom == 0)
-        copyPixelValuesToBufferNoPadding(bitDepth,
-                                         blockOffsetLumaBytes,
-                                         blockSize,
-                                         srcData,
-                                         srcStrideBytes,
-                                         buffer);
+        copyPixelValuesToBufferNoPadding(bitDepth, blockSize, srcData, srcStrideBytes, buffer);
     else
     {
         if (bitDepth == 8)
-            copyPixelValuesToBufferWithPadding8Bit(blockOffsetLumaBytes,
-                                                   blockSize,
+            copyPixelValuesToBufferWithPadding8Bit(blockSize,
                                                    srcData,
                                                    srcStrideBytes,
                                                    buffer,
                                                    paddingRight,
-                                                   paddingRight);
+                                                   paddingBottom);
         else if (bitDepth > 8 && bitDepth <= 16)
-            copyPixelValuesToBufferWithPaddingHighBitDepth(blockOffsetLumaBytes,
-                                                           blockSize,
+            copyPixelValuesToBufferWithPaddingHighBitDepth(blockSize,
                                                            srcData,
                                                            srcStrideBytes,
                                                            buffer,
                                                            paddingRight,
-                                                           paddingRight);
+                                                           paddingBottom);
     }
 }
 
@@ -463,17 +454,18 @@ void computeWeightedDCTEnergy(const Job &job,
 
     if (enableChroma)
     {
-        auto srcU       = frame->planes[1];
-        auto srcV       = frame->planes[2];
-        auto srcUStride = frame->stride[1];
-        auto srcUHeight = frame->height[1];
+        const auto srcU       = frame->planes[1];
+        const auto srcV       = frame->planes[2];
+        const auto srcUStride = frame->stride[1];
+        const auto srcUHeight = frame->height[1];
+        const auto srcUWidth  = srcUStride / bytesPerPixel;
 
         auto [widthInBlocksC, heightInBlockC] = getChromaFrameSizeInBlocks(blockSize,
-                                                                           srcUStride,
+                                                                           srcUWidth,
                                                                            srcUHeight);
-        auto totalNumberBlocksC               = widthInBlocksC * heightInBlockC;
-        auto widthInPixelsC                   = widthInBlocksC * blockSize;
-        auto heightInPixelsC                  = heightInBlockC * blockSize;
+        const auto totalNumberBlocksC         = widthInBlocksC * heightInBlockC;
+        const auto widthInPixelsC             = widthInBlocksC * blockSize;
+        const auto heightInPixelsC            = heightInBlockC * blockSize;
 
         if (result.averageUPerBlock.size() < totalNumberBlocksC)
             result.averageUPerBlock.resize(totalNumberBlocksC);
