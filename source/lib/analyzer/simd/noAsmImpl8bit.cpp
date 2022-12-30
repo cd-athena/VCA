@@ -26,31 +26,31 @@
 
 extern "C" {
 
-void vca_dct4_sse2(const int16_t *src, int16_t *dst, intptr_t srcStride)
+void vca_dct4_8bit_sse2(const int16_t *src, int16_t *dst, intptr_t srcStride)
 {
     assert(false);
 }
-void vca_dct8_sse2(const int16_t *src, int16_t *dst, intptr_t srcStride)
+void vca_dct8_8bit_sse2(const int16_t *src, int16_t *dst, intptr_t srcStride)
 {
     assert(false);
 }
-void vca_dct8_sse4(const int16_t *src, int16_t *dst, intptr_t srcStride)
+void vca_dct8_8bit_sse4(const int16_t *src, int16_t *dst, intptr_t srcStride)
 {
     assert(false);
 }
-void vca_dct4_avx2(const int16_t *src, int16_t *dst, intptr_t srcStride)
+void vca_dct4_8bit_avx2(const int16_t *src, int16_t *dst, intptr_t srcStride)
 {
     assert(false);
 }
-void vca_dct8_avx2(const int16_t *src, int16_t *dst, intptr_t srcStride)
+void vca_dct8_8bit_avx2(const int16_t *src, int16_t *dst, intptr_t srcStride)
 {
     assert(false);
 }
-void vca_dct16_avx2(const int16_t *src, int16_t *dst, intptr_t srcStride)
+void vca_dct16_8bit_avx2(const int16_t *src, int16_t *dst, intptr_t srcStride)
 {
     assert(false);
 }
-void vca_dct32_avx2(const int16_t *src, int16_t *dst, intptr_t srcStride)
+void vca_dct32_8bit_avx2(const int16_t *src, int16_t *dst, intptr_t srcStride)
 {
     assert(false);
 }

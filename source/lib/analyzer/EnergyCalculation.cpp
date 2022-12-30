@@ -146,103 +146,237 @@ uint32_t calculateWeightedCoeffSum(unsigned blockSize, int16_t *coeffBuffer)
     return weightedSum;
 }
 
-void copyPixelValuesToBuffer(unsigned blockOffsetLumaBytes,
-                             unsigned blockSize,
-                             unsigned bitDepth,
-                             uint8_t *src,
-                             unsigned srcStride,
-                             int16_t *buffer)
+void copyPixelValuesToBufferNoPadding(unsigned bitDepth,
+                                      unsigned blockSize,
+                                      uint8_t *srcData,
+                                      unsigned srcStrideBytes,
+                                      int16_t *buffer)
 {
     if (bitDepth == 8)
     {
-        src += blockOffsetLumaBytes;
-        for (unsigned y = 0; y < blockSize; y++, src += srcStride)
+        auto *__restrict src = srcData;
+        for (unsigned y = 0; y < blockSize; y++, src += srcStrideBytes)
             for (unsigned x = 0; x < blockSize; x++)
                 *(buffer++) = int16_t(src[x]);
     }
     else
     {
-        auto input             = (uint16_t *) (src + blockOffsetLumaBytes);
-        const auto shiftTo8Bit = (bitDepth - 8);
+        auto *__restrict src      = reinterpret_cast<uint16_t *>(srcData);
+        const auto nrBytesPerLine = blockSize * 2;
         for (unsigned y = 0; y < blockSize; ++y)
         {
-            for (unsigned x = 0; x < blockSize; ++x)
-            {
-                buffer[x] = int16_t(input[x] >> shiftTo8Bit);
-            }
-            input += srcStride / 2;
+            std::memcpy(buffer, src, nrBytesPerLine);
+            src += srcStrideBytes / 2;
             buffer += blockSize;
         }
     }
 }
 
-template<int bitDepth>
-void copyPixelValuesToBufferWithPadding(unsigned blockOffsetLumaBytes,
-                                        unsigned blockSize,
-                                        uint8_t *srcData,
-                                        unsigned srcStride,
-                                        int16_t *buffer,
-                                        unsigned paddingRight,
-                                        unsigned paddingBottom)
+void copyPixelValuesToBufferWithPadding8Bit(unsigned blockSize,
+                                            uint8_t *srcData,
+                                            unsigned srcStrideBytes,
+                                            int16_t *buffer,
+                                            unsigned paddingRight,
+                                            unsigned paddingBottom)
 {
-    typedef typename std::conditional<bitDepth == 8, uint8_t *, uint16_t *>::type InValueType;
-    static_assert(bitDepth >= 8 && bitDepth <= 16);
-
-    const auto *__restrict src = InValueType(srcData + blockOffsetLumaBytes);
-    const auto shiftTo8Bit     = (bitDepth - 8);
+    auto *__restrict src = srcData;
 
     unsigned y          = 0;
     auto bufferLastLine = buffer;
-    for (; y < blockSize - paddingBottom; y++, src += srcStride)
+    for (; y < blockSize - paddingBottom; y++, src += srcStrideBytes)
     {
         unsigned x     = 0;
         bufferLastLine = buffer;
         for (; x < blockSize - paddingRight; x++)
-            *(buffer++) = int16_t(src[x] >> shiftTo8Bit);
-        const auto lastValue = int16_t(src[x] >> shiftTo8Bit);
+            *(buffer++) = static_cast<int16_t>(src[x]);
+        const auto lastValue = static_cast<int16_t>(src[x]);
         for (; x < blockSize; x++)
             *(buffer++) = lastValue;
     }
     for (; y < blockSize; y++)
     {
         for (unsigned x = 0; x < blockSize; x++)
-            *(buffer++) = (bufferLastLine[x] >> shiftTo8Bit);
+            *(buffer++) = (bufferLastLine[x]);
     }
 }
 
-void performDCT(unsigned blockSize, int16_t *pixelBuffer, int16_t *coeffBuffer, CpuSimd cpuSimd)
+void copyPixelValuesToBufferWithPaddingHighBitDepth(unsigned blockSize,
+                                                    uint8_t *srcData,
+                                                    unsigned srcStrideBytes,
+                                                    int16_t *buffer,
+                                                    unsigned paddingRight,
+                                                    unsigned paddingBottom)
 {
-    switch (blockSize)
+    auto *__restrict src = reinterpret_cast<uint16_t *>(srcData);
+
+    unsigned y          = 0;
+    auto bufferLastLine = buffer;
+    for (; y < blockSize - paddingBottom; y++)
     {
-        case 32:
-            if (cpuSimd == CpuSimd::AVX2)
-                vca_dct32_avx2(pixelBuffer, coeffBuffer, 32);
-            else if (cpuSimd == CpuSimd::SSSE3)
-                vca_dct32_ssse3(pixelBuffer, coeffBuffer, 32);
-            else
-                vca::dct32_c(pixelBuffer, coeffBuffer, 32);
-            break;
-        case 16:
-            if (cpuSimd == CpuSimd::AVX2)
-                vca_dct16_avx2(pixelBuffer, coeffBuffer, 16);
-            else if (cpuSimd == CpuSimd::SSSE3)
-                vca_dct16_ssse3(pixelBuffer, coeffBuffer, 16);
-            else
-                vca::dct16_c(pixelBuffer, coeffBuffer, 16);
-            break;
-        case 8:
-            if (cpuSimd == CpuSimd::AVX2)
-                vca_dct8_avx2(pixelBuffer, coeffBuffer, 8);
-            else if (cpuSimd == CpuSimd::SSE4)
-                vca_dct8_sse4(pixelBuffer, coeffBuffer, 8);
-            else if (cpuSimd == CpuSimd::SSE2)
-                vca_dct8_sse2(pixelBuffer, coeffBuffer, 8);
-            else
-                vca::dct8_c(pixelBuffer, coeffBuffer, 8);
-            break;
-        default:
-            throw std::invalid_argument("Invalid block size " + std::to_string(blockSize));
+        unsigned x     = 0;
+        bufferLastLine = buffer;
+
+        const auto nrValuesToCopy = blockSize - paddingRight;
+        const auto nrBytesToCopy  = nrValuesToCopy * 2;
+        std::memcpy(buffer, src, nrBytesToCopy);
+
+        const auto lastValue = src[nrValuesToCopy - 1];
+        for (unsigned x = nrValuesToCopy; x < blockSize; x++)
+            buffer[x] = lastValue;
+
+        buffer += blockSize;
+        src += srcStrideBytes / 2;
     }
+    for (; y < blockSize; y++)
+    {
+        const auto nrBytesToCopy = blockSize * 2;
+        std::memcpy(buffer, bufferLastLine, nrBytesToCopy);
+        buffer += blockSize;
+    }
+}
+
+void copyPixelValuesToBuffer(unsigned bitDepth,
+                             unsigned blockOffsetBytes,
+                             unsigned blockSize,
+                             uint8_t *srcData,
+                             unsigned srcStrideBytes,
+                             int16_t *buffer,
+                             unsigned paddingRight,
+                             unsigned paddingBottom)
+{
+    if (bitDepth < 8 || bitDepth > 16)
+        throw std::invalid_argument("Invalid bit depth " + std::to_string(bitDepth));
+
+    srcData += blockOffsetBytes;
+
+    if (paddingRight == 0 && paddingBottom == 0)
+        copyPixelValuesToBufferNoPadding(bitDepth, blockSize, srcData, srcStrideBytes, buffer);
+    else
+    {
+        if (bitDepth == 8)
+            copyPixelValuesToBufferWithPadding8Bit(blockSize,
+                                                   srcData,
+                                                   srcStrideBytes,
+                                                   buffer,
+                                                   paddingRight,
+                                                   paddingBottom);
+        else if (bitDepth > 8 && bitDepth <= 16)
+            copyPixelValuesToBufferWithPaddingHighBitDepth(blockSize,
+                                                           srcData,
+                                                           srcStrideBytes,
+                                                           buffer,
+                                                           paddingRight,
+                                                           paddingBottom);
+    }
+}
+
+void performDCTBlockSize32(const unsigned bitDepth,
+                           int16_t *pixelBuffer,
+                           int16_t *coeffBuffer,
+                           CpuSimd cpuSimd)
+{
+    if (cpuSimd == CpuSimd::AVX2)
+    {
+        if (bitDepth == 8)
+            vca_dct32_8bit_avx2(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 10)
+            vca_dct32_10bit_avx2(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 12)
+            vca_dct32_12bit_avx2(pixelBuffer, coeffBuffer, 8);
+    }
+    else if (cpuSimd == CpuSimd::SSSE3)
+    {
+        if (bitDepth == 8)
+            vca_dct32_8bit_ssse3(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 10)
+            vca_dct32_10bit_ssse3(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 12)
+            vca_dct32_12bit_ssse3(pixelBuffer, coeffBuffer, 8);
+    }
+    else
+        vca::dct32_c(pixelBuffer, coeffBuffer, 32, bitDepth);
+}
+
+void performDCTBlockSize16(const unsigned bitDepth,
+                           int16_t *pixelBuffer,
+                           int16_t *coeffBuffer,
+                           CpuSimd cpuSimd)
+{
+    if (cpuSimd == CpuSimd::AVX2)
+    {
+        if (bitDepth == 8)
+            vca_dct16_8bit_avx2(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 10)
+            vca_dct16_10bit_avx2(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 12)
+            vca_dct16_12bit_avx2(pixelBuffer, coeffBuffer, 8);
+    }
+    else if (cpuSimd == CpuSimd::SSSE3)
+    {
+        if (bitDepth == 8)
+            vca_dct16_8bit_ssse3(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 10)
+            vca_dct16_10bit_ssse3(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 12)
+            vca_dct16_12bit_ssse3(pixelBuffer, coeffBuffer, 8);
+    }
+    else
+        vca::dct16_c(pixelBuffer, coeffBuffer, 16, bitDepth);
+}
+
+void performDCTBlockSize8(const unsigned bitDepth,
+                          int16_t *pixelBuffer,
+                          int16_t *coeffBuffer,
+                          CpuSimd cpuSimd)
+{
+    if (cpuSimd == CpuSimd::AVX2)
+    {
+        if (bitDepth == 8)
+            vca_dct8_8bit_avx2(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 10)
+            vca_dct8_10bit_avx2(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 12)
+            vca_dct8_12bit_avx2(pixelBuffer, coeffBuffer, 8);
+    }
+    else if (cpuSimd == CpuSimd::SSE4)
+    {
+        if (bitDepth == 8)
+            vca_dct8_8bit_sse4(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 10)
+            vca_dct8_10bit_sse4(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 12)
+            vca_dct8_12bit_sse4(pixelBuffer, coeffBuffer, 8);
+    }
+    else if (cpuSimd == CpuSimd::SSE2)
+    {
+        if (bitDepth == 8)
+            vca_dct8_8bit_sse2(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 10)
+            vca_dct8_10bit_sse2(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 12)
+            vca_dct8_12bit_sse2(pixelBuffer, coeffBuffer, 8);
+    }
+    else
+        vca::dct8_c(pixelBuffer, coeffBuffer, 8, bitDepth);
+}
+
+void performDCT(const unsigned blockSize,
+                const unsigned bitDepth,
+                int16_t *pixelBuffer,
+                int16_t *coeffBuffer,
+                CpuSimd cpuSimd)
+{
+    if (bitDepth != 8 && bitDepth != 10 && bitDepth != 12)
+        throw std::invalid_argument("Invalid bit depth " + std::to_string(bitDepth));
+
+    if (blockSize == 32)
+        performDCTBlockSize32(bitDepth, pixelBuffer, coeffBuffer, cpuSimd);
+    else if (blockSize == 16)
+        performDCTBlockSize16(bitDepth, pixelBuffer, coeffBuffer, cpuSimd);
+    else if (blockSize == 8)
+        performDCTBlockSize8(bitDepth, pixelBuffer, coeffBuffer, cpuSimd);
+    else
+        throw std::invalid_argument("Invalid block size " + std::to_string(blockSize));
 }
 
 } // namespace
@@ -251,7 +385,7 @@ namespace vca {
 
 void computeWeightedDCTEnergy(const Job &job,
                               Result &result,
-                              unsigned blockSize,
+                              const unsigned blockSize,
                               CpuSimd cpuSimd,
                               bool enableChroma)
 {
@@ -295,36 +429,16 @@ void computeWeightedDCTEnergy(const Job &job,
             auto paddingRight = std::max(int(blockX + blockSize) - int(frame->info.width), 0);
             auto blockOffsetLumaBytes = blockX * bytesPerPixel + (blockY * srcStride);
 
-            if (paddingRight > 0 || paddingBottom > 0)
-            {
-                if (bitDepth == 8)
-                    copyPixelValuesToBufferWithPadding<8>(blockOffsetLumaBytes,
-                                                          blockSize,
-                                                          src,
-                                                          srcStride,
-                                                          pixelBuffer,
-                                                          unsigned(paddingRight),
-                                                          unsigned(paddingBottom));
-                else
-                    copyPixelValuesToBufferWithPadding<16>(blockOffsetLumaBytes,
-                                                           blockSize,
-                                                           src,
-                                                           srcStride / 2,
-                                                           pixelBuffer,
-                                                           unsigned(paddingRight),
-                                                           unsigned(paddingBottom));
-            }
-            else
-            {
-                copyPixelValuesToBuffer(blockOffsetLumaBytes,
-                                        blockSize,
-                                        bitDepth,
-                                        src,
-                                        srcStride,
-                                        pixelBuffer);
-            }
+            copyPixelValuesToBuffer(bitDepth,
+                                    blockOffsetLumaBytes,
+                                    blockSize,
+                                    src,
+                                    srcStride,
+                                    pixelBuffer,
+                                    unsigned(paddingRight),
+                                    unsigned(paddingBottom));
 
-            performDCT(blockSize, pixelBuffer, coeffBuffer, cpuSimd);
+            performDCT(blockSize, bitDepth, pixelBuffer, coeffBuffer, cpuSimd);
 
             result.brightnessPerBlock[blockIndex] = uint32_t(sqrt(coeffBuffer[0]));
             result.energyPerBlock[blockIndex] = calculateWeightedCoeffSum(blockSize, coeffBuffer);
@@ -340,17 +454,18 @@ void computeWeightedDCTEnergy(const Job &job,
 
     if (enableChroma)
     {
-        auto srcU       = frame->planes[1];
-        auto srcV       = frame->planes[2];
-        auto srcUStride = frame->stride[1];
-        auto srcUHeight = frame->height[1];
+        const auto srcU       = frame->planes[1];
+        const auto srcV       = frame->planes[2];
+        const auto srcUStride = frame->stride[1];
+        const auto srcUHeight = frame->height[1];
+        const auto srcUWidth  = srcUStride / bytesPerPixel;
 
         auto [widthInBlocksC, heightInBlockC] = getChromaFrameSizeInBlocks(blockSize,
-                                                                           srcUStride,
+                                                                           srcUWidth,
                                                                            srcUHeight);
-        auto totalNumberBlocksC               = widthInBlocksC * heightInBlockC;
-        auto widthInPixelsC                   = widthInBlocksC * blockSize;
-        auto heightInPixelsC                  = heightInBlockC * blockSize;
+        const auto totalNumberBlocksC         = widthInBlocksC * heightInBlockC;
+        const auto widthInPixelsC             = widthInBlocksC * blockSize;
+        const auto heightInPixelsC            = heightInBlockC * blockSize;
 
         if (result.averageUPerBlock.size() < totalNumberBlocksC)
             result.averageUPerBlock.resize(totalNumberBlocksC);
@@ -377,36 +492,16 @@ void computeWeightedDCTEnergy(const Job &job,
                 auto paddingRight = std::max(int(blockX + blockSize) - int(srcUStride), 0);
                 auto blockOffsetChromaBytes = blockX * bytesPerPixel + (blockY * srcUStride);
 
-                if (paddingRight > 0 || paddingBottom > 0)
-                {
-                    if (bitDepth == 8)
-                        copyPixelValuesToBufferWithPadding<8>(blockOffsetChromaBytes,
-                                                              blockSize,
-                                                              srcU,
-                                                              srcUStride,
-                                                              pixelBufferC,
-                                                              unsigned(paddingRight),
-                                                              unsigned(paddingBottom));
-                    else
-                        copyPixelValuesToBufferWithPadding<16>(blockOffsetChromaBytes,
-                                                               blockSize,
-                                                               srcU,
-                                                               srcUStride / 2,
-                                                               pixelBufferC,
-                                                               unsigned(paddingRight),
-                                                               unsigned(paddingBottom));
-                }
-                else
-                {
-                    copyPixelValuesToBuffer(blockOffsetChromaBytes,
-                                            blockSize,
-                                            bitDepth,
-                                            srcU,
-                                            srcUStride,
-                                            pixelBufferC);
-                }
+                copyPixelValuesToBuffer(bitDepth,
+                                        blockOffsetChromaBytes,
+                                        blockSize,
+                                        srcU,
+                                        srcUStride,
+                                        pixelBufferC,
+                                        unsigned(paddingRight),
+                                        unsigned(paddingBottom));
 
-                performDCT(blockSize, pixelBufferC, coeffBufferC, cpuSimd);
+                performDCT(blockSize, bitDepth, pixelBufferC, coeffBufferC, cpuSimd);
 
                 result.averageUPerBlock[blockIndexC] = uint32_t(sqrt(coeffBufferC[0]));
                 result.energyUPerBlock[blockIndexC]  = calculateWeightedCoeffSum(blockSize,
@@ -429,36 +524,16 @@ void computeWeightedDCTEnergy(const Job &job,
                 auto paddingRight = std::max(int(blockX + blockSize) - int(srcUStride), 0);
                 auto blockOffsetChromaBytes = blockX * bytesPerPixel + (blockY * srcUStride);
 
-                if (paddingRight > 0 || paddingBottom > 0)
-                {
-                    if (bitDepth == 8)
-                        copyPixelValuesToBufferWithPadding<8>(blockOffsetChromaBytes,
-                                                              blockSize,
-                                                              srcV,
-                                                              srcUStride,
-                                                              pixelBufferC,
-                                                              unsigned(paddingRight),
-                                                              unsigned(paddingBottom));
-                    else
-                        copyPixelValuesToBufferWithPadding<16>(blockOffsetChromaBytes,
-                                                               blockSize,
-                                                               srcV,
-                                                               srcUStride / 2,
-                                                               pixelBufferC,
-                                                               unsigned(paddingRight),
-                                                               unsigned(paddingBottom));
-                }
-                else
-                {
-                    copyPixelValuesToBuffer(blockOffsetChromaBytes,
-                                            blockSize,
-                                            bitDepth,
-                                            srcV,
-                                            srcUStride,
-                                            pixelBufferC);
-                }
+                copyPixelValuesToBuffer(bitDepth,
+                                        blockOffsetChromaBytes,
+                                        blockSize,
+                                        srcV,
+                                        srcUStride,
+                                        pixelBufferC,
+                                        unsigned(paddingRight),
+                                        unsigned(paddingBottom));
 
-                performDCT(blockSize, pixelBufferC, coeffBufferC, cpuSimd);
+                performDCT(blockSize, bitDepth, pixelBufferC, coeffBufferC, cpuSimd);
 
                 result.averageVPerBlock[blockIndexC] = uint32_t(sqrt(coeffBufferC[0]));
                 result.energyVPerBlock[blockIndexC]  = calculateWeightedCoeffSum(blockSize,

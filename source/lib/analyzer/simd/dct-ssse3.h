@@ -21,5 +21,10 @@
 
 #include <stdint.h>
 
-void vca_dct16_ssse3(const int16_t* src, int16_t* dst, intptr_t srcStride);
-void vca_dct32_ssse3(const int16_t *src, int16_t *dst, intptr_t stride);
+void vca_dct16_8bit_ssse3(const int16_t *src, int16_t *dst, intptr_t srcStride);
+void vca_dct16_10bit_ssse3(const int16_t *src, int16_t *dst, intptr_t srcStride);
+void vca_dct16_12bit_ssse3(const int16_t *src, int16_t *dst, intptr_t srcStride);
+
+void vca_dct32_8bit_ssse3(const int16_t *src, int16_t *dst, intptr_t stride);
+void vca_dct32_10bit_ssse3(const int16_t *src, int16_t *dst, intptr_t stride);
+void vca_dct32_12bit_ssse3(const int16_t *src, int16_t *dst, intptr_t stride);

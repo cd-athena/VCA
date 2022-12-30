@@ -17,14 +17,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.
  *****************************************************************************/
- 
+
 #pragma once
 
 #include "common.h"
 
 namespace vca {
 
-void computeWeightedDCTEnergy(const Job &job, Result &result, unsigned blockSize, CpuSimd cpuSimd,
+void computeWeightedDCTEnergy(const Job &job,
+                              Result &result,
+                              const unsigned blockSize,
+                              CpuSimd cpuSimd,
                               bool enableChroma);
 void computeTextureSAD(Result &results, const Result &resultsPreviousFrame);
 

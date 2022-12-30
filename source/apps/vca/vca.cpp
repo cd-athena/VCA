@@ -270,9 +270,10 @@ bool checkOptions(CLIOptions options)
         return false;
     }
 
-    if (options.vcaParam.frameInfo.bitDepth < 8 || options.vcaParam.frameInfo.bitDepth > 16)
+    const auto bitDepth = options.vcaParam.frameInfo.bitDepth;
+    if (bitDepth != 8 && bitDepth != 10 && bitDepth != 12)
     {
-        vca_log(LogLevel::Error, "Bit depth must be between 8 and 16 bits.");
+        vca_log(LogLevel::Error, "Bit depth must be 8, 10, or 12 bit.");
         return false;
     }
 

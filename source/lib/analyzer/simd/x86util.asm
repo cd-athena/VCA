@@ -30,7 +30,7 @@
 %define pixel byte
 %define vpbroadcastdct vpbroadcastw
 %define vpbroadcastpix vpbroadcastb
-%if HIGH_BIT_DEPTH
+%if(BIT_DEPTH>8)
     %assign SIZEOF_PIXEL 2
     %assign SIZEOF_DCTCOEF 4
     %define pixel word
@@ -44,7 +44,7 @@
 %assign PIXEL_MAX ((1 << BIT_DEPTH)-1)
 
 %macro FIX_STRIDES 1-*
-%if HIGH_BIT_DEPTH
+%if(BIT_DEPTH>8)
 %rep %0
     add %1, %1
     %rotate 1
@@ -743,7 +743,7 @@
 
 
 %macro LOAD_DIFF 5-6 1
-%if HIGH_BIT_DEPTH
+%if(BIT_DEPTH>8)
 %if %6 ; %5 aligned?
     mova       %1, %4
     psubw      %1, %5
@@ -755,7 +755,7 @@
     movu       %2, %5
     psubw      %1, %2
 %endif
-%else ; !HIGH_BIT_DEPTH
+%else ; !(BIT_DEPTH>8)
     movh       %1, %4
     movh       %2, %5
 %ifidn %3, none
@@ -766,7 +766,7 @@
     punpcklbw  %2, %3
 %endif
     psubw      %1, %2
-%endif ; HIGH_BIT_DEPTH
+%endif ; (BIT_DEPTH>8)
 %endmacro
 
 %macro LOAD_DIFF8x4 8 ; 4x dst, 1x tmp, 1x mul, 2x ptr
@@ -853,7 +853,7 @@
 ; (high depth) in: %1, %2, min to clip, max to clip, mem128
 ; in: %1, tmp, %3, mem64
 %macro STORE_DIFF 4-5
-%if HIGH_BIT_DEPTH
+%if(BIT_DEPTH>8)
     psrad      %1, 6
     psrad      %2, 6
     packssdw   %1, %2

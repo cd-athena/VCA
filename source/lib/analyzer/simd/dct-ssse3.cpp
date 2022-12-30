@@ -24,16 +24,16 @@
  * along with this program.
  *****************************************************************************/
 
-#include <analyzer/common.h>
-
+#include <stdint.h>
 #include <pmmintrin.h> // SSE3
 #include <tmmintrin.h> // SSSE3
 #include <xmmintrin.h> // SSE
 
-// This means that >8 bit stuff will not work now. TODO: Fix
-#define VCA_DEPTH 8
+#ifndef BIT_DEPTH
+#error "BIT_DEPTH must be specified"
+#endif
 
-#define DCT16_SHIFT1 (3 + VCA_DEPTH - 8)
+#define DCT16_SHIFT1 (3 + BIT_DEPTH - 8)
 #define DCT16_ADD1 (1 << ((DCT16_SHIFT1) -1))
 
 #define DCT16_SHIFT2 10
@@ -45,7 +45,11 @@
 #define DCT32_SHIFT2 (DCT16_SHIFT2 + 1)
 #define DCT32_ADD2 (1 << ((DCT32_SHIFT2) -1))
 
-using namespace vca;
+#if defined(__GNUC__)
+#define ALIGN_VAR_32(T, var) T var __attribute__((aligned(32)))
+#elif defined(_MSC_VER)
+#define ALIGN_VAR_32(T, var) __declspec(align(32)) T var
+#endif
 
 ALIGN_VAR_32(static const int16_t, tab_dct_8[][8]) = {
     {0x0100, 0x0F0E, 0x0706, 0x0908, 0x0302, 0x0D0C, 0x0504, 0x0B0A},
@@ -103,7 +107,15 @@ ALIGN_VAR_32(static const int16_t, tab_dct_16_1[][8])
 #undef MAKE_COEF
 };
 
-void vca_dct16_ssse3(const int16_t *src, int16_t *dst, intptr_t stride)
+#if(BIT_DEPTH==8)
+void vca_dct16_8bit_ssse3(const int16_t *src, int16_t *dst, intptr_t stride)
+#elif(BIT_DEPTH==10)
+void vca_dct16_10bit_ssse3(const int16_t *src, int16_t *dst, intptr_t stride)
+#elif(BIT_DEPTH==12)
+void vca_dct16_12bit_ssse3(const int16_t *src, int16_t *dst, intptr_t stride)
+#else
+#error "Wrong bit depth specified"
+#endif
 {
     // Const
     __m128i c_4   = _mm_set1_epi32(DCT16_ADD1);
@@ -665,7 +677,15 @@ ALIGN_VAR_32(static const int16_t, tab_dct_32_1[][8]) = {
 #undef MAKE_COEF16
 };
 
-void vca_dct32_ssse3(const int16_t *src, int16_t *dst, intptr_t stride)
+#if(BIT_DEPTH==8)
+void vca_dct32_8bit_ssse3(const int16_t *src, int16_t *dst, intptr_t stride)
+#elif(BIT_DEPTH==10)
+void vca_dct32_10bit_ssse3(const int16_t *src, int16_t *dst, intptr_t stride)
+#elif(BIT_DEPTH==12)
+void vca_dct32_12bit_ssse3(const int16_t *src, int16_t *dst, intptr_t stride)
+#else
+#error "Wrong bit depth specified"
+#endif
 {
     // Const
     __m128i c_8    = _mm_set1_epi32(DCT32_ADD1);
