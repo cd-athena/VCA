@@ -301,9 +301,6 @@ static void partialButterfly32(const int16_t *src, int16_t *dst, int shift, int 
 
 namespace vca {
 
-// TODO: I think for the other bit depths (10, 12), we just have to adapt the shift (shift_1st) in
-// these functions.
-
 void dct8_c(const int16_t *src, int16_t *dst, intptr_t srcStride, const unsigned bitDepth)
 {
     const int shift_1st = 2 + bitDepth - 8;
