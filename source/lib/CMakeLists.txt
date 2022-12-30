@@ -92,6 +92,7 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
 endif()
 
 add_subdirectory(analyzer)
+add_subdirectory(test)
 
 include_directories(./)
 
