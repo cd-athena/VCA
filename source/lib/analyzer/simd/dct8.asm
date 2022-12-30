@@ -215,7 +215,15 @@ cextern trans8_shuf
 ; void dct8(const int16_t* src, int16_t* dst, intptr_t srcStride)
 ;-------------------------------------------------------
 INIT_XMM sse2
-cglobal dct8, 3,6,8,0-16*mmsize
+%if BIT_DEPTH == 12
+cglobal dct8_12bit, 3,6,8,0-16*mmsize
+%elif BIT_DEPTH == 10
+cglobal dct8_10bit, 3,6,8,0-16*mmsize
+%elif BIT_DEPTH == 8
+cglobal dct8_8bit, 3,6,8,0-16*mmsize
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
     ;------------------------
     ; Stack Mapping(dword)
     ;------------------------
@@ -563,7 +571,15 @@ cglobal dct8, 3,6,8,0-16*mmsize
 ; void dct8(const int16_t* src, int16_t* dst, intptr_t srcStride)
 ;-------------------------------------------------------
 INIT_XMM sse4
-cglobal dct8, 3,6,7,0-16*mmsize
+%if BIT_DEPTH == 12
+cglobal dct8_12bit, 3,6,7,0-16*mmsize
+%elif BIT_DEPTH == 10
+cglobal dct8_10bit, 3,6,7,0-16*mmsize
+%elif BIT_DEPTH == 8
+cglobal dct8_8bit, 3,6,7,0-16*mmsize
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
     ;------------------------
     ; Stack Mapping(dword)
     ;------------------------
@@ -817,7 +833,16 @@ cglobal dct8, 3,6,7,0-16*mmsize
 %endmacro
 
 INIT_YMM avx2
-cglobal dct8, 3, 7, 11, 0-8*16
+%if BIT_DEPTH == 12
+cglobal dct8_12bit, 3, 7, 11, 0-8*16
+%elif BIT_DEPTH == 10
+cglobal dct8_10bit, 3, 7, 11, 0-8*16
+%elif BIT_DEPTH == 8
+cglobal dct8_8bit, 3, 7, 11, 0-8*16
+%else
+    %error Unsupported BIT_DEPTH!
+%endif
+
 vbroadcasti128      m5,                [pd_ %+ DCT8_ROUND1]
 %define             DCT_SHIFT2         9
 
@@ -976,14 +1001,16 @@ vbroadcasti128      m5,                [pd_ %+ DCT8_ROUND1]
     movhlps         xm14,              xm10
 %endmacro
 INIT_YMM avx2
-cglobal dct16, 3, 9, 16, 0-16*mmsize
 %if BIT_DEPTH == 12
+cglobal dct16_12bit, 3, 9, 16, 0-16*mmsize
     %define         DCT_SHIFT          7
     vbroadcasti128  m9,                [pd_64]
 %elif BIT_DEPTH == 10
+cglobal dct16_10bit, 3, 9, 16, 0-16*mmsize
     %define         DCT_SHIFT          5
     vbroadcasti128  m9,                [pd_16]
 %elif BIT_DEPTH == 8
+cglobal dct16_8bit, 3, 9, 16, 0-16*mmsize
     %define         DCT_SHIFT          3
     vbroadcasti128  m9,                [pd_4]
 %else
@@ -1201,14 +1228,16 @@ cglobal dct16, 3, 9, 16, 0-16*mmsize
 %endmacro
 
 INIT_YMM avx2
-cglobal dct32, 3, 9, 16, 0-64*mmsize
 %if BIT_DEPTH == 12
+cglobal dct32_12bit, 3, 9, 16, 0-64*mmsize
     %define         DCT_SHIFT          8
     vpbroadcastq    m9,                [pd_128]
 %elif BIT_DEPTH == 10
+cglobal dct32_10bit, 3, 9, 16, 0-64*mmsize
     %define         DCT_SHIFT          6
     vpbroadcastq    m9,                [pd_32]
 %elif BIT_DEPTH == 8
+cglobal dct32_8bit, 3, 9, 16, 0-64*mmsize
     %define         DCT_SHIFT          4
     vpbroadcastq    m9,                [pd_8]
 %else

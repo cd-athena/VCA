@@ -279,6 +279,96 @@ void copyPixelValuesToBuffer(unsigned bitDepth,
     }
 }
 
+void performDCTBlockSize32(const unsigned bitDepth,
+                           int16_t *pixelBuffer,
+                           int16_t *coeffBuffer,
+                           CpuSimd cpuSimd)
+{
+    if (cpuSimd == CpuSimd::AVX2)
+    {
+        if (bitDepth == 8)
+            vca_dct32_8bit_avx2(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 10)
+            vca_dct32_10bit_avx2(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 12)
+            vca_dct32_12bit_avx2(pixelBuffer, coeffBuffer, 8);
+    }
+    else if (cpuSimd == CpuSimd::SSSE3)
+    {
+        if (bitDepth == 8)
+            vca_dct32_8bit_ssse3(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 10)
+            vca_dct32_10bit_ssse3(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 12)
+            vca_dct32_12bit_ssse3(pixelBuffer, coeffBuffer, 8);
+    }
+    else
+        vca::dct32_c(pixelBuffer, coeffBuffer, 32, bitDepth);
+}
+
+void performDCTBlockSize16(const unsigned bitDepth,
+                           int16_t *pixelBuffer,
+                           int16_t *coeffBuffer,
+                           CpuSimd cpuSimd)
+{
+    if (cpuSimd == CpuSimd::AVX2)
+    {
+        if (bitDepth == 8)
+            vca_dct16_8bit_avx2(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 10)
+            vca_dct16_10bit_avx2(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 12)
+            vca_dct16_12bit_avx2(pixelBuffer, coeffBuffer, 8);
+    }
+    else if (cpuSimd == CpuSimd::SSSE3)
+    {
+        if (bitDepth == 8)
+            vca_dct16_8bit_ssse3(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 10)
+            vca_dct16_10bit_ssse3(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 12)
+            vca_dct16_12bit_ssse3(pixelBuffer, coeffBuffer, 8);
+    }
+    else
+        vca::dct16_c(pixelBuffer, coeffBuffer, 16, bitDepth);
+}
+
+void performDCTBlockSize8(const unsigned bitDepth,
+                          int16_t *pixelBuffer,
+                          int16_t *coeffBuffer,
+                          CpuSimd cpuSimd)
+{
+    if (cpuSimd == CpuSimd::AVX2)
+    {
+        if (bitDepth == 8)
+            vca_dct8_8bit_avx2(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 10)
+            vca_dct8_10bit_avx2(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 12)
+            vca_dct8_12bit_avx2(pixelBuffer, coeffBuffer, 8);
+    }
+    else if (cpuSimd == CpuSimd::SSE4)
+    {
+        if (bitDepth == 8)
+            vca_dct8_8bit_sse4(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 10)
+            vca_dct8_10bit_sse4(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 12)
+            vca_dct8_12bit_sse4(pixelBuffer, coeffBuffer, 8);
+    }
+    else if (cpuSimd == CpuSimd::SSE2)
+    {
+        if (bitDepth == 8)
+            vca_dct8_8bit_sse2(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 10)
+            vca_dct8_10bit_sse2(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 12)
+            vca_dct8_12bit_sse2(pixelBuffer, coeffBuffer, 8);
+    }
+    else
+        vca::dct8_c(pixelBuffer, coeffBuffer, 8, bitDepth);
+}
+
 void performDCT(const unsigned blockSize,
                 const unsigned bitDepth,
                 int16_t *pixelBuffer,
@@ -288,37 +378,14 @@ void performDCT(const unsigned blockSize,
     if (bitDepth != 8 && bitDepth != 10 && bitDepth != 12)
         throw std::invalid_argument("Invalid bit depth " + std::to_string(bitDepth));
 
-    switch (blockSize)
-    {
-        case 32:
-            if (cpuSimd == CpuSimd::AVX2)
-                vca_dct32_avx2(pixelBuffer, coeffBuffer, 32);
-            else if (cpuSimd == CpuSimd::SSSE3)
-                vca_dct32_ssse3(pixelBuffer, coeffBuffer, 32);
-            else
-                vca::dct32_c(pixelBuffer, coeffBuffer, 32, bitDepth);
-            break;
-        case 16:
-            if (cpuSimd == CpuSimd::AVX2)
-                vca_dct16_avx2(pixelBuffer, coeffBuffer, 16);
-            else if (cpuSimd == CpuSimd::SSSE3)
-                vca_dct16_ssse3(pixelBuffer, coeffBuffer, 16);
-            else
-                vca::dct16_c(pixelBuffer, coeffBuffer, 16, bitDepth);
-            break;
-        case 8:
-            if (cpuSimd == CpuSimd::AVX2)
-                vca_dct8_avx2(pixelBuffer, coeffBuffer, 8);
-            else if (cpuSimd == CpuSimd::SSE4)
-                vca_dct8_sse4(pixelBuffer, coeffBuffer, 8);
-            else if (cpuSimd == CpuSimd::SSE2)
-                vca_dct8_sse2(pixelBuffer, coeffBuffer, 8);
-            else
-                vca::dct8_c(pixelBuffer, coeffBuffer, 8, bitDepth);
-            break;
-        default:
-            throw std::invalid_argument("Invalid block size " + std::to_string(blockSize));
-    }
+    if (blockSize == 32)
+        performDCTBlockSize32(bitDepth, pixelBuffer, coeffBuffer, cpuSimd);
+    else if (blockSize == 16)
+        performDCTBlockSize16(bitDepth, pixelBuffer, coeffBuffer, cpuSimd);
+    else if (blockSize == 8)
+        performDCTBlockSize8(bitDepth, pixelBuffer, coeffBuffer, cpuSimd);
+    else
+        throw std::invalid_argument("Invalid block size " + std::to_string(blockSize));
 }
 
 } // namespace

@@ -124,8 +124,6 @@ target_sources(vcaLib
         analyzer/ShotDetection.cpp
         analyzer/simd/cpu.h
         analyzer/simd/cpu.cpp
-        analyzer/simd/dct-ssse3.h
-        analyzer/simd/dct-ssse3.cpp
         analyzer/simd/dct8.h
     PUBLIC
         vcaLib.h
@@ -152,31 +150,7 @@ else()
     message(STATUS "Nasm disabled. Not looking for it or using it.")
 endif(ENABLE_NASM)
 
-if(BUILD_WITH_NASM)
-    set_source_files_properties(analyzer/Analyzer.cpp analyzer/EnergyCalculation.cpp analyzer/simd/cpu.cpp PROPERTIES COMPILE_FLAGS -DENABLE_NASM=1)
-    enable_language(ASM_NASM)
-    target_sources(vcaLib
-        PRIVATE
-            analyzer/simd/dct8.asm
-            analyzer/simd/const-a.asm
-            analyzer/simd/cpu-a.asm
-    )
-
-    if(APPLE)
-        set(CMAKE_ASM_NASM_FLAGS "-I\"${CMAKE_CURRENT_SOURCE_DIR}/analyzer/simd/\" -DPIC -DARCH_X86_64=1 -DPREFIX -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DVCA_NS=vca")
-    else()
-        set(CMAKE_ASM_NASM_FLAGS "-I\"${CMAKE_CURRENT_SOURCE_DIR}/analyzer/simd/\" -DPIC -DARCH_X86_64=1 -DHIGH_BIT_DEPTH=0 -DBIT_DEPTH=8 -DVCA_NS=vca")	
-    endif()
-
-    if (GCC)
-        set_source_files_properties(analyzer/simd/dct-ssse3.cpp PROPERTIES COMPILE_FLAGS "-mssse3")
-    endif(GCC)
-else()
-    target_sources(vcaLib
-        PRIVATE
-            analyzer/simd/noAsmImpl.cpp
-    )
-endif(BUILD_WITH_NASM)
+add_subdirectory(analyzer/simd)
 
 file(GLOB_RECURSE vcaLib_source *.cpp)
 file(GLOB_RECURSE vcaLib_header *.h)
@@ -184,7 +158,7 @@ file(GLOB_RECURSE vcaLib_header *.h)
 include_directories(./)
 
 #add_library(vcaLib ${vcaLib_source} ${vcaLib_header} ${A_SRCS})
-target_link_libraries(vcaLib Threads::Threads)
+target_link_libraries(vcaLib Threads::Threads vcaLibSimd8bit vcaLibSimd10bit vcaLibSimd12bit)
 set_target_properties(vcaLib PROPERTIES OUTPUT_NAME vcaLib)
 set_target_properties(vcaLib PROPERTIES PUBLIC_HEADER "vcaLib.h")
 
