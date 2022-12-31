@@ -4,8 +4,10 @@ add_library(vcaInternal STATIC
     Analyzer.h
     Analyzer.cpp
     common.h
-    DCTTransforms.h
-    DCTTransforms.cpp
+    DCTTransform.h
+    DCTTransform.cpp
+    DCTTransformsNative.h
+    DCTTransformsNative.cpp
     EnergyCalculation.h
     EnergyCalculation.cpp
     MultiThreadQueue.h
@@ -34,6 +36,7 @@ else()
     message(STATUS "Nasm disabled. Not looking for it or using it.")
 endif(ENABLE_NASM)
 
+include_directories(./)
 add_subdirectory(simd)
 
 target_link_libraries(vcaInternal Threads::Threads vcaLibSimd8bit vcaLibSimd10bit vcaLibSimd12bit)

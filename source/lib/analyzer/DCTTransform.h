@@ -1,8 +1,13 @@
 /*****************************************************************************
  * Copyright (C) 2022 Christian Doppler Laboratory ATHENA
  *
- * Authors: Vignesh V Menon <vignesh.menon@aau.at>
- *          Christian Feldmann <christian.feldmann@bitmovin.com>
+ * Authors: Mandar Gurav <mandar@multicorewareinc.com>
+ *          Deepthi Devaki Akkoorath <deepthidevaki@multicorewareinc.com>
+ *          Mahesh Pittala <mahesh@multicorewareinc.com>
+ *          Rajesh Paulraj <rajesh@multicorewareinc.com>
+ *          Min Chen <min.chen@multicorewareinc.com>
+ *          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
+ *          Nabajit Deka <nabajit@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,12 +29,11 @@
 
 namespace vca {
 
-void computeWeightedDCTEnergy(const Job &job,
-                              Result &result,
-                              const unsigned blockSize,
-                              CpuSimd cpuSimd,
-                              bool enableChroma,
-                              bool enableLowpassDCT);
-void computeTextureSAD(Result &results, const Result &resultsPreviousFrame);
+void performDCT(const unsigned blockSize,
+                const unsigned bitDepth,
+                int16_t *pixelBuffer,
+                int16_t *coeffBuffer,
+                CpuSimd cpuSimd,
+                bool enableLowpassDCT);
 
 } // namespace vca

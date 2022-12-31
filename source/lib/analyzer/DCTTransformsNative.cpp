@@ -23,8 +23,9 @@
  * along with this program.
  *****************************************************************************/
 
-#include "DCTTransforms.h"
-#include "common.h"
+#include "DCTTransformsNative.h"
+
+#include <common.h>
 
 #include <cstring>
 

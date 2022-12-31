@@ -14,14 +14,16 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
+file(GLOB_RECURSE testSourceFiles *.cpp)
+
 add_executable(
-  unitTestSuite
-  firstDummyTest.cpp
+    unitTestSuite
+    ${testSourceFiles}
 )
 
 target_link_libraries(
     unitTestSuite
-  GTest::gtest_main
+    GTest::gtest_main
 )
 
 include(GoogleTest)
