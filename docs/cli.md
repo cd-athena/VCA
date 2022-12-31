@@ -39,6 +39,10 @@
 
 ## Performance Options
 
+- `--no-lowpass`
+
+	Disable lowpass DCT analysis (which is enabled by default).
+
 - `--no-chroma`
 
 	Disable analysis of chroma planes (which is enabled by default).

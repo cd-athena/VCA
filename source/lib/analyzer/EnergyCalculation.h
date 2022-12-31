@@ -28,7 +28,8 @@ void computeWeightedDCTEnergy(const Job &job,
                               Result &result,
                               const unsigned blockSize,
                               CpuSimd cpuSimd,
-                              bool enableChroma);
+                              bool enableChroma,
+                              bool enableLowpassDCT);
 void computeTextureSAD(Result &results, const Result &resultsPreviousFrame);
 
 } // namespace vca

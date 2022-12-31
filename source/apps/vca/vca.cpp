@@ -199,6 +199,8 @@ std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
         }
         else if (name == "no-chroma")
             options.vcaParam.enableChroma = false;
+        else if (name == "no-lowpass")
+            options.vcaParam.enableLowpassDCT = false;
         else if (name == "y4m")
             options.openAsY4m = true;
         else
@@ -305,6 +307,8 @@ void logOptions(const CLIOptions &options)
             "  Enable SIMD:       "s + (options.vcaParam.enableSIMD ? "True"s : "False"s));
     vca_log(LogLevel::Info,
             "  Enable chroma:     "s + (options.vcaParam.enableChroma ? "True"s : "False"s));
+    vca_log(LogLevel::Info,
+            "  Enable lowpassDCT: "s + (options.vcaParam.enableLowpassDCT ? "True"s : "False"s));
     vca_log(LogLevel::Info, "  Skip frames:       "s + std::to_string(options.skipFrames));
     vca_log(LogLevel::Info, "  Frames to analyze: "s + std::to_string(options.framesToBeAnalyzed));
     vca_log(LogLevel::Info, "  Complexity csv:    "s + options.complexityCSVFilename);

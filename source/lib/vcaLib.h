@@ -143,6 +143,7 @@ struct vca_param
 {
     bool enableSIMD{true};
     bool enableChroma{true};
+    bool enableLowpassDCT{true};
 
     vca_frame_info frameInfo{};
 
