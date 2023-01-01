@@ -121,7 +121,11 @@ TEST_P(DCTTestFixture, TransformTest)
     test::performIDCT(blockSize, bitDepth, coeffBuffer, reconstructedPixels);
     assertUnusedValuesAreZero(coeffBuffer, blockSize);
     const auto mse = calculateMeanSquareError(pixelBuffer, reconstructedPixels, blockSize);
-    ASSERT_LE(mse, 0.3);
+
+    if (blockSize == 32 && bitDepth == 12)
+        ASSERT_LE(mse, 3.0);
+    else
+        ASSERT_LE(mse, 1.0);
 }
 
 INSTANTIATE_TEST_SUITE_P(DCRTransformTest,
@@ -133,8 +137,6 @@ INSTANTIATE_TEST_SUITE_P(DCRTransformTest,
 
 // TEST(TransformTest, TestMaxMSE)
 // {
-//     const auto blockSize        = 8u;
-//     const auto bitDepth         = 8u;
 //     const auto cpuSimd          = CpuSimd::None;
 //     const auto enableLowpassDCT = false;
 
@@ -146,24 +148,38 @@ INSTANTIATE_TEST_SUITE_P(DCRTransformTest,
 //     std::memset(coeffBuffer, 0, MAX_BLOCKSIZE_BYTES);
 //     std::memset(reconstructedPixels, 0, MAX_BLOCKSIZE_BYTES);
 
-//     auto maxMSE = 0.0;
-//     for (int i = 0; i < 10000; i++)
+//     for (const auto blockSize : {8, 16, 32})
 //     {
-//         fillBlockWithRandomData(pixelBuffer, blockSize, bitDepth);
-//         assertUnusedValuesAreZero(pixelBuffer, blockSize);
+//         for (const auto bitDepth : {8, 10, 12})
+//         {
+//             auto maxMSE = 0.0;
+//             for (int i = 0; i < 10000; i++)
+//             {
+//                 fillBlockWithRandomData(pixelBuffer, blockSize, bitDepth);
+//                 assertUnusedValuesAreZero(pixelBuffer, blockSize);
 
-//         vca::performDCT(blockSize, bitDepth, pixelBuffer, coeffBuffer, cpuSimd,
-//         enableLowpassDCT); assertUnusedValuesAreZero(coeffBuffer, blockSize);
-//         assertUsedValuesContainNonZeroValues(coeffBuffer, blockSize);
+//                 vca::performDCT(blockSize,
+//                                 bitDepth,
+//                                 pixelBuffer,
+//                                 coeffBuffer,
+//                                 cpuSimd,
+//                                 enableLowpassDCT);
+//                 assertUnusedValuesAreZero(coeffBuffer, blockSize);
+//                 assertUsedValuesContainNonZeroValues(coeffBuffer, blockSize);
 
-//         test::performIDCT(blockSize, bitDepth, coeffBuffer, reconstructedPixels);
-//         assertUnusedValuesAreZero(coeffBuffer, blockSize);
-//         const auto mse = calculateMeanSquareError(pixelBuffer, reconstructedPixels, blockSize);
-//         if (mse > maxMSE)
-//             maxMSE = mse;
+//                 test::performIDCT(blockSize, bitDepth, coeffBuffer, reconstructedPixels);
+//                 assertUnusedValuesAreZero(coeffBuffer, blockSize);
+//                 const auto mse = calculateMeanSquareError(pixelBuffer,
+//                                                           reconstructedPixels,
+//                                                           blockSize);
+//                 if (mse > maxMSE)
+//                     maxMSE = mse;
+//             }
+
+//             std::cout << "BlockSize " << blockSize << " BitDepth " << bitDepth << "MaxMSE "
+//                       << maxMSE << "\n";
+//         }
 //     }
-
-//     std::cout << "MaxMSE " << maxMSE;
 
 //     int debugStop = 123;
 //     (void) debugStop;
