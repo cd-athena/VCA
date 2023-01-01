@@ -23,6 +23,7 @@ add_executable(
 
 target_link_libraries(
     unitTestSuite
+    vcaInternal
     GTest::gtest_main
 )
 

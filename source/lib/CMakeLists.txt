@@ -93,8 +93,10 @@ endif()
 
 add_subdirectory(analyzer)
 add_subdirectory(test)
+target_include_directories(unitTestSuite PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-include_directories(./)
+target_include_directories(vcaInternal PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(vcaLib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(vcaLib vcaInternal)
 set_target_properties(vcaLib PROPERTIES OUTPUT_NAME vcaLib)
