@@ -29,6 +29,8 @@
 #include <simd/dct-ssse3.h>
 #include <simd/dct8.h>
 
+#include <cstring>
+
 namespace vca {
 
 void performDCTBlockSize32(const unsigned bitDepth,
@@ -171,10 +173,10 @@ void performLowpassDCTBlockSize16(const unsigned bitDepth,
     else
         vca::dct8_c(avgBlock, coef, 8, bitDepth);
 
-    memset(dst, 0, 256 * sizeof(int16_t));
+    std::memset(dst, 0, 256 * sizeof(int16_t));
     for (int i = 0; i < 8; i++)
     {
-        memcpy(&dst[i * 16], &coef[i * 8], 8 * sizeof(int16_t));
+        std::memcpy(&dst[i * 16], &coef[i * 8], 8 * sizeof(int16_t));
     }
     dst[0] = static_cast<int16_t>(totalSum >> 1);
 }
@@ -217,10 +219,10 @@ static void performLowpassDCTBlockSize32(const unsigned bitDepth,
     }
     else
         vca::dct16_c(avgBlock, coef, 16, bitDepth);
-    memset(dst, 0, 1024 * sizeof(int16_t));
+    std::memset(dst, 0, 1024 * sizeof(int16_t));
     for (int i = 0; i < 16; i++)
     {
-        memcpy(&dst[i * 32], &coef[i * 16], 16 * sizeof(int16_t));
+        std::memcpy(&dst[i * 32], &coef[i * 16], 16 * sizeof(int16_t));
     }
     dst[0] = static_cast<int16_t>(totalSum >> 3);
 }

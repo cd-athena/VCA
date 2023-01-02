@@ -18,6 +18,7 @@
 
 #include "InverseDCTNative.h"
 
+#include <cstring>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -309,7 +310,7 @@ void idct8_c(const int16_t *src, int16_t *dst, intptr_t dstStride, const unsigne
 
     for (int i = 0; i < 8; i++)
     {
-        memcpy(&dst[i * dstStride], &block[i * 8], 8 * sizeof(int16_t));
+        std::memcpy(&dst[i * dstStride], &block[i * 8], 8 * sizeof(int16_t));
     }
 }
 
@@ -326,7 +327,7 @@ void idct16_c(const int16_t *src, int16_t *dst, intptr_t dstStride, const unsign
 
     for (int i = 0; i < 16; i++)
     {
-        memcpy(&dst[i * dstStride], &block[i * 16], 16 * sizeof(int16_t));
+        std::memcpy(&dst[i * dstStride], &block[i * 16], 16 * sizeof(int16_t));
     }
 }
 
@@ -343,7 +344,7 @@ void idct32_c(const int16_t *src, int16_t *dst, intptr_t dstStride, const unsign
 
     for (int i = 0; i < 32; i++)
     {
-        memcpy(&dst[i * dstStride], &block[i * 32], 32 * sizeof(int16_t));
+        std::memcpy(&dst[i * dstStride], &block[i * 32], 32 * sizeof(int16_t));
     }
 }
 

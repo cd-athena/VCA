@@ -21,6 +21,8 @@
 #include <analyzer/DCTTransform.h>
 #include <test/common/functions.h>
 
+#include <cstring>
+
 namespace {
 
 constexpr auto MAX_BLOCKSIZE_SAMPLES = 32 * 32;
