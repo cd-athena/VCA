@@ -39,6 +39,7 @@ jobs:
     - name: Unit test
       run: |
         pwd
+        cd build
         ls -l
         ls source -l
         ls source/lib -l
