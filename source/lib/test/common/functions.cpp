@@ -29,7 +29,8 @@ void fillBlockWithRandomData(int16_t *data, const unsigned blockSize, const unsi
 
     static std::random_device randomDevice;
     static std::default_random_engine randomEngine(randomDevice());
-    static std::uniform_int_distribution<unsigned> uniform_dist(0, maxValue);
+
+    std::uniform_int_distribution<unsigned> uniform_dist(0, maxValue);
 
     for (size_t i = 0; i < nrPixels; i++)
         data[i] = int16_t(uniform_dist(randomEngine));

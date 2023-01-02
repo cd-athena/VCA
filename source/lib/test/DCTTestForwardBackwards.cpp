@@ -126,14 +126,14 @@ TEST_P(DCTTestForwardBackwardsFixture, TransformTest)
     using MseAndDiff           = std::tuple<MSE, MaxDiff>;
     const std::map<BlockSizeAndBitDepth, MseAndDiff> ExpectedMaximumValues(
         {{{BlockSize(8u), BitDepth(8u)}, {MSE(0.2), MaxDiff(1)}},
-         {{BlockSize(8u), BitDepth(10u)}, {MSE(0.2), MaxDiff(1)}},
-         {{BlockSize(8u), BitDepth(12u)}, {MSE(0.5), MaxDiff(2)}},
-         {{BlockSize(16u), BitDepth(8u)}, {MSE(0.75), MaxDiff(2)}},
-         {{BlockSize(16u), BitDepth(10u)}, {MSE(0.75), MaxDiff(2)}},
-         {{BlockSize(16u), BitDepth(12u)}, {MSE(2.0), MaxDiff(4)}},
-         {{BlockSize(32u), BitDepth(8u)}, {MSE(0.75), MaxDiff(3)}},
-         {{BlockSize(32u), BitDepth(10u)}, {MSE(0.75), MaxDiff(3)}},
-         {{BlockSize(32u), BitDepth(12u)}, {MSE(2.5), MaxDiff(8)}}});
+         {{BlockSize(8u), BitDepth(10u)}, {MSE(2.0), MaxDiff(3)}},
+         {{BlockSize(8u), BitDepth(12u)}, {MSE(25.0), MaxDiff(13)}},
+         {{BlockSize(16u), BitDepth(8u)}, {MSE(0.5), MaxDiff(2)}},
+         {{BlockSize(16u), BitDepth(10u)}, {MSE(7.0), MaxDiff(8)}},
+         {{BlockSize(16u), BitDepth(12u)}, {MSE(90.0), MaxDiff(32)}},
+         {{BlockSize(32u), BitDepth(8u)}, {MSE(0.5), MaxDiff(3)}},
+         {{BlockSize(32u), BitDepth(10u)}, {MSE(6.0), MaxDiff(10)}},
+         {{BlockSize(32u), BitDepth(12u)}, {MSE(90.0), MaxDiff(41)}}});
 
     const auto [maxExpectedMSE, maxExpectedDiff] = ExpectedMaximumValues.at({blockSize, bitDepth});
     ASSERT_LE(maxDiff, maxExpectedDiff);
@@ -160,50 +160,46 @@ INSTANTIATE_TEST_SUITE_P(
 //     ALIGN_VAR_32(int16_t, coeffBuffer[MAX_BLOCKSIZE_SAMPLES]);
 //     ALIGN_VAR_32(int16_t, reconstructedPixels[MAX_BLOCKSIZE_SAMPLES]);
 
-//     std::memset(pixelBuffer, 0, MAX_BLOCKSIZE_BYTES);
-//     std::memset(coeffBuffer, 0, MAX_BLOCKSIZE_BYTES);
-//     std::memset(reconstructedPixels, 0, MAX_BLOCKSIZE_BYTES);
-
 //     for (const auto blockSize : {8, 16, 32})
 //     {
 //         for (const auto bitDepth : {8, 10, 12})
 //         {
-//             for (const auto cpuSimd : test::CpuSimdMapper.entries())
+//             const auto cpuSimd = CpuSimd::None;
+//             auto maxMSE        = 0.0;
+//             auto maxDiff       = 0;
+//             for (int i = 0; i < 10000; i++)
 //             {
-//                 auto maxMSE  = 0.0;
-//                 auto maxDiff = 0;
-//                 for (int i = 0; i < 10000; i++)
-//                 {
-//                     test::fillBlockWithRandomData(pixelBuffer, blockSize, bitDepth);
-//                     assertUnusedValuesAreZero(pixelBuffer, blockSize);
+//                 std::memset(pixelBuffer, 0, MAX_BLOCKSIZE_BYTES);
+//                 std::memset(coeffBuffer, 0, MAX_BLOCKSIZE_BYTES);
+//                 std::memset(reconstructedPixels, 0, MAX_BLOCKSIZE_BYTES);
 
-//                     vca::performDCT(blockSize,
-//                                     bitDepth,
-//                                     pixelBuffer,
-//                                     coeffBuffer,
-//                                     cpuSimd.value,
-//                                     enableLowpassDCT);
-//                     assertUnusedValuesAreZero(coeffBuffer, blockSize);
-//                     assertUsedValuesContainNonZeroValues(coeffBuffer, blockSize);
+//                 test::fillBlockWithRandomData(pixelBuffer, blockSize, bitDepth);
+//                 assertUnusedValuesAreZero(pixelBuffer, blockSize);
 
-//                     test::performIDCT(blockSize, bitDepth, coeffBuffer, reconstructedPixels);
-//                     assertUnusedValuesAreZero(coeffBuffer, blockSize);
-//                     const auto [mse, maxDiffForIteration]
-//                         = calculateMeanSquareErrorAndMaxDiff(pixelBuffer,
-//                                                              reconstructedPixels,
-//                                                              blockSize);
-//                     if (mse > maxMSE)
-//                         maxMSE = mse;
-//                     if (maxDiffForIteration > maxDiff)
-//                         maxDiff = maxDiffForIteration;
-//                 }
+//                 vca::performDCT(blockSize,
+//                                 bitDepth,
+//                                 pixelBuffer,
+//                                 coeffBuffer,
+//                                 cpuSimd,
+//                                 enableLowpassDCT);
+//                 assertUnusedValuesAreZero(coeffBuffer, blockSize);
+//                 assertUsedValuesContainNonZeroValues(coeffBuffer, blockSize);
 
-//                 std::cout << "BlockSize " << blockSize << " BitDepth " << bitDepth << " "
-//                           << cpuSimd.name << " MaxMSE " << maxMSE << " maxDiff " << maxDiff << "\n";
+//                 test::performIDCT(blockSize, bitDepth, coeffBuffer, reconstructedPixels);
+//                 assertUnusedValuesAreZero(coeffBuffer, blockSize);
+//                 const auto [mse, maxDiffForIteration]
+//                     = calculateMeanSquareErrorAndMaxDiff(pixelBuffer,
+//                                                          reconstructedPixels,
+//                                                          blockSize);
+//                 if (mse > maxMSE)
+//                     maxMSE = mse;
+//                 if (maxDiffForIteration > maxDiff)
+//                     maxDiff = maxDiffForIteration;
 //             }
+
+//             std::cout << "BlockSize " << blockSize << " BitDepth " << bitDepth << " "
+//                       << vca::CpuSimdMapper.getName(cpuSimd) << " MaxMSE " << maxMSE << " maxDiff "
+//                       << maxDiff << "\n";
 //         }
 //     }
-
-//     int debugStop = 123;
-//     (void) debugStop;
 // }

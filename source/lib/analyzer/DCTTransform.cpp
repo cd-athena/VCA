@@ -182,7 +182,7 @@ void performLowpassDCTBlockSize16(const unsigned bitDepth,
     dst[0] = static_cast<int16_t>(totalSum >> 1);
 }
 
-static void performLowpassDCTBlockSize32(const unsigned bitDepth,
+void performLowpassDCTBlockSize32(const unsigned bitDepth,
                                          const int16_t *src,
                                          int16_t *dst,
                                          CpuSimd cpuSimd)

@@ -130,7 +130,7 @@ const int16_t g_t32[32][32]
        {4,  -13, 22, -31, 38, -46, 54, -61, 67, -73, 78, -82, 85, -88, 90, -90,
         90, -90, 88, -85, 82, -78, 73, -67, 61, -54, 46, -38, 31, -22, 13, -4}};
 
-static void partialButterflyInverse8(const int16_t *src, int16_t *dst, int shift, int line)
+void partialButterflyInverse8(const int16_t *src, int16_t *dst, int shift, int line)
 {
     int j, k;
     int E[4], O[4];
@@ -168,7 +168,7 @@ static void partialButterflyInverse8(const int16_t *src, int16_t *dst, int shift
     }
 }
 
-static void partialButterflyInverse16(const int16_t *src, int16_t *dst, int shift, int line)
+void partialButterflyInverse16(const int16_t *src, int16_t *dst, int shift, int line)
 {
     int j, k;
     int E[8], O[8];
@@ -223,7 +223,7 @@ static void partialButterflyInverse16(const int16_t *src, int16_t *dst, int shif
     }
 }
 
-static void partialButterflyInverse32(const int16_t *src, int16_t *dst, int shift, int line)
+void partialButterflyInverse32(const int16_t *src, int16_t *dst, int shift, int line)
 {
     int j, k;
     int E[16], O[16];

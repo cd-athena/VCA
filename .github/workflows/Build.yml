@@ -38,6 +38,6 @@ jobs:
         cmake --build .
     - name: Unit test
       run: |
-        cd build
-        ./source/lib/test/unitTestSuite
+        cd build/source/lib/test
+        ctest
 
