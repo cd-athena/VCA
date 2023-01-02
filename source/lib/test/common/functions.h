@@ -18,35 +18,13 @@
 
 #pragma once
 
-#include <analyzer/MultiThreadQueue.h>
-#include <analyzer/common/common.h>
+#include <analyzer/common/EnumMapper.h>
 #include <vcaLib.h>
 
-#include <thread>
+#include <stdint.h>
 
-namespace vca {
+namespace test {
 
-class ProcessingThread
-{
-public:
-    ProcessingThread()                     = delete;
-    ProcessingThread(ProcessingThread &&o) = delete;
-    ProcessingThread(vca_param cfg,
-                     MultiThreadQueue<Job> &jobs,
-                     MultiThreadQueue<Result> &results,
-                     unsigned id);
-    ~ProcessingThread() = default;
+void fillBlockWithRandomData(int16_t *data, const unsigned blockSize, const unsigned bitDepth);
 
-    void abort();
-    void join();
-
-private:
-    void threadFunction(MultiThreadQueue<Job> &jobQueue, MultiThreadQueue<Result> &results);
-
-    std::thread thread;
-    bool aborted{};
-    unsigned id{};
-    vca_param cfg;
-};
-
-} // namespace vca
+} // namespace test

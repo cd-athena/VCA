@@ -10,6 +10,8 @@ set(VCA_VERSION "unknown")
 set(VCA_LATEST_TAG "0.0")
 set(VCA_TAG_DISTANCE "0")
 
+set(LIB_SOURCE_DIR ${CMAKE_SOURCE_DIR}/source/lib)
+
 if(GIT_EXECUTABLE AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../../.git)
     execute_process(
         COMMAND
@@ -67,43 +69,13 @@ list(FIND ARM_ALIASES "${SYSPROC}" ARMMATCH)
 list(FIND POWER_ALIASES "${SYSPROC}" POWERMATCH)
 
 if("${SYSPROC}" STREQUAL "" OR X86MATCH GREATER "-1")
-    set(X86 1)
+    add_definitions(-DX86_64=1)
     add_definitions(-DVCA_ARCH_X86=1)
-
-    if(CMAKE_CXX_FLAGS STREQUAL "-m32")
-        message(STATUS "Detected x86 target processor")
-    elseif("${CMAKE_SIZEOF_VOID_P}" MATCHES 8)
-        set(X64 1)
-        add_definitions(-DX86_64=1)
-        message(STATUS "Detected x86_64 target processor")
-    endif()
+    message(STATUS "Detected x86 target processor")
 elseif(POWERMATCH GREATER "-1")
     message(STATUS "Detected POWER target processor")
-    set(POWER 1)
-    add_definitions(-DVCA_ARCH_POWER=1)
-
-    if("${CMAKE_SIZEOF_VOID_P}" MATCHES 8)
-        set(PPC64 1)
-        add_definitions(-DPPC64=1)
-        message(STATUS "Detected POWER PPC64 target processor")
-    endif()
 elseif(ARMMATCH GREATER "-1")
-    if(CROSS_COMPILE_ARM)
-        message(STATUS "Cross compiling for ARM architecture")
-    else()
-        set(CROSS_COMPILE_ARM 0)
-    endif()
-
-    set(ARM 1)
-
-    if("${CMAKE_SIZEOF_VOID_P}" MATCHES 8)
-        message(STATUS "Detected ARM64 target processor")
-        set(ARM64 1)
-        add_definitions(-DVCA_ARCH_ARM=1 -DVCA_ARCH_ARM64=1 -DHAVE_ARMV6=0)
-    else()
-        message(STATUS "Detected ARM target processor")
-        add_definitions(-DVCA_ARCH_ARM=1 -DVCA_ARCH_ARM64=0 -DHAVE_ARMV6=1)
-    endif()
+    message(STATUS "Detected ARM target processor")
 else()
     message(STATUS "CMAKE_SYSTEM_PROCESSOR value `${CMAKE_SYSTEM_PROCESSOR}` is unknown")
     message(STATUS "Please add this value near ${CMAKE_CURRENT_LIST_FILE}:${CMAKE_CURRENT_LIST_LINE}")
@@ -113,23 +85,6 @@ add_library(vcaLib "")
 target_sources(vcaLib
     PRIVATE
     vcaLib.cpp
-    vcaColorSpace.h
-    analyzer/Analyzer.h
-    analyzer/Analyzer.cpp
-    analyzer/common.h
-    analyzer/DCTTransforms.h
-    analyzer/DCTTransforms.cpp
-    analyzer/EnergyCalculation.h
-    analyzer/EnergyCalculation.cpp
-    analyzer/MultiThreadQueue.h
-    analyzer/MultiThreadQueue.cpp
-    analyzer/ProcessingThread.h
-    analyzer/ProcessingThread.cpp
-    analyzer/ShotDetection.h
-    analyzer/ShotDetection.cpp
-    analyzer/simd/cpu.h
-    analyzer/simd/cpu.cpp
-    analyzer/simd/dct8.h
     PUBLIC
     vcaLib.h
 )
@@ -138,29 +93,18 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     set(GCC 1)
 endif()
 
-if(ENABLE_NASM)
-    enable_language(ASM_NASM)
-
-    if(CMAKE_ASM_NASM_COMPILER_LOADED)
-        message(STATUS "Nasm found. Activating nasm assembly.")
-        set(BUILD_WITH_NASM 1)
-    else()
-        message(STATUS "Nasm could not be found. Disabling nasm assembly.")
-    endif(CMAKE_ASM_NASM_COMPILER_LOADED)
-    set_source_files_properties(analyzer/simd/cpu.cpp PROPERTIES COMPILE_FLAGS -DENABLE_NASM=1)
+add_subdirectory(analyzer)
+if (ENABLE_TEST)
+    message(STATUS "Enable building of unit tests")
+    add_subdirectory(test)
 else()
-    message(STATUS "Nasm disabled. Not looking for it or using it.")
-endif(ENABLE_NASM)
+message(STATUS "Not building unit tests")
+endif()
 
-add_subdirectory(analyzer/simd)
+target_include_directories(vcaInternal PRIVATE ${LIB_SOURCE_DIR})
+target_include_directories(vcaLib PRIVATE ${LIB_SOURCE_DIR})
 
-file(GLOB_RECURSE vcaLib_source *.cpp)
-file(GLOB_RECURSE vcaLib_header *.h)
-
-include_directories(./)
-
-# add_library(vcaLib ${vcaLib_source} ${vcaLib_header} ${A_SRCS})
-target_link_libraries(vcaLib Threads::Threads vcaLibSimd8bit vcaLibSimd10bit vcaLibSimd12bit)
+target_link_libraries(vcaLib vcaInternal)
 set_target_properties(vcaLib PROPERTIES OUTPUT_NAME vcaLib)
 set_target_properties(vcaLib PROPERTIES PUBLIC_HEADER "vcaLib.h")
 

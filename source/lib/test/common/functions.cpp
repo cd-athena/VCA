@@ -16,37 +16,24 @@
  * along with this program.
  *****************************************************************************/
 
-#pragma once
+#include "functions.h"
 
-#include <analyzer/MultiThreadQueue.h>
-#include <analyzer/common/common.h>
-#include <vcaLib.h>
+#include <random>
 
-#include <thread>
+namespace test {
 
-namespace vca {
-
-class ProcessingThread
+void fillBlockWithRandomData(int16_t *data, const unsigned blockSize, const unsigned bitDepth)
 {
-public:
-    ProcessingThread()                     = delete;
-    ProcessingThread(ProcessingThread &&o) = delete;
-    ProcessingThread(vca_param cfg,
-                     MultiThreadQueue<Job> &jobs,
-                     MultiThreadQueue<Result> &results,
-                     unsigned id);
-    ~ProcessingThread() = default;
+    const auto nrPixels = blockSize * blockSize;
+    const auto maxValue = (1 << bitDepth) - 1;
 
-    void abort();
-    void join();
+    static std::random_device randomDevice;
+    static std::default_random_engine randomEngine(randomDevice());
 
-private:
-    void threadFunction(MultiThreadQueue<Job> &jobQueue, MultiThreadQueue<Result> &results);
+    std::uniform_int_distribution<unsigned> uniform_dist(0, maxValue);
 
-    std::thread thread;
-    bool aborted{};
-    unsigned id{};
-    vca_param cfg;
-};
+    for (size_t i = 0; i < nrPixels; i++)
+        data[i] = int16_t(uniform_dist(randomEngine));
+}
 
-} // namespace vca
+} // namespace test

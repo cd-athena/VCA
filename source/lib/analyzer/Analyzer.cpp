@@ -16,28 +16,13 @@
  * along with this program.
  *****************************************************************************/
 
-#include "Analyzer.h"
-#include "EnergyCalculation.h"
-#include "simd/cpu.h"
+#include <analyzer/Analyzer.h>
+#include <analyzer/EnergyCalculation.h>
+#include <analyzer/simd/cpu.h>
 
 #include <cstring>
+#include <map>
 #include <string>
-
-namespace {
-
-const std::map<CpuSimd, std::string> cpuSimdNames = {{CpuSimd::None, "None"},
-                                                     {CpuSimd::SSE2, "SSE2"},
-                                                     {CpuSimd::SSSE3, "SSSE3"},
-                                                     {CpuSimd::SSE4, "SSE4"},
-                                                     {CpuSimd::AVX2, "AVX2"}};
-
-const std::map<CpuSimd, unsigned> cpuSimdLevel = {{CpuSimd::None, 0},
-                                                  {CpuSimd::SSE2, 1},
-                                                  {CpuSimd::SSSE3, 2},
-                                                  {CpuSimd::SSE4, 3},
-                                                  {CpuSimd::AVX2, 4}};
-
-} // namespace
 
 namespace vca {
 
@@ -68,9 +53,7 @@ Analyzer::Analyzer(vca_param cfg)
     }
     else if (this->cfg.cpuSimd != CpuSimd::None)
     {
-        auto selectedLevel = cpuSimdLevel.at(this->cfg.cpuSimd);
-        auto maxLevel      = cpuSimdLevel.at(cpuDetectMaxSimd());
-        if (selectedLevel > maxLevel)
+        if (!isSimdSupported(this->cfg.cpuSimd))
         {
             this->cfg.cpuSimd = cpuDetectMaxSimd();
             log(cfg,
@@ -78,7 +61,7 @@ Analyzer::Analyzer(vca_param cfg)
                 "The selected SIMD is not available on this CPU (). Lowering it.");
         }
     }
-    log(cfg, LogLevel::Info, "Using SIMD " + cpuSimdNames.at(this->cfg.cpuSimd));
+    log(cfg, LogLevel::Info, "Using SIMD " + CpuSimdMapper.getName(this->cfg.cpuSimd));
 
     if (cfg.nrFrameThreads == 0)
     {

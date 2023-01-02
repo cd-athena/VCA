@@ -1,8 +1,6 @@
-/*****************************************************************************
- * Copyright (C) 2022 Christian Doppler Laboratory ATHENA
+/* Copyright (C) 2022 Christian Doppler Laboratory ATHENA
  *
  * Authors: Christian Feldmann <christian.feldmann@bitmovin.com>
- *          Vignesh V Menon <vignesh.menon@aau.at>       
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,27 +18,13 @@
 
 #pragma once
 
-#include <map>
+#include <stdint.h>
 
-// TODO: This should go into a namespace
+namespace test {
 
-enum class vca_colorSpace
-{
-    YUV400,
-    YUV420,
-    YUV422,
-    YUV444
-};
+void performIDCT(const unsigned blockSize,
+                 const unsigned bitDepth,
+                 int16_t *coeffBuffer,
+                 int16_t *pixelBuffer);
 
-struct vca_cli_csp
-{
-    int planes;
-    int width[3];
-    int height[3];
-};
-
-static const std::map<vca_colorSpace, vca_cli_csp> vca_cli_csps
-    = {{vca_colorSpace::YUV400, {1, {0, 0, 0}, {0, 0, 0}}},
-       {vca_colorSpace::YUV420, {3, {0, 1, 1}, {0, 1, 1}}},
-       {vca_colorSpace::YUV422, {3, {0, 1, 1}, {0, 0, 0}}},
-       {vca_colorSpace::YUV444, {3, {0, 0, 0}, {0, 0, 0}}}};
+} // namespace test

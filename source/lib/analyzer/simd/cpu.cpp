@@ -22,6 +22,8 @@
 
 #include "cpu.h"
 
+#include <analyzer/common/common.h>
+
 #if MACOS || SYS_FREEBSD
 #include <sys/sysctl.h>
 #include <sys/types.h>
@@ -98,6 +100,13 @@ uint64_t vca_cpu_xgetbv(int xcr);
 #pragma warning(disable : 4309) // truncation of constant value
 #endif
 
+bool isSimdSupported(CpuSimd simd)
+{
+    const auto simdLevelIndex             = CpuSimdMapper.indexOf(simd);
+    const auto maxSupportedSimdLevelIndex = CpuSimdMapper.indexOf(cpuDetectMaxSimd());
+    return maxSupportedSimdLevelIndex >= simdLevelIndex;
+}
+
 CpuSimd cpuDetectMaxSimd()
 {
     auto cpu = CpuSimd::SSSE3;
@@ -143,7 +152,7 @@ CpuSimd cpuDetectMaxSimd()
 }
 
 #else
-uint32_t cpuDetectMaxSimd()
+CpuSimd cpuDetectMaxSimd()
 {
     return CpuSimd::None;
 }

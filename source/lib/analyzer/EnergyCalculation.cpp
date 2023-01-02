@@ -20,9 +20,7 @@
 
 #include "EnergyCalculation.h"
 
-#include "DCTTransforms.h"
-#include "simd/dct-ssse3.h"
-#include "simd/dct8.h"
+#include <analyzer/DCTTransform.h>
 
 #include <algorithm>
 #include <cmath>
@@ -272,230 +270,6 @@ void copyPixelValuesToBuffer(unsigned bitDepth,
     }
 }
 
-void performDCTBlockSize32(const unsigned bitDepth,
-                           int16_t *pixelBuffer,
-                           int16_t *coeffBuffer,
-                           CpuSimd cpuSimd)
-{
-    if (cpuSimd == CpuSimd::AVX2)
-    {
-        if (bitDepth == 8)
-            vca_dct32_8bit_avx2(pixelBuffer, coeffBuffer, 32);
-        else if (bitDepth == 10)
-            vca_dct32_10bit_avx2(pixelBuffer, coeffBuffer, 32);
-        else if (bitDepth == 12)
-            vca_dct32_12bit_avx2(pixelBuffer, coeffBuffer, 32);
-    }
-    else if (cpuSimd == CpuSimd::SSSE3)
-    {
-        if (bitDepth == 8)
-            vca_dct32_8bit_ssse3(pixelBuffer, coeffBuffer, 32);
-        else if (bitDepth == 10)
-            vca_dct32_10bit_ssse3(pixelBuffer, coeffBuffer, 32);
-        else if (bitDepth == 12)
-            vca_dct32_12bit_ssse3(pixelBuffer, coeffBuffer, 32);
-    }
-    else
-        vca::dct32_c(pixelBuffer, coeffBuffer, 32, bitDepth);
-}
-
-void performDCTBlockSize16(const unsigned bitDepth,
-                           int16_t *pixelBuffer,
-                           int16_t *coeffBuffer,
-                           CpuSimd cpuSimd)
-{
-    if (cpuSimd == CpuSimd::AVX2)
-    {
-        if (bitDepth == 8)
-            vca_dct16_8bit_avx2(pixelBuffer, coeffBuffer, 16);
-        else if (bitDepth == 10)
-            vca_dct16_10bit_avx2(pixelBuffer, coeffBuffer, 16);
-        else if (bitDepth == 12)
-            vca_dct16_12bit_avx2(pixelBuffer, coeffBuffer, 16);
-    }
-    else if (cpuSimd == CpuSimd::SSSE3)
-    {
-        if (bitDepth == 8)
-            vca_dct16_8bit_ssse3(pixelBuffer, coeffBuffer, 16);
-        else if (bitDepth == 10)
-            vca_dct16_10bit_ssse3(pixelBuffer, coeffBuffer, 16);
-        else if (bitDepth == 12)
-            vca_dct16_12bit_ssse3(pixelBuffer, coeffBuffer, 16);
-    }
-    else
-        vca::dct16_c(pixelBuffer, coeffBuffer, 16, bitDepth);
-}
-
-void performDCTBlockSize8(const unsigned bitDepth,
-                          int16_t *pixelBuffer,
-                          int16_t *coeffBuffer,
-                          CpuSimd cpuSimd)
-{
-    if (cpuSimd == CpuSimd::AVX2)
-    {
-        if (bitDepth == 8)
-            vca_dct8_8bit_avx2(pixelBuffer, coeffBuffer, 8);
-        else if (bitDepth == 10)
-            vca_dct8_10bit_avx2(pixelBuffer, coeffBuffer, 8);
-        else if (bitDepth == 12)
-            vca_dct8_12bit_avx2(pixelBuffer, coeffBuffer, 8);
-    }
-    else if (cpuSimd == CpuSimd::SSE4)
-    {
-        if (bitDepth == 8)
-            vca_dct8_8bit_sse4(pixelBuffer, coeffBuffer, 8);
-        else if (bitDepth == 10)
-            vca_dct8_10bit_sse4(pixelBuffer, coeffBuffer, 8);
-        else if (bitDepth == 12)
-            vca_dct8_12bit_sse4(pixelBuffer, coeffBuffer, 8);
-    }
-    else if (cpuSimd == CpuSimd::SSE2)
-    {
-        if (bitDepth == 8)
-            vca_dct8_8bit_sse2(pixelBuffer, coeffBuffer, 8);
-        else if (bitDepth == 10)
-            vca_dct8_10bit_sse2(pixelBuffer, coeffBuffer, 8);
-        else if (bitDepth == 12)
-            vca_dct8_12bit_sse2(pixelBuffer, coeffBuffer, 8);
-    }
-    else
-        vca::dct8_c(pixelBuffer, coeffBuffer, 8, bitDepth);
-}
-
-void performLowpassDCTBlockSize16(const unsigned bitDepth,
-                                  const int16_t *src,
-                                  int16_t *dst,
-                                  CpuSimd cpuSimd)
-{
-    ALIGN_VAR_32(int16_t, coef[8 * 8]);
-    ALIGN_VAR_32(int16_t, avgBlock[8 * 8]);
-    int32_t totalSum = 0;
-    int16_t sum      = 0;
-    for (int i = 0; i < 8; i++)
-        for (int j = 0; j < 8; j++)
-        {
-            sum = src[2 * i * 16 + 2 * j] + src[2 * i * 16 + 2 * j + 1]
-                  + src[(2 * i + 1) * 16 + 2 * j] + src[(2 * i + 1) * 16 + 2 * j + 1];
-            avgBlock[i * 8 + j] = sum >> 2;
-            totalSum += sum;
-        }
-
-    if (cpuSimd == CpuSimd::AVX2)
-    {
-        if (bitDepth == 8)
-            vca_dct8_8bit_avx2(avgBlock, coef, 8);
-        else if (bitDepth == 10)
-            vca_dct8_10bit_avx2(avgBlock, coef, 8);
-        else if (bitDepth == 12)
-            vca_dct8_12bit_avx2(avgBlock, coef, 8);
-    }
-    else if (cpuSimd == CpuSimd::SSE4)
-    {
-        if (bitDepth == 8)
-            vca_dct8_8bit_sse4(avgBlock, coef, 8);
-        else if (bitDepth == 10)
-            vca_dct8_10bit_sse4(avgBlock, coef, 8);
-        else if (bitDepth == 12)
-            vca_dct8_12bit_sse4(avgBlock, coef, 8);
-    }
-    else if (cpuSimd == CpuSimd::SSE2)
-    {
-        if (bitDepth == 8)
-            vca_dct8_8bit_sse2(avgBlock, coef, 8);
-        else if (bitDepth == 10)
-            vca_dct8_10bit_sse2(avgBlock, coef, 8);
-        else if (bitDepth == 12)
-            vca_dct8_12bit_sse2(avgBlock, coef, 8);
-    }
-    else
-        vca::dct8_c(avgBlock, coef, 8, bitDepth);
-
-    memset(dst, 0, 256 * sizeof(int16_t));
-    for (int i = 0; i < 8; i++)
-    {
-        memcpy(&dst[i * 16], &coef[i * 8], 8 * sizeof(int16_t));
-    }
-    dst[0] = static_cast<int16_t>(totalSum >> 1);
-}
-
-static void performLowpassDCTBlockSize32(const unsigned bitDepth,
-                                         const int16_t *src,
-                                         int16_t *dst,
-                                         CpuSimd cpuSimd)
-{
-    ALIGN_VAR_32(int16_t, coef[16 * 16]);
-    ALIGN_VAR_32(int16_t, avgBlock[16 * 16]);
-    int32_t totalSum = 0;
-    int16_t sum      = 0;
-    for (int i = 0; i < 16; i++)
-        for (int j = 0; j < 16; j++)
-        {
-            sum = src[2 * i * 32 + 2 * j] + src[2 * i * 32 + 2 * j + 1]
-                  + src[(2 * i + 1) * 32 + 2 * j] + src[(2 * i + 1) * 32 + 2 * j + 1];
-            avgBlock[i * 16 + j] = sum >> 2;
-            totalSum += sum;
-        }
-
-    if (cpuSimd == CpuSimd::AVX2)
-    {
-        if (bitDepth == 8)
-            vca_dct16_8bit_avx2(avgBlock, coef, 16);
-        else if (bitDepth == 10)
-            vca_dct16_10bit_avx2(avgBlock, coef, 16);
-        else if (bitDepth == 12)
-            vca_dct16_12bit_avx2(avgBlock, coef, 16);
-    }
-    else if (cpuSimd == CpuSimd::SSSE3)
-    {
-        if (bitDepth == 8)
-            vca_dct16_8bit_ssse3(avgBlock, coef, 16);
-        else if (bitDepth == 10)
-            vca_dct16_10bit_ssse3(avgBlock, coef, 16);
-        else if (bitDepth == 12)
-            vca_dct16_12bit_ssse3(avgBlock, coef, 16);
-    }
-    else
-        vca::dct16_c(avgBlock, coef, 16, bitDepth);
-    memset(dst, 0, 1024 * sizeof(int16_t));
-    for (int i = 0; i < 16; i++)
-    {
-        memcpy(&dst[i * 32], &coef[i * 16], 16 * sizeof(int16_t));
-    }
-    dst[0] = static_cast<int16_t>(totalSum >> 3);
-}
-
-void performDCT(const unsigned blockSize,
-                const unsigned bitDepth,
-                int16_t *pixelBuffer,
-                int16_t *coeffBuffer,
-                CpuSimd cpuSimd,
-                bool enableLowpassDCT)
-{
-    if (bitDepth != 8 && bitDepth != 10 && bitDepth != 12)
-        throw std::invalid_argument("Invalid bit depth " + std::to_string(bitDepth));
-
-    switch (blockSize)
-    {
-        case 32:
-            if (enableLowpassDCT)
-                performLowpassDCTBlockSize32(bitDepth, pixelBuffer, coeffBuffer, cpuSimd);
-            else
-                performDCTBlockSize32(bitDepth, pixelBuffer, coeffBuffer, cpuSimd);
-            break;
-        case 16:
-            if (enableLowpassDCT)
-                performLowpassDCTBlockSize16(bitDepth, pixelBuffer, coeffBuffer, cpuSimd);
-            else
-                performDCTBlockSize16(bitDepth, pixelBuffer, coeffBuffer, cpuSimd);
-            break;
-        case 8:
-            performDCTBlockSize8(bitDepth, pixelBuffer, coeffBuffer, cpuSimd);
-            break;
-        default:
-            throw std::invalid_argument("Invalid block size " + std::to_string(blockSize));
-    }
-}
-
 } // namespace
 
 namespace vca {
@@ -559,7 +333,9 @@ void computeWeightedDCTEnergy(const Job &job,
             performDCT(blockSize, bitDepth, pixelBuffer, coeffBuffer, cpuSimd, enableLowpassDCT);
 
             result.brightnessPerBlock[blockIndex] = uint32_t(sqrt(coeffBuffer[0]));
-            result.energyPerBlock[blockIndex] = calculateWeightedCoeffSum(blockSize, coeffBuffer, enableLowpassDCT);
+            result.energyPerBlock[blockIndex]     = calculateWeightedCoeffSum(blockSize,
+                                                                          coeffBuffer,
+                                                                          enableLowpassDCT);
             frameBrightness += result.brightnessPerBlock[blockIndex];
             frameTexture += result.energyPerBlock[blockIndex];
 
@@ -628,8 +404,8 @@ void computeWeightedDCTEnergy(const Job &job,
 
                 result.averageUPerBlock[blockIndexC] = uint32_t(sqrt(coeffBufferC[0]));
                 result.energyUPerBlock[blockIndexC]  = calculateWeightedCoeffSum(blockSize,
-                                                                                 coeffBufferC,
-                                                                                 enableLowpassDCT);
+                                                                                coeffBufferC,
+                                                                                enableLowpassDCT);
                 frameU += result.averageUPerBlock[blockIndexC];
                 frameEnergyU += result.energyUPerBlock[blockIndexC];
 
@@ -666,8 +442,8 @@ void computeWeightedDCTEnergy(const Job &job,
 
                 result.averageVPerBlock[blockIndexC] = uint32_t(sqrt(coeffBufferC[0]));
                 result.energyVPerBlock[blockIndexC]  = calculateWeightedCoeffSum(blockSize,
-                                                                                 coeffBufferC,
-                                                                                 enableLowpassDCT);
+                                                                                coeffBufferC,
+                                                                                enableLowpassDCT);
                 frameV += result.averageVPerBlock[blockIndexC];
                 frameEnergyV += result.energyVPerBlock[blockIndexC];
 

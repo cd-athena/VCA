@@ -1,8 +1,13 @@
 /*****************************************************************************
  * Copyright (C) 2022 Christian Doppler Laboratory ATHENA
  *
- * Authors: Loren Merritt <lorenm@u.washington.edu>
- *          Steve Borho <steve@borho.org>
+ * Authors: Mandar Gurav <mandar@multicorewareinc.com>
+ *          Deepthi Devaki Akkoorath <deepthidevaki@multicorewareinc.com>
+ *          Mahesh Pittala <mahesh@multicorewareinc.com>
+ *          Rajesh Paulraj <rajesh@multicorewareinc.com>
+ *          Min Chen <min.chen@multicorewareinc.com>
+ *          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
+ *          Nabajit Deka <nabajit@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,37 +27,13 @@
 
 #include <vcaLib.h>
 
-#define VCA_CPU_SSE2 (1 << 0)
-#define VCA_CPU_SSSE3 (1 << 1)
-#define VCA_CPU_SSE4 (1 << 2)
-#define VCA_CPU_AVX2 (1 << 3)
-
-// from primitives.cpp
-#if ENABLE_NASM
-extern "C" void vca_cpu_emms(void);
-#endif
-
-#if _MSC_VER
-#include <mmintrin.h>
-#define vca_emms() _mm_empty()
-#elif __GNUC__
-// Cannot use _mm_empty() directly without compiling all the source with
-// a fixed CPU arch, which we would like to avoid at the moment
-#define vca_emms() vca_cpu_emms()
-#else
-#define vca_emms() vca_cpu_emms()
-#endif
-
 namespace vca {
 
-CpuSimd cpuDetectMaxSimd();
-
-bool isSimdSupported(CpuSimd simd);
-
-struct cpu_name_t
-{
-    char name[16];
-    uint32_t flags;
-};
+void performDCT(const unsigned blockSize,
+                const unsigned bitDepth,
+                int16_t *pixelBuffer,
+                int16_t *coeffBuffer,
+                CpuSimd cpuSimd,
+                bool enableLowpassDCT);
 
 } // namespace vca
