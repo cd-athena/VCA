@@ -34,5 +34,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake ..
+        cmake -DENABLE_TEST=1 ..
         cmake --build .
+    - name: Unit test
+      run: ./source/lib/test/unitTestSuite

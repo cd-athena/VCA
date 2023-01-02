@@ -15,6 +15,7 @@ endif()
 
 option(ENABLE_NASM "Enable use of nasm assembly" ON)
 option(ENABLE_PERFORMANCE_TEST "Enable Performance Test" OFF)
+option(ENABLE_TEST "Enable build of Tests" OFF)
 
 add_subdirectory(source/lib)
 add_subdirectory(source/apps/vca)

@@ -92,8 +92,10 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
 endif()
 
 add_subdirectory(analyzer)
-add_subdirectory(test)
-target_include_directories(unitTestSuite PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+if (ENABLE_TEST)
+    add_subdirectory(test)
+    target_include_directories(unitTestSuite PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+endif(ENABLE_TEST)
 
 target_include_directories(vcaInternal PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(vcaLib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
