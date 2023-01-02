@@ -17,29 +17,15 @@
  *****************************************************************************/
 
 #include <gtest/gtest.h>
-#include <random>
 
 #include <analyzer/DCTTransform.h>
-#include <test/EnumMapper.h>
 #include <test/InverseDCTNative.h>
+#include <test/common/functions.h>
 
 namespace {
 
 constexpr auto MAX_BLOCKSIZE_SAMPLES = 32 * 32;
 constexpr auto MAX_BLOCKSIZE_BYTES   = MAX_BLOCKSIZE_SAMPLES * 2;
-
-void fillBlockWithRandomData(int16_t *data, const unsigned blockSize, const unsigned bitDepth)
-{
-    const auto nrPixels = blockSize * blockSize;
-    const auto maxValue = (1 << bitDepth) - 1;
-
-    static std::random_device randomDevice;
-    static std::default_random_engine randomEngine(randomDevice());
-    static std::uniform_int_distribution<unsigned> uniform_dist(0, maxValue);
-
-    for (size_t i = 0; i < nrPixels; i++)
-        data[i] = int16_t(uniform_dist(randomEngine));
-}
 
 void assertUnusedValuesAreZero(int16_t *data, const unsigned blockSize)
 {
@@ -57,23 +43,22 @@ void assertUsedValuesContainNonZeroValues(int16_t *data, const unsigned blockSiz
     FAIL();
 }
 
-double calculateMeanSquareError(int16_t *data1, int16_t *data2, const unsigned blockSize)
+std::tuple<double, int> calculateMeanSquareErrorAndMaxDiff(int16_t *data1,
+                                                           int16_t *data2,
+                                                           const unsigned blockSize)
 {
     double sumOfSquaredError = 0.0;
     const auto nrUsedPixels  = blockSize * blockSize;
+    int maxDiff              = 0;
     for (unsigned i = 0; i < nrUsedPixels; i++)
     {
         const auto diff = data2[i] - data1[i];
+        if (diff > maxDiff)
+            maxDiff = diff;
         sumOfSquaredError += static_cast<double>(diff * diff);
     }
-    return sumOfSquaredError / nrUsedPixels;
+    return {sumOfSquaredError / nrUsedPixels, maxDiff};
 }
-
-const auto CpuSimdMapper = EnumMapper<CpuSimd>({{CpuSimd::None, "NoSimd"},
-                                                {CpuSimd::SSE2, "SSE2"},
-                                                {CpuSimd::SSSE3, "SSSE3"},
-                                                {CpuSimd::SSE4, "SSE4"},
-                                                {CpuSimd::AVX2, "AVX"}});
 
 } // namespace
 
@@ -81,7 +66,7 @@ using BlockSize = unsigned;
 using BitDepth  = unsigned;
 using TestCase  = std::tuple<BlockSize, BitDepth, CpuSimd>;
 
-class DCTTestFixture : public testing::TestWithParam<TestCase>
+class DCTTestForwardBackwardsFixture : public testing::TestWithParam<TestCase>
 {
 public:
     static std::string generateName(const ::testing::TestParamInfo<TestCase> &info)
@@ -90,11 +75,11 @@ public:
         const auto bitDepth  = std::get<1>(info.param);
         const auto cpuSimd   = std::get<2>(info.param);
         return "BlockSize" + std::to_string(blockSize) + "_BitDpeht" + std::to_string(bitDepth)
-               + "_" + CpuSimdMapper.getName(cpuSimd);
+               + "_" + test::CpuSimdMapper.getName(cpuSimd);
     }
 };
 
-TEST_P(DCTTestFixture, TransformTest)
+TEST_P(DCTTestForwardBackwardsFixture, TransformTest)
 {
     const auto param = GetParam();
 
@@ -111,7 +96,7 @@ TEST_P(DCTTestFixture, TransformTest)
     std::memset(coeffBuffer, 0, MAX_BLOCKSIZE_BYTES);
     std::memset(reconstructedPixels, 0, MAX_BLOCKSIZE_BYTES);
 
-    fillBlockWithRandomData(pixelBuffer, blockSize, bitDepth);
+    test::fillBlockWithRandomData(pixelBuffer, blockSize, bitDepth);
     assertUnusedValuesAreZero(pixelBuffer, blockSize);
 
     vca::performDCT(blockSize, bitDepth, pixelBuffer, coeffBuffer, cpuSimd, enableLowpassDCT);
@@ -120,20 +105,24 @@ TEST_P(DCTTestFixture, TransformTest)
 
     test::performIDCT(blockSize, bitDepth, coeffBuffer, reconstructedPixels);
     assertUnusedValuesAreZero(coeffBuffer, blockSize);
-    const auto mse = calculateMeanSquareError(pixelBuffer, reconstructedPixels, blockSize);
+    const auto [mse, maxDiff] = calculateMeanSquareErrorAndMaxDiff(pixelBuffer,
+                                                                   reconstructedPixels,
+                                                                   blockSize);
 
+    ASSERT_LE(maxDiff, 2);
     if (blockSize == 32 && bitDepth == 12)
         ASSERT_LE(mse, 3.0);
     else
         ASSERT_LE(mse, 1.0);
 }
 
-INSTANTIATE_TEST_SUITE_P(DCRTransformTest,
-                         DCTTestFixture,
-                         testing::Combine(testing::ValuesIn({8u, 16u, 32u}),
-                                          testing::ValuesIn({8u, 10u, 12u}),
-                                          testing::ValuesIn({CpuSimd::None, CpuSimd::SSE2})),
-                         &DCTTestFixture::generateName);
+INSTANTIATE_TEST_SUITE_P(
+    DCRTransformTest,
+    DCTTestForwardBackwardsFixture,
+    testing::Combine(testing::ValuesIn({BlockSize(8u), BlockSize(16u), BlockSize(32u)}),
+                     testing::ValuesIn({BitDepth(8u), BitDepth(10u), BitDepth(12u)}),
+                     testing::ValuesIn({CpuSimd::None, CpuSimd::SSE2})),
+    &DCTTestForwardBackwardsFixture::generateName);
 
 // TEST(TransformTest, TestMaxMSE)
 // {
