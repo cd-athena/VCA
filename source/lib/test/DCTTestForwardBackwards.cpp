@@ -64,6 +64,8 @@ std::tuple<double, int> calculateMeanSquareErrorAndMaxDiff(int16_t *data1,
 
 using BlockSize = unsigned;
 using BitDepth  = unsigned;
+using MSE       = double;
+using MaxDiff   = int;
 using TestCase  = std::tuple<BlockSize, BitDepth, CpuSimd>;
 
 class DCTTestForwardBackwardsFixture : public testing::TestWithParam<TestCase>
@@ -109,21 +111,38 @@ TEST_P(DCTTestForwardBackwardsFixture, TransformTest)
                                                                    reconstructedPixels,
                                                                    blockSize);
 
-    ASSERT_LE(maxDiff, 2);
-    if (blockSize == 32 && bitDepth == 12)
-        ASSERT_LE(mse, 3.0);
-    else
-        ASSERT_LE(mse, 1.0);
+    // I got this table by experimentation (see commented code below).
+    // There is probably a theoretical maximum error value one can calculate for this
+    // forward/bacward transform combination.
+    using BlockSizeAndBitDepth = std::tuple<BlockSize, BitDepth>;
+    using MseAndDiff           = std::tuple<MSE, MaxDiff>;
+    const std::map<BlockSizeAndBitDepth, MseAndDiff> ExpectedMaximumValues(
+        {{{BlockSize(8u), BitDepth(8u)}, {MSE(0.2), MaxDiff(1)}},
+         {{BlockSize(8u), BitDepth(10u)}, {MSE(0.2), MaxDiff(1)}},
+         {{BlockSize(8u), BitDepth(12u)}, {MSE(0.5), MaxDiff(2)}},
+         {{BlockSize(16u), BitDepth(8u)}, {MSE(0.75), MaxDiff(2)}},
+         {{BlockSize(16u), BitDepth(10u)}, {MSE(0.75), MaxDiff(2)}},
+         {{BlockSize(16u), BitDepth(12u)}, {MSE(2.0), MaxDiff(4)}},
+         {{BlockSize(32u), BitDepth(8u)}, {MSE(0.75), MaxDiff(3)}},
+         {{BlockSize(32u), BitDepth(10u)}, {MSE(0.75), MaxDiff(3)}},
+         {{BlockSize(32u), BitDepth(12u)}, {MSE(2.5), MaxDiff(8)}}});
+
+    const auto [maxExpectedMSE, maxExpectedDiff] = ExpectedMaximumValues.at({blockSize, bitDepth});
+    ASSERT_LE(maxDiff, maxExpectedDiff);
+    ASSERT_LE(mse, maxExpectedMSE);
 }
 
 INSTANTIATE_TEST_SUITE_P(
     DCRTransformTest,
     DCTTestForwardBackwardsFixture,
-    testing::Combine(testing::ValuesIn({BlockSize(8u), BlockSize(16u), BlockSize(32u)}),
-                     testing::ValuesIn({BitDepth(8u), BitDepth(10u), BitDepth(12u)}),
-                     testing::ValuesIn({CpuSimd::None, CpuSimd::SSE2})),
+    testing::Combine(
+        testing::ValuesIn({BlockSize(8u), BlockSize(16u), BlockSize(32u)}),
+        testing::ValuesIn({BitDepth(8u), BitDepth(10u), BitDepth(12u)}),
+        testing::ValuesIn(
+            {CpuSimd::None, CpuSimd::SSE2, CpuSimd::SSSE3, CpuSimd::SSE4, CpuSimd::AVX2})),
     &DCTTestForwardBackwardsFixture::generateName);
 
+// This code was used to get the results table above.
 // TEST(TransformTest, TestMaxMSE)
 // {
 //     const auto cpuSimd          = CpuSimd::None;
@@ -141,32 +160,39 @@ INSTANTIATE_TEST_SUITE_P(
 //     {
 //         for (const auto bitDepth : {8, 10, 12})
 //         {
-//             auto maxMSE = 0.0;
-//             for (int i = 0; i < 10000; i++)
+//             for (const auto cpuSimd : test::CpuSimdMapper.entries())
 //             {
-//                 fillBlockWithRandomData(pixelBuffer, blockSize, bitDepth);
-//                 assertUnusedValuesAreZero(pixelBuffer, blockSize);
+//                 auto maxMSE  = 0.0;
+//                 auto maxDiff = 0;
+//                 for (int i = 0; i < 10000; i++)
+//                 {
+//                     test::fillBlockWithRandomData(pixelBuffer, blockSize, bitDepth);
+//                     assertUnusedValuesAreZero(pixelBuffer, blockSize);
 
-//                 vca::performDCT(blockSize,
-//                                 bitDepth,
-//                                 pixelBuffer,
-//                                 coeffBuffer,
-//                                 cpuSimd,
-//                                 enableLowpassDCT);
-//                 assertUnusedValuesAreZero(coeffBuffer, blockSize);
-//                 assertUsedValuesContainNonZeroValues(coeffBuffer, blockSize);
+//                     vca::performDCT(blockSize,
+//                                     bitDepth,
+//                                     pixelBuffer,
+//                                     coeffBuffer,
+//                                     cpuSimd.value,
+//                                     enableLowpassDCT);
+//                     assertUnusedValuesAreZero(coeffBuffer, blockSize);
+//                     assertUsedValuesContainNonZeroValues(coeffBuffer, blockSize);
 
-//                 test::performIDCT(blockSize, bitDepth, coeffBuffer, reconstructedPixels);
-//                 assertUnusedValuesAreZero(coeffBuffer, blockSize);
-//                 const auto mse = calculateMeanSquareError(pixelBuffer,
-//                                                           reconstructedPixels,
-//                                                           blockSize);
-//                 if (mse > maxMSE)
-//                     maxMSE = mse;
+//                     test::performIDCT(blockSize, bitDepth, coeffBuffer, reconstructedPixels);
+//                     assertUnusedValuesAreZero(coeffBuffer, blockSize);
+//                     const auto [mse, maxDiffForIteration]
+//                         = calculateMeanSquareErrorAndMaxDiff(pixelBuffer,
+//                                                              reconstructedPixels,
+//                                                              blockSize);
+//                     if (mse > maxMSE)
+//                         maxMSE = mse;
+//                     if (maxDiffForIteration > maxDiff)
+//                         maxDiff = maxDiffForIteration;
+//                 }
+
+//                 std::cout << "BlockSize " << blockSize << " BitDepth " << bitDepth << " "
+//                           << cpuSimd.name << " MaxMSE " << maxMSE << " maxDiff " << maxDiff << "\n";
 //             }
-
-//             std::cout << "BlockSize " << blockSize << " BitDepth " << bitDepth << "MaxMSE "
-//                       << maxMSE << "\n";
 //         }
 //     }
 
