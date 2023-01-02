@@ -38,11 +38,6 @@ jobs:
         cmake --build .
     - name: Unit test
       run: |
-        pwd
         cd build
-        ls -l
-        ls source -l
-        ls source/lib -l
-        ls source/lib/test -l
         ./source/lib/test/unitTestSuite
 
