@@ -40,5 +40,8 @@ jobs:
       run: |
         pwd
         ls -l
+        ll source -l
+        ll source/lib -l
+        ll source/lib/test -l
         ./source/lib/test/unitTestSuite
-        
+
