@@ -25,7 +25,7 @@
 
 #include "DCTTransformsNative.h"
 
-#include <common.h>
+#include <analyzer/common/common.h>
 
 #include <cstring>
 

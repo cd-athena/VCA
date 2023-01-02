@@ -10,6 +10,8 @@ set(VCA_VERSION "unknown")
 set(VCA_LATEST_TAG "0.0")
 set(VCA_TAG_DISTANCE "0")
 
+set(LIB_SOURCE_DIR ${CMAKE_SOURCE_DIR}/source/lib)
+
 if(GIT_EXECUTABLE AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../../.git)
     execute_process(
         COMMAND
@@ -93,12 +95,14 @@ endif()
 
 add_subdirectory(analyzer)
 if (ENABLE_TEST)
+    message(STATUS "Enable building of unit tests")
     add_subdirectory(test)
-    target_include_directories(unitTestSuite PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-endif(ENABLE_TEST)
+else()
+message(STATUS "Not building unit tests")
+endif()
 
-target_include_directories(vcaInternal PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(vcaLib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(vcaInternal PRIVATE ${LIB_SOURCE_DIR})
+target_include_directories(vcaLib PRIVATE ${LIB_SOURCE_DIR})
 
 target_link_libraries(vcaLib vcaInternal)
 set_target_properties(vcaLib PROPERTIES OUTPUT_NAME vcaLib)

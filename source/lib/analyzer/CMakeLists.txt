@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.13)
 
 add_library(vcaInternal STATIC
+    common/common.h
+    common/EnumMapper.h
     Analyzer.h
     Analyzer.cpp
-    common.h
     DCTTransform.h
     DCTTransform.cpp
     DCTTransformsNative.h
@@ -36,7 +37,8 @@ else()
     message(STATUS "Nasm disabled. Not looking for it or using it.")
 endif(ENABLE_NASM)
 
-include_directories(./)
+target_include_directories(vcaInternal PRIVATE ${LIB_SOURCE_DIR})
+
 add_subdirectory(simd)
 
 target_link_libraries(vcaInternal Threads::Threads vcaLibSimd8bit vcaLibSimd10bit vcaLibSimd12bit)

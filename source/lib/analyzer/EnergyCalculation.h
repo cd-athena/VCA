@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <common.h>
+#include <analyzer/common/common.h>
 
 namespace vca {
 

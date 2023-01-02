@@ -18,11 +18,10 @@
 
 #pragma once
 
-#include "../vcaLib.h"
-
-#include "common.h"
-#include "MultiThreadQueue.h"
-#include "ProcessingThread.h"
+#include <analyzer/MultiThreadQueue.h>
+#include <analyzer/ProcessingThread.h>
+#include <analyzer/common/common.h>
+#include <vcaLib.h>
 
 #include <condition_variable>
 #include <mutex>

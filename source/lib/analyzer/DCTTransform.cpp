@@ -23,11 +23,12 @@
  * along with this program.
  *****************************************************************************/
 
-#include <DCTTransform.h>
+#include <analyzer/DCTTransform.h>
 
-#include <DCTTransformsNative.h>
-#include <simd/dct-ssse3.h>
-#include <simd/dct8.h>
+#include <analyzer/DCTTransformsNative.h>
+#include <analyzer/common/common.h>
+#include <analyzer/simd/dct-ssse3.h>
+#include <analyzer/simd/dct8.h>
 
 #include <cstring>
 

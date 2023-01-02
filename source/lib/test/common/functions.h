@@ -18,18 +18,12 @@
 
 #pragma once
 
-#include <test/common/EnumMapper.h>
+#include <analyzer/common/EnumMapper.h>
 #include <vcaLib.h>
 
 #include <stdint.h>
 
 namespace test {
-
-const auto CpuSimdMapper = EnumMapper<CpuSimd>({{CpuSimd::None, "NoSimd"},
-                                                {CpuSimd::SSE2, "SSE2"},
-                                                {CpuSimd::SSSE3, "SSSE3"},
-                                                {CpuSimd::SSE4, "SSE4"},
-                                                {CpuSimd::AVX2, "AVX"}});
 
 void fillBlockWithRandomData(int16_t *data, const unsigned blockSize, const unsigned bitDepth);
 

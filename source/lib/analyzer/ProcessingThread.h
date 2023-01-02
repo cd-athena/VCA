@@ -18,10 +18,10 @@
 
 #pragma once
 
-#include "../vcaLib.h"
+#include <analyzer/MultiThreadQueue.h>
+#include <analyzer/common/common.h>
+#include <vcaLib.h>
 
-#include "MultiThreadQueue.h"
-#include "common.h"
 #include <thread>
 
 namespace vca {

@@ -18,7 +18,8 @@
 
 #pragma once
 
-#include "../vcaLib.h"
+#include <analyzer/common/EnumMapper.h>
+#include <vcaLib.h>
 
 #include <mutex>
 #include <string>
@@ -32,6 +33,12 @@ namespace vca {
 #elif defined(_MSC_VER)
 #define ALIGN_VAR_32(T, var) __declspec(align(32)) T var
 #endif
+
+const auto CpuSimdMapper = EnumMapper<CpuSimd>({{CpuSimd::None, "NoSimd"},
+                                                {CpuSimd::SSE2, "SSE2"},
+                                                {CpuSimd::SSSE3, "SSSE3"},
+                                                {CpuSimd::SSE4, "SSE4"},
+                                                {CpuSimd::AVX2, "AVX"}});
 
 inline void log(const vca_param &cfg, LogLevel level, const std::string &message)
 {

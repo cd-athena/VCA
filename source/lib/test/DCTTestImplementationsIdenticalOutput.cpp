@@ -19,6 +19,8 @@
 #include <gtest/gtest.h>
 
 #include <analyzer/DCTTransform.h>
+#include <analyzer/common/common.h>
+#include <analyzer/simd/cpu.h>
 #include <test/common/functions.h>
 
 #include <cstring>
@@ -79,6 +81,13 @@ TEST_P(DCTTestImplementationsIdenticalOutputFixture,
 
     for (const auto cpuSimd : {CpuSimd::SSE2, CpuSimd::SSSE3, CpuSimd::SSE4, CpuSimd::AVX2})
     {
+        if (!vca::isSimdSupported(cpuSimd))
+        {
+            std::cout << "Skipping testing of " << vca::CpuSimdMapper.getName(cpuSimd)
+                      << " because it is not supported on this platform.";
+            continue;
+        }
+
         vca::performDCT(blockSize, bitDepth, pixelBuffer, coeffBufferTest, cpuSimd, enableLowpassDCT);
         assertUsedValuesAreIdentical(coeffBufferNative, coeffBufferTest, blockSize);
     }

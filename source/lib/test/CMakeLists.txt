@@ -21,6 +21,8 @@ add_executable(
     ${testSourceFiles}
 )
 
+target_include_directories(unitTestSuite PRIVATE ${LIB_SOURCE_DIR})
+
 target_link_libraries(
     unitTestSuite
     vcaInternal

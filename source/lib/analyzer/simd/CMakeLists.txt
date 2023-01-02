@@ -6,6 +6,10 @@ add_library(vcaLibSimd8bit STATIC "")
 add_library(vcaLibSimd10bit STATIC "")
 add_library(vcaLibSimd12bit STATIC "")
 
+target_include_directories(vcaLibSimd8bit PRIVATE ${LIB_SOURCE_DIR})
+target_include_directories(vcaLibSimd10bit PRIVATE ${LIB_SOURCE_DIR})
+target_include_directories(vcaLibSimd12bit PRIVATE ${LIB_SOURCE_DIR})
+
 if(BUILD_WITH_NASM)
     enable_language(ASM_NASM)
 

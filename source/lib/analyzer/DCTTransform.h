@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include <analyzer/common.h>
+#include <vcaLib.h>
 
 namespace vca {
 

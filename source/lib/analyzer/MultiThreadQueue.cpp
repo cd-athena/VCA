@@ -17,7 +17,8 @@
  *****************************************************************************/
 
 #include "MultiThreadQueue.h"
-#include "common.h"
+
+#include <analyzer/common/common.h>
 
 namespace vca {
 

@@ -18,9 +18,9 @@
  * along with this program.
  *****************************************************************************/
 
-#include "vcaLib.h"
-#include "analyzer/Analyzer.h"
-#include "analyzer/ShotDetection.h"
+#include <analyzer/Analyzer.h>
+#include <analyzer/ShotDetection.h>
+#include <vcaLib.h>
 
 #define XSTR(x) STR(x)
 #define STR(x) #x

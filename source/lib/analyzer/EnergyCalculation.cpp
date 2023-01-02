@@ -20,7 +20,7 @@
 
 #include "EnergyCalculation.h"
 
-#include "DCTTransform.h"
+#include <analyzer/DCTTransform.h>
 
 #include <algorithm>
 #include <cmath>
@@ -333,7 +333,9 @@ void computeWeightedDCTEnergy(const Job &job,
             performDCT(blockSize, bitDepth, pixelBuffer, coeffBuffer, cpuSimd, enableLowpassDCT);
 
             result.brightnessPerBlock[blockIndex] = uint32_t(sqrt(coeffBuffer[0]));
-            result.energyPerBlock[blockIndex] = calculateWeightedCoeffSum(blockSize, coeffBuffer, enableLowpassDCT);
+            result.energyPerBlock[blockIndex]     = calculateWeightedCoeffSum(blockSize,
+                                                                          coeffBuffer,
+                                                                          enableLowpassDCT);
             frameBrightness += result.brightnessPerBlock[blockIndex];
             frameTexture += result.energyPerBlock[blockIndex];
 
@@ -402,8 +404,8 @@ void computeWeightedDCTEnergy(const Job &job,
 
                 result.averageUPerBlock[blockIndexC] = uint32_t(sqrt(coeffBufferC[0]));
                 result.energyUPerBlock[blockIndexC]  = calculateWeightedCoeffSum(blockSize,
-                                                                                 coeffBufferC,
-                                                                                 enableLowpassDCT);
+                                                                                coeffBufferC,
+                                                                                enableLowpassDCT);
                 frameU += result.averageUPerBlock[blockIndexC];
                 frameEnergyU += result.energyUPerBlock[blockIndexC];
 
@@ -440,8 +442,8 @@ void computeWeightedDCTEnergy(const Job &job,
 
                 result.averageVPerBlock[blockIndexC] = uint32_t(sqrt(coeffBufferC[0]));
                 result.energyVPerBlock[blockIndexC]  = calculateWeightedCoeffSum(blockSize,
-                                                                                 coeffBufferC,
-                                                                                 enableLowpassDCT);
+                                                                                coeffBufferC,
+                                                                                enableLowpassDCT);
                 frameV += result.averageVPerBlock[blockIndexC];
                 frameEnergyV += result.energyVPerBlock[blockIndexC];
 
