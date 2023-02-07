@@ -22,10 +22,10 @@
 
 #include <vcaLib.h>
 
-#define VCA_CPU_SSE2   (1 << 0)
-#define VCA_CPU_SSSE3  (1 << 1)
-#define VCA_CPU_SSE4   (1 << 2)
-#define VCA_CPU_AVX2   (1 << 3)
+#define VCA_CPU_SSE2 (1 << 0)
+#define VCA_CPU_SSSE3 (1 << 1)
+#define VCA_CPU_SSE4 (1 << 2)
+#define VCA_CPU_AVX2 (1 << 3)
 
 // from primitives.cpp
 #if ENABLE_NASM
@@ -46,6 +46,8 @@ extern "C" void vca_cpu_emms(void);
 namespace vca {
 
 CpuSimd cpuDetectMaxSimd();
+
+bool isSimdSupported(CpuSimd simd);
 
 struct cpu_name_t
 {

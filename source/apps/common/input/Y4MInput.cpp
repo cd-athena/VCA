@@ -28,19 +28,8 @@ namespace filesystem = std::experimental::filesystem;
 namespace filesystem = std::filesystem;
 #endif
 
-#include <common/EnumMapper.h>
 #include <iterator>
 #include <string>
-
-namespace {
-
-const auto vca_colorSpaceMapper = EnumMapper<vca_colorSpace>({{vca_colorSpace::YUV400, "4:0:0"},
-                                                              {vca_colorSpace::YUV420, "4:2:0"},
-                                                              {vca_colorSpace::YUV422, "4:2:2"},
-                                                              {vca_colorSpace::YUV444, "4:4:4"}});
-
-}
-
 namespace vca {
 Y4MInput::Y4MInput(std::string &fileName)
 {

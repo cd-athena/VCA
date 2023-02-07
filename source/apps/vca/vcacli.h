@@ -28,6 +28,7 @@ static const char short_options[]         = "f:h?";
 static const struct option long_options[] = {{"help", no_argument, NULL, 'h'},
                                              {"no-simd", no_argument, NULL, 0},
                                              {"no-chroma", no_argument, NULL, 0},
+                                             {"no-lowpass", no_argument, NULL, 0},
                                              {"input", required_argument, NULL, 0},
                                              {"y4m", no_argument, NULL, 0},
                                              {"input-depth", required_argument, NULL, 0},
@@ -82,6 +83,7 @@ static void showHelp()
     printf("\nOperation Options:\n");
     printf("   --no-simd                     Disable SIMD. Default: Enabled\n");
     printf("   --no-chroma                   Disable chroma. Default: Enabled\n");
+    printf("   --no-lowpass                  Disable lowpass DCT kernels. Default: Enabled\n");
     printf("   --max-epsthresh <float>       Maximum threshold of epsilon in shot detection\n");
     printf("   --min-epsthresh <float>       Minimum threshold of epsilon in shot detection\n");
     printf("   --min-sadthresh <float>       Minimum threshold of h in shot detection\n");

@@ -65,17 +65,17 @@ void printStatus(uint32_t frameNum,
         prevUpdateTime = std::chrono::high_resolution_clock::now();
     }
 
-    auto now = std::chrono::high_resolution_clock::now();
-
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - prevUpdateTime);
+    const auto now      = std::chrono::high_resolution_clock::now();
+    const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now
+                                                                                - prevUpdateTime);
     if (!printSummary && duration < std::chrono::milliseconds(250))
         return;
 
     prevUpdateTime = now;
 
-    auto elapsedAbsMs = std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime)
-                            .count();
-    double fps = elapsedAbsMs > 0 ? frameNum * 1000. / elapsedAbsMs : 0;
+    const auto elapsedAbsMs = std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime)
+                                  .count();
+    const auto fps = elapsedAbsMs > 0 ? frameNum * 1000. / elapsedAbsMs : 0.0;
 
     if (printSummary)
     {
@@ -92,8 +92,10 @@ void printStatus(uint32_t frameNum,
     }
     else if (framesToBeAnalyzed > 0)
     {
-        int eta = (int) (elapsedAbsMs * (framesToBeAnalyzed - frameNum)
-                         / ((int64_t) frameNum * 1000));
+        int eta = 0;
+        if (frameNum > 0)
+            eta = static_cast<int>(elapsedAbsMs * (framesToBeAnalyzed - frameNum)
+                                   / (static_cast<int64_t>(frameNum) * 1000));
         sprintf(buf,
                 "vca [%.1f%%] %d/%d frames, %.2f fps, eta %d:%02d:%02d",
                 100. * frameNum / (framesToBeAnalyzed),
@@ -197,6 +199,13 @@ std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
 
 bool checkOptions(CLIOptions options)
 {
+    const auto bitDepth = options.vcaParam.frameInfo.bitDepth;
+    if (bitDepth != 8 && bitDepth != 10 && bitDepth != 12)
+    {
+        vca_log(LogLevel::Error, "Invalid bit depth: " + std::to_string(bitDepth));
+        return false;
+    }
+
     return true;
 }
 
@@ -209,7 +218,7 @@ void logOptions(CLIOptions options)
 std::vector<std::unique_ptr<FrameWithData>> generateRandomFrames(vca_frame_info frameInfo,
                                                                  unsigned nrFrames)
 {
-    if (frameInfo.colorspace != vca_colorSpace::YUV420 || frameInfo.bitDepth != 8)
+    if (frameInfo.colorspace != vca_colorSpace::YUV420)
         throw std::exception("Not implemented yet");
 
     std::random_device randomDevice;
@@ -394,8 +403,13 @@ int main(int argc, char **argv)
     if (nrFramesToAllocate == 0)
         nrFramesToAllocate = std::thread::hardware_concurrency();
 
-    auto pushFrames = generateRandomFrames(options.vcaParam.frameInfo, nrFramesToAllocate + 1);
-    vca_log(LogLevel::Info, "Generated " + std::to_string(pushFrames.size()) + " random frames");
+    const auto frameInfo = options.vcaParam.frameInfo;
+    auto pushFrames      = generateRandomFrames(frameInfo, nrFramesToAllocate + 1);
+    vca_log(LogLevel::Info,
+            "Generated " + std::to_string(pushFrames.size()) + " random frames ("
+                + std::to_string(frameInfo.width) + "x" + std::to_string(frameInfo.height) + " "
+                + vca_colorSpaceMapper.getName(frameInfo.colorspace) + " "
+                + std::to_string(frameInfo.bitDepth) + "bit)");
 
     const std::map<CpuSimd, std::string> cpuSimdNames = {{CpuSimd::None, "None"},
                                                          {CpuSimd::SSE2, "SSE2"},
@@ -408,7 +422,7 @@ int main(int argc, char **argv)
         for (unsigned blocksize : {8, 16, 32})
         {
             std::cout << "  [Run test 0 - " << simd.second << " - " << blocksize << "x" << blocksize
-                      << "]\n";
+                      << " " << options.vcaParam.frameInfo.bitDepth << "bit]\n";
             options.vcaParam.cpuSimd   = simd.first;
             options.vcaParam.blockSize = blocksize;
 

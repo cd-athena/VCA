@@ -17,8 +17,8 @@
  *****************************************************************************/
 
 #include "ProcessingThread.h"
-#include "EnergyCalculation.h"
-#include "common.h"
+
+#include <analyzer/EnergyCalculation.h>
 
 namespace vca {
 
@@ -50,10 +50,14 @@ void ProcessingThread::threadFunction(MultiThreadQueue<Job> &jobQueue,
             "Thread " + std::to_string(this->id) + ": Start work on job " + job->infoString());
 
         Result result;
-        result.poc = job->frame->stats.poc;
+        result.poc   = job->frame->stats.poc;
         result.jobID = job->jobID;
-        computeWeightedDCTEnergy(*job, result, this->cfg.blockSize, this->cfg.cpuSimd,
-                                 this->cfg.enableChroma);
+        computeWeightedDCTEnergy(*job,
+                                 result,
+                                 this->cfg.blockSize,
+                                 this->cfg.cpuSimd,
+                                 this->cfg.enableChroma,
+                                 this->cfg.enableLowpassDCT);
 
         log(this->cfg,
             LogLevel::Debug,

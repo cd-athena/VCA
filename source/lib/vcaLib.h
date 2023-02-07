@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "vcaColorSpace.h"
 #include <cstddef>
 #include <stdint.h>
 
@@ -58,6 +57,14 @@ enum class CpuSimd
     SSSE3,
     SSE4,
     AVX2
+};
+
+enum class vca_colorSpace
+{
+    YUV400,
+    YUV420,
+    YUV422,
+    YUV444
 };
 
 /* Frame level statistics */
@@ -136,6 +143,7 @@ struct vca_param
 {
     bool enableSIMD{true};
     bool enableChroma{true};
+    bool enableLowpassDCT{true};
 
     vca_frame_info frameInfo{};
 

@@ -1,7 +1,13 @@
 /*****************************************************************************
  * Copyright (C) 2022 Christian Doppler Laboratory ATHENA
  *
- * Authors: Vignesh V Menon <vignesh.menon@aau.at>
+ * Authors: Mandar Gurav <mandar@multicorewareinc.com>
+ *          Deepthi Devaki Akkoorath <deepthidevaki@multicorewareinc.com>
+ *          Mahesh Pittala <mahesh@multicorewareinc.com>
+ *          Rajesh Paulraj <rajesh@multicorewareinc.com>
+ *          Min Chen <min.chen@multicorewareinc.com>
+ *          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
+ *          Nabajit Deka <nabajit@multicorewareinc.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,12 +25,15 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <vcaLib.h>
 
-void vca_dct16_8bit_ssse3(const int16_t *src, int16_t *dst, intptr_t srcStride);
-void vca_dct16_10bit_ssse3(const int16_t *src, int16_t *dst, intptr_t srcStride);
-void vca_dct16_12bit_ssse3(const int16_t *src, int16_t *dst, intptr_t srcStride);
+namespace vca {
 
-void vca_dct32_8bit_ssse3(const int16_t *src, int16_t *dst, intptr_t stride);
-void vca_dct32_10bit_ssse3(const int16_t *src, int16_t *dst, intptr_t stride);
-void vca_dct32_12bit_ssse3(const int16_t *src, int16_t *dst, intptr_t stride);
+void performDCT(const unsigned blockSize,
+                const unsigned bitDepth,
+                int16_t *pixelBuffer,
+                int16_t *coeffBuffer,
+                CpuSimd cpuSimd,
+                bool enableLowpassDCT);
+
+} // namespace vca

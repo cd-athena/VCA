@@ -1,7 +1,6 @@
-/*****************************************************************************
- * Copyright (C) 2022 Christian Doppler Laboratory ATHENA
+/* Copyright (C) 2022 Christian Doppler Laboratory ATHENA
  *
- * Authors: Vignesh V Menon <vignesh.menon@aau.at>
+ * Authors: Christian Feldmann <christian.feldmann@bitmovin.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,12 +18,13 @@
 
 #pragma once
 
+#include <analyzer/common/EnumMapper.h>
+#include <vcaLib.h>
+
 #include <stdint.h>
 
-void vca_dct16_8bit_ssse3(const int16_t *src, int16_t *dst, intptr_t srcStride);
-void vca_dct16_10bit_ssse3(const int16_t *src, int16_t *dst, intptr_t srcStride);
-void vca_dct16_12bit_ssse3(const int16_t *src, int16_t *dst, intptr_t srcStride);
+namespace test {
 
-void vca_dct32_8bit_ssse3(const int16_t *src, int16_t *dst, intptr_t stride);
-void vca_dct32_10bit_ssse3(const int16_t *src, int16_t *dst, intptr_t stride);
-void vca_dct32_12bit_ssse3(const int16_t *src, int16_t *dst, intptr_t stride);
+void fillBlockWithRandomData(int16_t *data, const unsigned blockSize, const unsigned bitDepth);
+
+} // namespace test

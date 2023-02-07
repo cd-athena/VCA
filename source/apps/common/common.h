@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <common/EnumMapper.h>
 #include <lib/vcaLib.h>
 
 #include <string>
@@ -51,6 +52,11 @@ private:
     std::vector<uint8_t> data;
     vca_frame vcaFrame;
 };
+
+const auto vca_colorSpaceMapper = EnumMapper<vca_colorSpace>({{vca_colorSpace::YUV400, "4:0:0"},
+                                                              {vca_colorSpace::YUV420, "4:2:0"},
+                                                              {vca_colorSpace::YUV422, "4:2:2"},
+                                                              {vca_colorSpace::YUV444, "4:4:4"}});
 
 void vca_log(LogLevel level, std::string error);
 size_t calculateFrameBytesInInput(const vca_frame_info &frameInfo);
