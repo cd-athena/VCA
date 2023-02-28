@@ -69,8 +69,15 @@ void detect(const vca_shot_detection_param &param, vca_frame_results *frames, si
     for (auto it = unsureFrames.begin(); it != unsureFrames.end(); it++)
     {
         auto itNext = it + 1;
-        if (itNext != unsureFrames.end() && it->previousShotDistance > param.fps
-            && itNext->previousShotDistance > param.fps)
+        if (itNext != unsureFrames.end() && it->previousShotDistance >= param.fps
+            && (itNext->index - it->index) >= param.fps)
+        {
+            frames[it->index].isNewShot = true;
+            numDetectedShots++;
+        }
+
+        if (it->index == unsureFrames.back().index && it->previousShotDistance >= param.fps
+            && (it->index + param.fps) <= num_frames)
         {
             frames[it->index].isNewShot = true;
             numDetectedShots++;
