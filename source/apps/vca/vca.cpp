@@ -32,6 +32,7 @@
 #include <optional>
 #include <signal.h>
 #include <queue>
+#include <cmath>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -621,7 +622,7 @@ int main(int argc, char **argv)
     if (segmentFeatureFile.is_open()) 
     {
         if (options.openAsY4m) 
-            T_fps = static_cast<int> (ceil(inputFile->getFPS()));
+            T_fps = static_cast<int> (std::ceil(inputFile->getFPS()));
         else 
             T_fps  = static_cast<int> (options.shotDetectParam.fps);
 
