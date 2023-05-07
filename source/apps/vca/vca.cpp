@@ -110,7 +110,9 @@ struct CLIOptions
     bool openAsY4m{};
     unsigned skipFrames{};
     unsigned framesToBeAnalyzed{};
+    unsigned segmentSize{};
     std::string complexityCSVFilename;
+    std::string segmentFeatureCSVFilename;
     std::string shotCSVFilename;
     std::string yuviewStatsFilename;
 
@@ -240,6 +242,10 @@ std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
                 options.framesToBeAnalyzed = std::stoul(optarg);
             else if (name == "complexity-csv")
                 options.complexityCSVFilename = optarg;
+            else if (name == "segment-size")
+                options.segmentSize = std::stoul(optarg);
+            else if (name == "segment-feature-csv") 
+                options.segmentFeatureCSVFilename = optarg;
             else if (name == "shot-csv")
                 options.shotCSVFilename = optarg;
             else if (name == "yuview-stats")
@@ -311,6 +317,8 @@ void logOptions(const CLIOptions &options)
             "  Enable lowpassDCT: "s + (options.vcaParam.enableLowpassDCT ? "True"s : "False"s));
     vca_log(LogLevel::Info, "  Skip frames:       "s + std::to_string(options.skipFrames));
     vca_log(LogLevel::Info, "  Frames to analyze: "s + std::to_string(options.framesToBeAnalyzed));
+    vca_log(LogLevel::Info, "  Segment Size:       "s + std::to_string(options.segmentSize));  
+    vca_log(LogLevel::Info, "  Segment Feature csv:"s + options.segmentFeatureCSVFilename);
     vca_log(LogLevel::Info, "  Complexity csv:    "s + options.complexityCSVFilename);
     vca_log(LogLevel::Info, "  Shot csv:          "s + options.shotCSVFilename);
     vca_log(LogLevel::Info, "  YUView stats file: "s + options.yuviewStatsFilename);
@@ -407,6 +415,60 @@ void writeShotDetectionResultsToFile(const std::vector<vca_frame_results> &shotD
     if (averageValuesShot)
         writeToFile(*averageValuesShot, shotCounter);
 }
+
+void segment_result_init(Result *segment_result)
+{
+    segment_result->result.averageBrightness = 0;
+    segment_result->result.sad               = 0;
+    segment_result->result.averageEnergy     = 0;
+    segment_result->result.epsilon           = 0;
+    segment_result->result.poc               = 0;
+    segment_result->result.averageU          = 0;
+    segment_result->result.energyU           = 0;
+    segment_result->result.averageV          = 0;
+    segment_result->result.energyV           = 0;
+}
+
+void segment_complexity_function(vca_frame_results *segment_result,
+                                 vca_frame_results *frame_result,
+                                 int Segment_size,
+                                 bool chroma_flag,
+                                 unsigned pushedFrames,
+                                 unsigned resultsCounter)
+{
+    segment_result->averageBrightness += frame_result->averageBrightness;
+    segment_result->sad += frame_result->sad;
+    segment_result->averageEnergy += frame_result->averageEnergy;
+    segment_result->epsilon += frame_result->epsilon;
+    if (chroma_flag)
+    {
+        segment_result->averageU += frame_result->averageU;
+        segment_result->energyU += frame_result->energyU;
+        segment_result->averageV += frame_result->averageV;
+        segment_result->energyV += frame_result->energyV;
+    }
+
+    if (((frame_result->poc) % Segment_size == 0) && !(frame_result->poc == 0)
+        || (resultsCounter == (pushedFrames - 1)))
+    {
+        segment_result->averageBrightness = (segment_result->averageBrightness / Segment_size);
+        segment_result->averageEnergy     = (segment_result->averageEnergy / Segment_size);
+        segment_result->sad               = (segment_result->sad / Segment_size);
+        segment_result->epsilon           = (segment_result->epsilon / Segment_size);
+        if (resultsCounter == (pushedFrames - 1))
+            segment_result->poc = pushedFrames;
+        else
+            segment_result->poc = frame_result->poc;
+
+        if (chroma_flag)
+        {
+            segment_result->averageU        = (segment_result->averageU / Segment_size);
+            segment_result->energyU         = (segment_result->energyU / Segment_size);
+            segment_result->averageV        = (segment_result->averageV / Segment_size);
+            segment_result->energyV         = (segment_result->energyV / Segment_size);
+        }
+    }   
+}  
 
 #ifdef _WIN32
 /* Copy of x264 code, which allows for Unicode characters in the command line.
@@ -506,6 +568,23 @@ int main(int argc, char **argv)
         else
             complexityFile << "\n";
     }
+    
+    std::ofstream segmentFeatureFile;
+    if (!options.segmentFeatureCSVFilename.empty()) 
+    {
+        segmentFeatureFile.open(options.segmentFeatureCSVFilename);
+        if (!segmentFeatureFile.is_open())
+        {
+            vca_log(LogLevel::Error,
+                     "Error opening complexity CSV file " + options.segmentFeatureCSVFilename);
+            return 1;            
+        }
+        segmentFeatureFile << "POC, E, h, epsilon, L";
+        if (options.vcaParam.enableChroma) 
+            segmentFeatureFile << ", avgU, energyU, avgV, energyV \n ";
+        else 
+            segmentFeatureFile << "\n";
+    }   
 
     options.vcaParam.logFunction        = logLibraryMessage;
     options.shotDetectParam.logFunction = logLibraryMessage;
@@ -536,6 +615,25 @@ int main(int argc, char **argv)
     unsigned pushedFrames   = 0;
     unsigned resultsCounter = 0;
     unsigned skippedFrames  = 0;
+
+    int Segment_size = 0;
+    int T_fps       = 0;
+    if (segmentFeatureFile.is_open()) 
+    {
+        if (options.openAsY4m) 
+            T_fps = static_cast<int> (ceil(inputFile->getFPS()));
+        else 
+            T_fps  = static_cast<int> (options.shotDetectParam.fps);
+
+        if (options.segmentSize != 0) 
+            Segment_size = options.segmentSize * T_fps;
+        else
+            Segment_size   = T_fps;
+    }
+
+    Result segment_result(frameInfo, options.vcaParam.blockSize);
+    segment_result_init(&segment_result);
+
     while (!inputFile->isEof() && !inputFile->isFail()
            && (options.framesToBeAnalyzed == 0 || pushedFrames < options.framesToBeAnalyzed))
     {
@@ -600,6 +698,22 @@ int main(int argc, char **argv)
                 return 3;
             }
 
+            if (segmentFeatureFile.is_open())
+            {
+                segment_complexity_function(&segment_result.result,
+                                            &result.result,
+                                            Segment_size,
+                                            options.vcaParam.enableChroma, 
+                                            pushedFrames,
+                                            resultsCounter);
+
+                if (((result.result.poc) % Segment_size == 0) && !(result.result.poc == 0))
+                {
+                    writeComplexityStatsToFile(segment_result, segmentFeatureFile, options.vcaParam.enableChroma);
+                    segment_result_init(&segment_result);                   
+                }
+            }
+
             if (yuviewStatsFile)
                 yuviewStatsFile->write(result.result, options.vcaParam.blockSize);
             if (complexityFile.is_open())
@@ -629,6 +743,22 @@ int main(int argc, char **argv)
             return 3;
         }
 
+        if (segmentFeatureFile.is_open())
+        {
+            segment_complexity_function(&segment_result.result,
+                                        &result.result,
+                                        Segment_size,
+                                        options.vcaParam.enableChroma,
+                                        pushedFrames, resultsCounter);
+            
+            if (resultsCounter == (pushedFrames - 1))
+            {
+                writeComplexityStatsToFile(segment_result,
+                                           segmentFeatureFile,
+                                           options.vcaParam.enableChroma);
+                segment_result_init(&segment_result);
+            }
+        }
         if (yuviewStatsFile)
             yuviewStatsFile->write(result.result, options.vcaParam.blockSize);
         if (complexityFile.is_open())
