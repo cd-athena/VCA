@@ -38,6 +38,8 @@ static const struct option long_options[] = {{"help", no_argument, NULL, 'h'},
                                              {"skip", required_argument, NULL, 0},
                                              {"frames", required_argument, NULL, 'f'},
                                              {"complexity-csv", required_argument, NULL, 0},
+                                             {"segment-size", required_argument, NULL, 0},
+                                             {"segment-feature-csv", required_argument, NULL, 0},
                                              {"shot-csv", required_argument, NULL, 0},
                                              {"yuview-stats", required_argument, NULL, 0},
                                              {"max-epsthresh", required_argument, NULL, 0},
@@ -73,8 +75,12 @@ static void showHelp()
     printf("-f/--frames <integer>            Maximum number of frames to analyze. Default all\n");
     printf("   --skip <integer>              Skip N frames in the input before starting the "
            "analysis\n");
+    printf("   --segment-size <integer>      Specifies the size of segment (Example: 1 = fps, 2 = "
+            "2xfps)");
     printf("\nOutput Options:\n");
     printf("   --complexity-csv <filename>   Comma separated complexity log file\n");
+    printf("   --segment-feature-csv <filename> Comma separated segment based complexity log "
+            "file\n");
     printf("   --shot-csv <filename>         Comma separated shot detection log file.\n");
     printf("                                 Specify a filename to enable shot-detection.\n");
     printf("   --yuview-stats <filename>     Write the per block results (energy, sad) to a stats "
