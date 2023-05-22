@@ -27,3 +27,7 @@ The following commands will checkout the project source code and create a direct
     $ cmake --build .
 
 This will create VCA binaries in the VCA/build/source/apps/ folder.
+
+## Locate the Executable
+
+After building with the above instructions, the executable is located at the directory path `vca_root/build/source/apps/vca`.
