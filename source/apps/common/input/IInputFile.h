@@ -24,9 +24,9 @@
 #include <lib/vcaLib.h>
 
 #define MIN_FRAME_WIDTH 64
-#define MAX_FRAME_WIDTH 8192
+#define MAX_FRAME_WIDTH 16384
 #define MIN_FRAME_HEIGHT 64
-#define MAX_FRAME_HEIGHT 4320
+#define MAX_FRAME_HEIGHT 8640
 
 #include <fstream>
 
