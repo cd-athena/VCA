@@ -563,7 +563,7 @@ int main(int argc, char **argv)
                     "Error opening complexity CSV file " + options.complexityCSVFilename);
             return 1;
         }
-        complexityFile << "POC, E, h, epsilon, L";
+        complexityFile << "POC,E,h,epsilon,L";
         if (options.vcaParam.enableChroma)
             complexityFile << ", avgU, energyU, avgV, energyV\n ";
         else
@@ -580,7 +580,7 @@ int main(int argc, char **argv)
                      "Error opening complexity CSV file " + options.segmentFeatureCSVFilename);
             return 1;            
         }
-        segmentFeatureFile << "POC, E, h, epsilon, L";
+        segmentFeatureFile << "POC,E,h,epsilon,L";
         if (options.vcaParam.enableChroma) 
             segmentFeatureFile << ", avgU, energyU, avgV, energyV \n ";
         else 
