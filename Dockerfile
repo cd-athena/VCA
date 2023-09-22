@@ -9,24 +9,27 @@ LABEL description="This is a custom Docker Image for VCA."
 # Disable Prompt During Packages Installation
 ARG DEBIAN_FRONTEND=noninteractive
 
-# Update Ubuntu Software repository
+# Update and Upgrade Ubuntu Software repository
 RUN apt-get update && \
     apt-get upgrade -y
 
+# Install required packages
 RUN apt install -y git nasm ffmpeg cmake build-essential
 RUN rm -rf /var/lib/apt/lists/*
 RUN apt clean
 
 WORKDIR /vca
 
+# copy required data to container
 COPY source/ source/
 COPY CMakeLists.txt .
 COPY .clang-format .
 
-RUN mkdir build
-# RUN cd build
+# build sources
 RUN cmake .
-RUN cmake --build .
+RUN cmake --build . -j
 
+# change to directory containing the VCA binary and copy videos
 WORKDIR /vca/source/apps/vca
-COPY videos/* .
+RUN mkdir videos
+COPY videos/* videos/
