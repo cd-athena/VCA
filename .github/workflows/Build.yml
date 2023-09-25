@@ -8,28 +8,16 @@ jobs:
     strategy:
       matrix:
         include: 
-          - os: ubuntu-18.04
           - os: ubuntu-20.04
-          - os: macos-10.15
+          - os: ubuntu-22.04
           - os: macos-11
+          - os: macos-12
           - os: windows-2019
           - os: windows-2022
     steps:
     - uses: actions/checkout@v3
+    - uses: ilammy/setup-nasm@v1
     - run: git fetch --prune --unshallow
-    - name: Install Linux packages
-      run: |
-        sudo apt-get update
-        sudo apt-get install nasm
-      if: matrix.os == 'ubuntu-18.04' || matrix.os == 'ubuntu-20.04'
-    - name: Install Mac packages
-      run: |
-        brew install nasm
-      if: matrix.os == 'macos-10.15' || matrix.os == 'macos-11'
-    - name: Install Windows packages
-      run: |
-        choco install nasm
-      if: matrix.os == 'windows-2019' || matrix.os == 'windows-2022'
     - name: Build
       run: |
         mkdir build
