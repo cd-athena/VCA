@@ -2,7 +2,7 @@
 ;* const-a.asm: x86 global constants
 ;*****************************************************************************
 ;* Copyright (C) 2003-2013 x264 project
-;* Copyright (C) 2022 Christian Doppler Laboratory ATHENA
+;* Copyright (C) 2024 Christian Doppler Laboratory ATHENA
 ;*
 ;* Authors: Loren Merritt <lorenm@u.washington.edu>
 ;*          Fiona Glaser <fiona@x264.com>

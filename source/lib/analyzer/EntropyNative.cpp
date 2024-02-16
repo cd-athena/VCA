@@ -26,7 +26,7 @@ namespace vca {
 double entropy_c(const std::vector<int16_t> &block)
 {
     std::unordered_map<int, int> pixelCounts;
-    int totalPixels = block.size();
+    int totalPixels = static_cast<int>(block.size());
 
     // Count occurrences of each pixel value
     for (int pixel : block)

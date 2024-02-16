@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2022 Christian Doppler Laboratory ATHENA
+ * Copyright (C) 2024 Christian Doppler Laboratory ATHENA
  *
  * Authors: Loren Merritt <lorenm@u.washington.edu>
  *          Laurent Aimar <fenrir@via.ecp.fr>

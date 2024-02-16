@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2022 Christian Doppler Laboratory ATHENA
+ * Copyright (C) 2024 Christian Doppler Laboratory ATHENA
  *
  * Authors: Mandar Gurav <mandar@multicorewareinc.com>
  *          Deepthi Devaki Akkoorath <deepthidevaki@multicorewareinc.com>
