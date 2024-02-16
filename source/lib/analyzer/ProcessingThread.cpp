@@ -58,6 +58,10 @@ void ProcessingThread::threadFunction(MultiThreadQueue<Job> &jobQueue,
                                  this->cfg.cpuSimd,
                                  this->cfg.enableChroma,
                                  this->cfg.enableLowpassDCT);
+        computeEntropy(*job,
+                       result,
+                       this->cfg.blockSize,
+                       this->cfg.cpuSimd);
 
         log(this->cfg,
             LogLevel::Debug,

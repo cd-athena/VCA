@@ -89,6 +89,7 @@ struct Result
 {
     std::vector<uint32_t> brightnessPerBlock;
     std::vector<uint32_t> energyPerBlock;
+    std::vector<double> entropyPerBlock;
     std::vector<uint32_t> sadPerBlock;
     std::vector<uint32_t> averageUPerBlock;
     std::vector<uint32_t> averageVPerBlock;
@@ -96,6 +97,7 @@ struct Result
     std::vector<uint32_t> energyVPerBlock;
     uint32_t averageBrightness{};
     uint32_t averageEnergy{};
+    double averageEntropy{};
     uint32_t averageU{};
     uint32_t averageV{};
     uint32_t energyU{};

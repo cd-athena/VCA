@@ -102,6 +102,9 @@ struct vca_frame_results
     uint32_t energyU{};
     uint32_t energyV{};
 
+    double *entropyPerBlock{};
+    double averageEntropy;
+
     double epsilon{};
 
     int poc{};

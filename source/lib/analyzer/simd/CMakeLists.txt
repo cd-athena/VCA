@@ -19,6 +19,7 @@ if(BUILD_WITH_NASM)
         const-a.asm
         cpu-a.asm
         dct-ssse3.cpp
+		entropy.cpp
     )
     target_sources(vcaLibSimd10bit
         PRIVATE
@@ -26,6 +27,7 @@ if(BUILD_WITH_NASM)
         const-a.asm
         cpu-a.asm
         dct-ssse3.cpp
+		entropy.cpp
     )
     target_sources(vcaLibSimd12bit
         PRIVATE
@@ -33,6 +35,7 @@ if(BUILD_WITH_NASM)
         const-a.asm
         cpu-a.asm
         dct-ssse3.cpp
+		entropy.cpp
     )
 
     set_property(TARGET vcaLibSimd8bit PROPERTY COMPILE_FLAGS -DBIT_DEPTH=8)
@@ -47,6 +50,7 @@ if(BUILD_WITH_NASM)
 
     if(GCC)
         set_source_files_properties(dct-ssse3.cpp PROPERTIES COMPILE_FLAGS "-mssse3")
+		set_source_files_properties(entropy.cpp PROPERTIES COMPILE_FLAGS "-mssse3")
     endif(GCC)
 else()
     target_sources(vcaLibSimd8bit

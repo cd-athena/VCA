@@ -131,6 +131,8 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
     outputResult->averageEnergy     = result->averageEnergy;
     outputResult->sad               = result->sad;
     outputResult->epsilon           = result->epsilon;
+    outputResult->averageEntropy    = result->averageEntropy;
+
     if (outputResult->brightnessPerBlock)
         std::memcpy(outputResult->brightnessPerBlock,
                     result->brightnessPerBlock.data(),
@@ -143,6 +145,10 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
         std::memcpy(outputResult->sadPerBlock,
                     result->sadPerBlock.data(),
                     result->sadPerBlock.size() * sizeof(uint32_t));
+    if (outputResult->entropyPerBlock)
+        std::memcpy(outputResult->entropyPerBlock,
+                    result->entropyPerBlock.data(),
+                    result->entropyPerBlock.size() * sizeof(uint8_t));
 
     outputResult->averageU = result->averageU;
     outputResult->averageV = result->averageV;

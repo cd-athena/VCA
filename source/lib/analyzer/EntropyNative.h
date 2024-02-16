@@ -1,8 +1,9 @@
 /*****************************************************************************
- * Copyright (C) 2022 Christian Doppler Laboratory ATHENA
+ * Copyright (C) 2024 Christian Doppler Laboratory ATHENA
  *
- * Authors: Vignesh V Menon <vignesh.menon@aau.at>
- *          Christian Feldmann <christian.feldmann@bitmovin.com>
+ * Authors: Amritha Premkumar <amritha.premkumar@ieee.org>
+ *          Prajit T Rajendran <prajit.rajendran@ieee.org>
+ *          Vignesh V Menon <vignesh.menon@hhi.fraunhofer.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,20 +21,16 @@
 
 #pragma once
 
-#include <analyzer/common/common.h>
+#include <cstdint>
+#include <cmath>
+#include <vector>
+#include <unordered_map>
 
 namespace vca {
 
-void computeWeightedDCTEnergy(const Job &job,
-                              Result &result,
-                              const unsigned blockSize,
-                              CpuSimd cpuSimd,
-                              bool enableChroma,
-                              bool enableLowpassDCT);
-void computeTextureSAD(Result &results, const Result &resultsPreviousFrame);
-void computeEntropy(const Job &job,
-                    Result &result,
-                    const unsigned blockSize,
-                    CpuSimd cpuSimd);
+typedef double (*entropy_t)(const std::vector<int16_t> &block);
+
+double entropy_c(const std::vector<int16_t> &block);
 
 } // namespace vca
+
