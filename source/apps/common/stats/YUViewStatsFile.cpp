@@ -72,7 +72,7 @@ void YUViewStatsFile::write(const vca_frame_results &results,
                     this->file << results.poc << ";" << x * blockSize << ";" << y * blockSize << ";"
                                << blockSize << ";" << blockSize << ";1;" << *(data++) << "\n";
         }
-        if (auto data = results.sadPerBlock)
+        if (auto data = results.energyDiffPerBlock)
         {
             for (unsigned y = 0; y < heightInBlock; y++)
                 for (unsigned x = 0; x < widthInBlocks; x++)
@@ -89,7 +89,7 @@ void YUViewStatsFile::write(const vca_frame_results &results,
                     this->file << results.poc << ";" << x * blockSize << ";" << y * blockSize << ";"
                                << blockSize << ";" << blockSize << ";1;" << *(data++) << "\n";
         }
-        if (auto data = results.entropySadPerBlock)
+        if (auto data = results.entropyDiffPerBlock)
         {
             for (unsigned y = 0; y < heightInBlock; y++)
                 for (unsigned x = 0; x < widthInBlocks; x++)

@@ -532,18 +532,18 @@ void computeTextureSAD(Result &result, const Result &resultsPreviousFrame)
         throw std::out_of_range("Size of energy result vector must match");
 
     auto totalNumberBlocks = result.energyPerBlock.size();
-    if (result.sadPerBlock.size() < totalNumberBlocks)
-        result.sadPerBlock.resize(totalNumberBlocks);
+    if (result.energyDiffPerBlock.size() < totalNumberBlocks)
+        result.energyDiffPerBlock.resize(totalNumberBlocks);
 
     double textureSad = 0.0;
     for (size_t i = 0; i < totalNumberBlocks; i++)
     {
-        result.sadPerBlock[i] = uint32_t(
+        result.energyDiffPerBlock[i] = uint32_t(
             std::abs(int(result.energyPerBlock[i]) - int(resultsPreviousFrame.energyPerBlock[i])));
-        textureSad += result.sadPerBlock[i];
+        textureSad += result.energyDiffPerBlock[i];
     }
 
-    result.sad = textureSad / (totalNumberBlocks * h_norm_factor);
+    result.energyDiff = textureSad / (totalNumberBlocks * h_norm_factor);
 }
 
 void computeEntropySAD(Result &result, const Result &resultsPreviousFrame)
@@ -552,18 +552,18 @@ void computeEntropySAD(Result &result, const Result &resultsPreviousFrame)
         throw std::out_of_range("Size of entropy result vector must match");
 
     auto totalNumberBlocks = result.entropyPerBlock.size();
-    if (result.entropySadPerBlock.size() < totalNumberBlocks)
-        result.entropySadPerBlock.resize(totalNumberBlocks);
+    if (result.entropyDiffPerBlock.size() < totalNumberBlocks)
+        result.entropyDiffPerBlock.resize(totalNumberBlocks);
 
-    double entropySad = 0.0;
+    double entropyDiff = 0.0;
     for (size_t i = 0; i < totalNumberBlocks; i++)
     {
-        result.entropySadPerBlock[i] = std::abs(result.entropyPerBlock[i]
+        result.entropyDiffPerBlock[i] = std::abs(result.entropyPerBlock[i]
                                                 - resultsPreviousFrame.entropyPerBlock[i]);
-        entropySad += result.entropySadPerBlock[i];
+        entropyDiff += result.entropyDiffPerBlock[i];
     }
 
-    result.entropySad = entropySad / totalNumberBlocks;
+    result.entropyDiff = entropyDiff / totalNumberBlocks;
 }
 
 } // namespace vca

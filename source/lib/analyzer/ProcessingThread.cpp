@@ -19,6 +19,7 @@
 #include "ProcessingThread.h"
 
 #include <analyzer/EnergyCalculation.h>
+#include <analyzer/EntropyCalculation.h>
 
 namespace vca {
 

@@ -133,7 +133,7 @@ struct Result
         this->energyPerBlockData.resize(numberBlocks);
         this->result.energyPerBlock = this->energyPerBlockData.data();
         this->sadPerBlockData.resize(numberBlocks);
-        this->result.sadPerBlock = this->sadPerBlockData.data();
+        this->result.energyDiffPerBlock = this->sadPerBlockData.data();
     }
 
     std::vector<uint32_t> brightnessPerBlockData;
@@ -355,7 +355,7 @@ void logResult(const Result &result, const vca_frame *frame, const unsigned resu
             "Got results POC " + std::to_string(result.result.poc) + "averageBrightness "
                 + std::to_string(result.result.averageBrightness) + " averageEnergy "
                 + std::to_string(result.result.averageEnergy) + " sad "
-                + std::to_string(result.result.sad));
+                + std::to_string(result.result.energyDiff));
 }
 
 void writeComplexityStatsToFile(const Result &result,
@@ -367,7 +367,7 @@ void writeComplexityStatsToFile(const Result &result,
     file << result.result.poc;
     if (enableDCTenergy)
     {
-        file << ", " << result.result.averageEnergy << ", " << result.result.sad << ", "
+        file << ", " << result.result.averageEnergy << ", " << result.result.energyDiff << ", "
              << result.result.epsilon << ", " << result.result.averageBrightness;
         if (enableChroma)
             file << ", " << result.result.averageU << ", " << result.result.energyU << ", "
@@ -375,7 +375,8 @@ void writeComplexityStatsToFile(const Result &result,
     }
     if (enableEntropy)
     {
-        file << ", " << result.result.averageEntropy << ", " << result.result.entropySad;
+        file << ", " << result.result.averageEntropy << ", " << result.result.entropyDiff << ", "
+            <<result.result.entropyEpsilon;
     }
     file << "\n";
 }
@@ -428,7 +429,7 @@ void writeShotDetectionResultsToFile(const std::vector<vca_frame_results> &shotD
         }
         averageValuesShot->brightness += frame.averageBrightness;
         averageValuesShot->energy += frame.averageEnergy;
-        averageValuesShot->sad += frame.sad;
+        averageValuesShot->sad += frame.energyDiff;
         averageValuesShot->u += frame.averageU;
         averageValuesShot->v += frame.averageV;
         averageValuesShot->energyU += frame.energyU;
@@ -444,7 +445,7 @@ void writeShotDetectionResultsToFile(const std::vector<vca_frame_results> &shotD
 void segment_result_init(Result *segment_result)
 {
     segment_result->result.averageBrightness = 0;
-    segment_result->result.sad               = 0;
+    segment_result->result.energyDiff        = 0;
     segment_result->result.averageEnergy     = 0;
     segment_result->result.epsilon           = 0;
     segment_result->result.poc               = 0;
@@ -462,7 +463,7 @@ void segment_complexity_function(vca_frame_results *segment_result,
                                  unsigned resultsCounter)
 {
     segment_result->averageBrightness += frame_result->averageBrightness;
-    segment_result->sad += frame_result->sad;
+    segment_result->energyDiff += frame_result->energyDiff;
     segment_result->averageEnergy += frame_result->averageEnergy;
     segment_result->epsilon += frame_result->epsilon;
     if (chroma_flag)
@@ -478,7 +479,7 @@ void segment_complexity_function(vca_frame_results *segment_result,
     {
         segment_result->averageBrightness = (segment_result->averageBrightness / Segment_size);
         segment_result->averageEnergy     = (segment_result->averageEnergy / Segment_size);
-        segment_result->sad               = (segment_result->sad / Segment_size);
+        segment_result->energyDiff        = (segment_result->energyDiff / Segment_size);
         segment_result->epsilon           = (segment_result->epsilon / Segment_size);
         if (resultsCounter == (pushedFrames - 1))
             segment_result->poc = pushedFrames;
@@ -596,7 +597,7 @@ int main(int argc, char **argv)
         }
         if (options.vcaParam.enableEntropy)
         {
-            complexityFile << ",entropy,entropyDiff";
+            complexityFile << ",entropy,entropyDiff, entropyEpsilon";
         }
         complexityFile << "\n";
     }

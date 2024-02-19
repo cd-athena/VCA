@@ -89,8 +89,8 @@ struct vca_frame_results
     uint32_t *energyPerBlock{};
     uint32_t averageEnergy{};
 
-    uint32_t *sadPerBlock{};
-    double sad{};
+    uint32_t *energyDiffPerBlock{};
+    double energyDiff{};
 
     uint32_t *averageUPerBlock{};
     uint32_t *averageVPerBlock{};
@@ -104,10 +104,11 @@ struct vca_frame_results
 
     double *entropyPerBlock{};
     double averageEntropy;
-    double *entropySadPerBlock{};
-    double entropySad{};
+    double *entropyDiffPerBlock{};
+    double entropyDiff{};
 
     double epsilon{};
+    double entropyEpsilon{};
 
     int poc{};
     bool isNewShot{};

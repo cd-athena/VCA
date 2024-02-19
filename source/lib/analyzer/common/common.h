@@ -89,9 +89,7 @@ struct Result
 {
     std::vector<uint32_t> brightnessPerBlock;
     std::vector<uint32_t> energyPerBlock;
-    std::vector<double> entropyPerBlock;
-    std::vector<uint32_t> sadPerBlock;
-    std::vector<double> entropySadPerBlock;
+    std::vector<uint32_t> energyDiffPerBlock;
     std::vector<uint32_t> averageUPerBlock;
     std::vector<uint32_t> averageVPerBlock;
     std::vector<uint32_t> energyUPerBlock;
@@ -103,10 +101,14 @@ struct Result
     uint32_t averageV{};
     uint32_t energyU{};
     uint32_t energyV{};
-
-    double sad{};
-    double entropySad{};
+    double energyDiff{};
     double epsilon{};
+
+    std::vector<double> entropyPerBlock;
+    std::vector<double> entropyDiffPerBlock;
+    double entropyDiff{};
+    double entropyEpsilon{};
+
     int poc{};
     unsigned jobID{};
 };
