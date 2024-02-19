@@ -35,5 +35,5 @@ void computeEntropy(const Job &job,
                     Result &result,
                     const unsigned blockSize,
                     CpuSimd cpuSimd);
-
+void computeEntropySAD(Result &results, const Result &resultsPreviousFrame);
 } // namespace vca

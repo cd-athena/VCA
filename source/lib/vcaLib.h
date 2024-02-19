@@ -104,6 +104,8 @@ struct vca_frame_results
 
     double *entropyPerBlock{};
     double averageEntropy;
+    double *entropySadPerBlock{};
+    double entropySad{};
 
     double epsilon{};
 

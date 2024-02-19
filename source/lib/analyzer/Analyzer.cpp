@@ -118,7 +118,7 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
     if (this->previousResult)
     {
         computeTextureSAD(*result, *this->previousResult);
-
+        computeEntropySAD(*result, *this->previousResult);
         auto sadNormalized     = result->sad / result->averageEnergy;
         auto sadNormalizedPrev = this->previousResult->sad / this->previousResult->averageEnergy;
         if (this->previousResult->sad > 0)
@@ -132,6 +132,7 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
     outputResult->sad               = result->sad;
     outputResult->epsilon           = result->epsilon;
     outputResult->averageEntropy    = result->averageEntropy;
+    outputResult->entropySad        = result->entropySad;
 
     if (outputResult->brightnessPerBlock)
         std::memcpy(outputResult->brightnessPerBlock,
@@ -148,7 +149,11 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
     if (outputResult->entropyPerBlock)
         std::memcpy(outputResult->entropyPerBlock,
                     result->entropyPerBlock.data(),
-                    result->entropyPerBlock.size() * sizeof(uint8_t));
+                    result->entropyPerBlock.size() * sizeof(double));
+    if (outputResult->entropySadPerBlock)
+        std::memcpy(outputResult->entropySadPerBlock,
+                    result->entropySadPerBlock.data(),
+                    result->entropySadPerBlock.size() * sizeof(double));
 
     outputResult->averageU = result->averageU;
     outputResult->averageV = result->averageV;

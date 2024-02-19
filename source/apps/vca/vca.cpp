@@ -348,8 +348,8 @@ void logResult(const Result &result, const vca_frame *frame, const unsigned resu
 void writeComplexityStatsToFile(const Result &result, std::ofstream &file, bool enableChroma)
 {
     file << result.result.poc << ", " << result.result.averageEnergy << ", " << result.result.sad
-         << ", " << result.result.epsilon << ", " << result.result.averageBrightness
-         << ", " << result.result.averageEntropy;
+         << ", " << result.result.epsilon << ", " << result.result.averageBrightness << ", "
+         << result.result.averageEntropy << ", " << result.result.entropySad;
     if (enableChroma)
         file << ", " << result.result.averageU << ", " << result.result.energyU << ", "
              << result.result.averageV << ", " << result.result.energyV << "\n";
@@ -564,7 +564,7 @@ int main(int argc, char **argv)
                     "Error opening complexity CSV file " + options.complexityCSVFilename);
             return 1;
         }
-        complexityFile << "POC,E,h,epsilon,L,entropy";
+        complexityFile << "POC,E,h,epsilon,L,entropy,entropySad";
         if (options.vcaParam.enableChroma)
             complexityFile << ",avgU,energyU,avgV,energyV\n ";
         else

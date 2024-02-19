@@ -539,4 +539,24 @@ void computeTextureSAD(Result &result, const Result &resultsPreviousFrame)
     result.sad = textureSad / (totalNumberBlocks * h_norm_factor);
 }
 
+void computeEntropySAD(Result &result, const Result &resultsPreviousFrame)
+{
+    if (result.entropyPerBlock.size() != resultsPreviousFrame.entropyPerBlock.size())
+        throw std::out_of_range("Size of entropy result vector must match");
+
+    auto totalNumberBlocks = result.entropyPerBlock.size();
+    if (result.entropySadPerBlock.size() < totalNumberBlocks)
+        result.entropySadPerBlock.resize(totalNumberBlocks);
+
+    double entropySad = 0.0;
+    for (size_t i = 0; i < totalNumberBlocks; i++)
+    {
+        result.entropySadPerBlock[i] = std::abs(result.entropyPerBlock[i]
+                                                - resultsPreviousFrame.entropyPerBlock[i]);
+        entropySad += result.entropySadPerBlock[i];
+    }
+
+    result.entropySad = entropySad / totalNumberBlocks;
+}
+
 } // namespace vca
