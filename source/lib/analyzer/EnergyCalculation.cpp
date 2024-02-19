@@ -280,7 +280,7 @@ void computeWeightedDCTEnergy(const Job &job,
                               const unsigned blockSize,
                               CpuSimd cpuSimd,
                               bool enableChroma,
-                              bool enableLowpassDCT)
+                              bool enableLowpass)
 {
     const auto frame = job.frame;
     if (frame == nullptr)
@@ -331,12 +331,17 @@ void computeWeightedDCTEnergy(const Job &job,
                                     unsigned(paddingRight),
                                     unsigned(paddingBottom));
 
-            performDCT(blockSize, bitDepth, pixelBuffer, coeffBuffer, cpuSimd, enableLowpassDCT);
+            performDCT(blockSize,
+                       bitDepth,
+                       pixelBuffer,
+                       coeffBuffer,
+                       cpuSimd,
+                       enableLowpass);
 
             result.brightnessPerBlock[blockIndex] = uint32_t(sqrt(coeffBuffer[0]));
             result.energyPerBlock[blockIndex]     = calculateWeightedCoeffSum(blockSize,
-                                                                          coeffBuffer,
-                                                                          enableLowpassDCT);
+                                                                              coeffBuffer,
+                                                                              enableLowpass);
             frameBrightness += result.brightnessPerBlock[blockIndex];
             frameTexture += result.energyPerBlock[blockIndex];
 
@@ -401,12 +406,12 @@ void computeWeightedDCTEnergy(const Job &job,
                            pixelBufferC,
                            coeffBufferC,
                            cpuSimd,
-                           enableLowpassDCT);
+                           enableLowpass);
 
                 result.averageUPerBlock[blockIndexC] = uint32_t(sqrt(coeffBufferC[0]));
                 result.energyUPerBlock[blockIndexC]  = calculateWeightedCoeffSum(blockSize,
-                                                                                coeffBufferC,
-                                                                                enableLowpassDCT);
+                                                                                 coeffBufferC,
+                                                                                 enableLowpass);
                 frameU += result.averageUPerBlock[blockIndexC];
                 frameEnergyU += result.energyUPerBlock[blockIndexC];
 
@@ -439,12 +444,12 @@ void computeWeightedDCTEnergy(const Job &job,
                            pixelBufferC,
                            coeffBufferC,
                            cpuSimd,
-                           enableLowpassDCT);
+                           enableLowpass);
 
                 result.averageVPerBlock[blockIndexC] = uint32_t(sqrt(coeffBufferC[0]));
                 result.energyVPerBlock[blockIndexC]  = calculateWeightedCoeffSum(blockSize,
                                                                                 coeffBufferC,
-                                                                                enableLowpassDCT);
+                                                                                enableLowpass);
                 frameV += result.averageVPerBlock[blockIndexC];
                 frameEnergyV += result.energyVPerBlock[blockIndexC];
 
@@ -459,7 +464,8 @@ void computeWeightedDCTEnergy(const Job &job,
 void computeEntropy(const Job &job,
                     Result &result,
                     const unsigned blockSize,
-                    CpuSimd cpuSimd)
+                    CpuSimd cpuSimd,
+                    bool enableLowpass)
 {
     const auto frame = job.frame;
     if (frame == nullptr)
@@ -509,7 +515,8 @@ void computeEntropy(const Job &job,
             result.entropyPerBlock[blockIndex] = performEntropy(blockSize,
                                                                 bitDepth,
                                                                 pixelBuffer,
-                                                                cpuSimd);
+                                                                cpuSimd,
+                                                                enableLowpass);
             frameEntropy += result.entropyPerBlock[blockIndex];
             blockIndex++;
         }

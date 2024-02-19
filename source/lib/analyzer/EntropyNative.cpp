@@ -52,4 +52,57 @@ double entropy_c(const std::vector<int16_t> &block)
     return entropy;
 }
 
+double entropy_lowpass_c(const std::vector<int16_t> &block, int width)
+{
+    // Check if width and height are divisible by 2
+    if (width % 2 != 0)
+    {
+        return -1.0; // Error: Width is not divisible by 2
+    }
+
+    std::unordered_map<int, int> pixelCounts;
+
+    // Downscale the block by averaging 2x2 blocks of pixels into a single pixel
+    int downscaledWidth  = width >> 1;
+    std::vector<int> downscaledBlock(downscaledWidth * downscaledWidth, 0);
+
+    for (int i = 0; i < width; i += 2)
+    {
+        for (int j = 0; j < width; j += 2)
+        {
+            // Compute average pixel value of 2x2 block
+            int sum = block[i * width + j] + block[i * width + j + 1] + block[(i + 1) * width + j]
+                      + block[(i + 1) * width + j + 1];
+            int averagePixel = sum >> 2;
+
+            // Store the average pixel value in the downscaled block
+            downscaledBlock[(i / 2) * downscaledWidth + (j / 2)] = averagePixel;
+
+            // Count occurrences of the average pixel value
+            pixelCounts[averagePixel]++;
+        }
+    }
+
+    // Calculate probability of each pixel value in the downscaled block
+    int totalPixels = downscaledWidth * downscaledWidth;
+    std::vector<double> probabilities;
+    for (const auto &pair : pixelCounts)
+    {
+        double probability = static_cast<double>(pair.second) / totalPixels;
+        probabilities.push_back(probability);
+    }
+
+    // Calculate entropy of the downscaled block
+    double entropy = 0.0;
+    for (double probability : probabilities)
+    {
+        if (probability > 0.0)
+        {
+            entropy -= probability * log2(probability);
+        }
+    }
+
+    return entropy;
+}
+
 }

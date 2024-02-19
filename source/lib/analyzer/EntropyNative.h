@@ -28,9 +28,8 @@
 
 namespace vca {
 
-typedef double (*entropy_t)(const std::vector<int16_t> &block);
-
 double entropy_c(const std::vector<int16_t> &block);
+double entropy_lowpass_c(const std::vector<int16_t> &block, int blocksize);
 
 } // namespace vca
 

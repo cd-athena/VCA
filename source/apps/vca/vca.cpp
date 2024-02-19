@@ -203,7 +203,7 @@ std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
         else if (name == "no-chroma")
             options.vcaParam.enableChroma = false;
         else if (name == "no-lowpass")
-            options.vcaParam.enableLowpassDCT = false;
+            options.vcaParam.enableLowpass = false;
         else if (name == "y4m")
             options.openAsY4m = true;
         else
@@ -315,7 +315,7 @@ void logOptions(const CLIOptions &options)
     vca_log(LogLevel::Info,
             "  Enable chroma:     "s + (options.vcaParam.enableChroma ? "True"s : "False"s));
     vca_log(LogLevel::Info,
-            "  Enable lowpassDCT: "s + (options.vcaParam.enableLowpassDCT ? "True"s : "False"s));
+            "  Enable lowpass: "s + (options.vcaParam.enableLowpass ? "True"s : "False"s));
     vca_log(LogLevel::Info, "  Skip frames:       "s + std::to_string(options.skipFrames));
     vca_log(LogLevel::Info, "  Frames to analyze: "s + std::to_string(options.framesToBeAnalyzed));
     vca_log(LogLevel::Info, "  Segment Size:       "s + std::to_string(options.segmentSize));  
@@ -564,7 +564,7 @@ int main(int argc, char **argv)
                     "Error opening complexity CSV file " + options.complexityCSVFilename);
             return 1;
         }
-        complexityFile << "POC,E,h,epsilon,L,entropy,entropySad";
+        complexityFile << "POC,E,h,epsilon,L,entropy,entropyDiff";
         if (options.vcaParam.enableChroma)
             complexityFile << ",avgU,energyU,avgV,energyV\n ";
         else

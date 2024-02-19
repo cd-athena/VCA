@@ -30,7 +30,8 @@ namespace vca {
 double performEntropy(const unsigned blockSize,
                       const unsigned bitDepth,
                       const int16_t *pixelBuffer,
-                      CpuSimd cpuSimd)
+                      CpuSimd cpuSimd,
+                      bool enableLowpass)
 {
     std::vector<int16_t> block(blockSize * blockSize);
 
@@ -50,7 +51,10 @@ double performEntropy(const unsigned blockSize,
     //    entropy = entropy_avx2(block);
     //}
     //else
-    entropy = vca::entropy_c(block);
+    if (enableLowpass)
+        entropy = vca::entropy_lowpass_c(block, blockSize);
+    else
+        entropy = vca::entropy_c(block);
 
     return entropy;
 }

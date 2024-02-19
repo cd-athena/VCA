@@ -28,6 +28,7 @@ namespace vca {
 double performEntropy(const unsigned blockSize,
                       const unsigned bitDepth,
                       const int16_t *pixelBuffer,
-                      CpuSimd cpuSimd);
+                      CpuSimd cpuSimd,
+                      bool enableLowpass);
 
 } // namespace vca

@@ -29,11 +29,13 @@ void computeWeightedDCTEnergy(const Job &job,
                               const unsigned blockSize,
                               CpuSimd cpuSimd,
                               bool enableChroma,
-                              bool enableLowpassDCT);
+                              bool enableLowpass);
 void computeTextureSAD(Result &results, const Result &resultsPreviousFrame);
 void computeEntropy(const Job &job,
                     Result &result,
                     const unsigned blockSize,
-                    CpuSimd cpuSimd);
+                    CpuSimd cpuSimd,
+                    bool enableLowpass);
 void computeEntropySAD(Result &results, const Result &resultsPreviousFrame);
+
 } // namespace vca
