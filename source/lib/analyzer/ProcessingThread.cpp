@@ -68,7 +68,8 @@ void ProcessingThread::threadFunction(MultiThreadQueue<Job> &jobQueue,
                            result,
                            this->cfg.blockSize,
                            this->cfg.cpuSimd,
-                           this->cfg.enableLowpass);
+                           this->cfg.enableLowpass,
+                           this->cfg.enableChroma);
         }
 
         log(this->cfg,

@@ -377,6 +377,8 @@ void writeComplexityStatsToFile(const Result &result,
     {
         file << ", " << result.result.averageEntropy << ", " << result.result.entropyDiff << ", "
             <<result.result.entropyEpsilon;
+        if (enableChroma)
+            file << ", " << result.result.entropyU << ", " << result.result.entropyV;
     }
     file << "\n";
 }
@@ -598,6 +600,8 @@ int main(int argc, char **argv)
         if (options.vcaParam.enableEntropy)
         {
             complexityFile << ",entropy,entropyDiff, entropyEpsilon";
+            if (options.vcaParam.enableChroma)
+                complexityFile << ",entropyU,entropyV";
         }
         complexityFile << "\n";
     }

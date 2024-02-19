@@ -185,7 +185,7 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
     }
     if (this->cfg.enableEntropy)
     {
-        outputResult->averageEntropy = result->averageEntropy;
+        outputResult->averageEntropy = result->entropyY;
         outputResult->entropyDiff     = result->entropyDiff;
         outputResult->entropyEpsilon = result->entropyEpsilon;
 
@@ -197,6 +197,20 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
             std::memcpy(outputResult->entropyDiffPerBlock,
                         result->entropyDiffPerBlock.data(),
                         result->entropyDiffPerBlock.size() * sizeof(double));
+        if (this->cfg.enableChroma)
+        {
+            outputResult->entropyU = result->entropyU;
+            outputResult->entropyV = result->entropyV;
+            if (outputResult->entropyUPerBlock)
+                std::memcpy(outputResult->entropyUPerBlock,
+                            result->entropyUPerBlock.data(),
+                            result->entropyUPerBlock.size() * sizeof(double));
+            if (outputResult->entropyVPerBlock)
+                std::memcpy(outputResult->entropyVPerBlock,
+                            result->entropyVPerBlock.data(),
+                            result->entropyVPerBlock.size() * sizeof(double));
+        }
+
     }
 
     this->previousResult = result;

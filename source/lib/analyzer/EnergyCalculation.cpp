@@ -465,7 +465,8 @@ void computeEntropy(const Job &job,
                     Result &result,
                     const unsigned blockSize,
                     CpuSimd cpuSimd,
-                    bool enableLowpass)
+                    bool enableLowpass,
+                    bool enableChroma)
 {
     const auto frame = job.frame;
     if (frame == nullptr)
@@ -522,7 +523,95 @@ void computeEntropy(const Job &job,
         }
     }
 
-    result.averageEntropy = frameEntropy / totalNumberBlocks;
+    result.entropyY = frameEntropy / totalNumberBlocks;
+
+    if (enableChroma)
+    {
+        const auto srcU       = frame->planes[1];
+        const auto srcV       = frame->planes[2];
+        const auto srcUStride = frame->stride[1];
+        const auto srcUHeight = frame->height[1];
+        const auto srcUWidth  = srcUStride / bytesPerPixel;
+
+        auto [widthInBlocksC, heightInBlockC] = getChromaFrameSizeInBlocks(blockSize,
+                                                                           srcUWidth,
+                                                                           srcUHeight);
+        const auto totalNumberBlocksC         = widthInBlocksC * heightInBlockC;
+        const auto widthInPixelsC             = widthInBlocksC * blockSize;
+        const auto heightInPixelsC            = heightInBlockC * blockSize;
+
+        if (result.entropyUPerBlock.size() < totalNumberBlocksC)
+            result.entropyUPerBlock.resize(totalNumberBlocksC);
+        if (result.entropyVPerBlock.size() < totalNumberBlocksC)
+            result.entropyVPerBlock.resize(totalNumberBlocksC);
+
+        ALIGN_VAR_32(int16_t, pixelBufferC[32 * 32]);
+
+        auto blockIndexC      = 0u;
+        uint32_t frameU       = 0;
+        uint32_t frameV       = 0;
+        double frameEntropyU  = 0;
+        double frameEntropyV  = 0;
+        for (unsigned blockY = 0; blockY < heightInPixelsC; blockY += blockSize)
+        {
+            auto paddingBottom = std::max(int(blockY + blockSize) - int(srcUHeight), 0);
+            for (unsigned blockX = 0; blockX < widthInPixelsC; blockX += blockSize)
+            {
+                auto paddingRight = std::max(int(blockX + blockSize) - int(srcUStride), 0);
+                auto blockOffsetChromaBytes = blockX * bytesPerPixel + (blockY * srcUStride);
+
+                copyPixelValuesToBuffer(bitDepth,
+                                        blockOffsetChromaBytes,
+                                        blockSize,
+                                        srcU,
+                                        srcUStride,
+                                        pixelBufferC,
+                                        unsigned(paddingRight),
+                                        unsigned(paddingBottom));
+                result.entropyUPerBlock[blockIndexC] = performEntropy(blockSize,
+                                                                      bitDepth,
+                                                                      pixelBufferC,
+                                                                      cpuSimd,
+                                                                      enableLowpass);
+
+                frameEntropyU += result.entropyUPerBlock[blockIndexC];
+
+                blockIndexC++;
+            }
+        }
+        result.entropyU  = frameEntropyU / totalNumberBlocksC;
+
+        blockIndexC = 0u;
+        for (unsigned blockY = 0; blockY < heightInPixelsC; blockY += blockSize)
+        {
+            auto paddingBottom = std::max(int(blockY + blockSize) - int(srcUHeight), 0);
+            for (unsigned blockX = 0; blockX < widthInPixelsC; blockX += blockSize)
+            {
+                auto paddingRight = std::max(int(blockX + blockSize) - int(srcUStride), 0);
+                auto blockOffsetChromaBytes = blockX * bytesPerPixel + (blockY * srcUStride);
+
+                copyPixelValuesToBuffer(bitDepth,
+                                        blockOffsetChromaBytes,
+                                        blockSize,
+                                        srcV,
+                                        srcUStride,
+                                        pixelBufferC,
+                                        unsigned(paddingRight),
+                                        unsigned(paddingBottom));
+
+                result.entropyVPerBlock[blockIndexC] = performEntropy(blockSize,
+                                                                      bitDepth,
+                                                                      pixelBufferC,
+                                                                      cpuSimd,
+                                                                      enableLowpass);
+
+                frameEntropyV += result.entropyVPerBlock[blockIndexC];
+
+                blockIndexC++;
+            }
+        }
+        result.entropyV = frameEntropyV / totalNumberBlocksC;
+    }
 
 }
 
