@@ -52,17 +52,23 @@ void ProcessingThread::threadFunction(MultiThreadQueue<Job> &jobQueue,
         Result result;
         result.poc   = job->frame->stats.poc;
         result.jobID = job->jobID;
-        computeWeightedDCTEnergy(*job,
-                                 result,
-                                 this->cfg.blockSize,
-                                 this->cfg.cpuSimd,
-                                 this->cfg.enableChroma,
-                                 this->cfg.enableLowpass);
-        computeEntropy(*job,
-                       result,
-                       this->cfg.blockSize,
-                       this->cfg.cpuSimd,
-                       this->cfg.enableLowpass);
+        if (this->cfg.enableDCTenergy)
+        {
+            computeWeightedDCTEnergy(*job,
+                                     result,
+                                     this->cfg.blockSize,
+                                     this->cfg.cpuSimd,
+                                     this->cfg.enableChroma,
+                                     this->cfg.enableLowpass);
+        }
+        if (this->cfg.enableEntropy)
+        {
+            computeEntropy(*job,
+                           result,
+                           this->cfg.blockSize,
+                           this->cfg.cpuSimd,
+                           this->cfg.enableLowpass);
+        }
 
         log(this->cfg,
             LogLevel::Debug,

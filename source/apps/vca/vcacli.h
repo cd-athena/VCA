@@ -47,6 +47,8 @@ static const struct option long_options[] = {{"help", no_argument, NULL, 'h'},
                                              {"max-sadthresh", required_argument, NULL, 0},
                                              {"block-size", required_argument, NULL, 0},
                                              {"threads", required_argument, NULL, 0},
+                                             {"no-dctenergy", no_argument, 0},
+                                             {"no-entropy", no_argument, 0},
                                              {0, 0, 0, 0},
                                              {0, 0, 0, 0},
                                              {0, 0, 0, 0},
@@ -96,4 +98,6 @@ static void showHelp()
     printf("   --block-size <integer>        Block size for DCT transform. Must be 8, 16 or 32 "
            "(Default).\n");
     printf("   --threads <integer>           Nr of threads to use. (Default: 0 (autodetect))\n");
+    printf("   --no-dctenergy                Disable DCT energy features. Default: Enabled\n");
+    printf("   --no-entropy                  Disable entropy features. Default: Enabled\n");
 }

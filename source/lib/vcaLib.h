@@ -150,6 +150,9 @@ struct vca_param
     bool enableChroma{true};
     bool enableLowpass{true};
 
+    bool enableDCTenergy{true};
+    bool enableEntropy{true};
+
     vca_frame_info frameInfo{};
 
     // Size (width/height) of the analysis block. Must be 8, 16 or 32.

@@ -204,6 +204,10 @@ std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
             options.vcaParam.enableChroma = false;
         else if (name == "no-lowpass")
             options.vcaParam.enableLowpass = false;
+        else if (name == "no-dctenergy")
+            options.vcaParam.enableDCTenergy = false;
+        else if (name == "no-entropy")
+            options.vcaParam.enableEntropy = false;
         else if (name == "y4m")
             options.openAsY4m = true;
         else
@@ -302,6 +306,11 @@ bool checkOptions(CLIOptions options)
         return false;
     }
 
+    if (!options.vcaParam.enableDCTenergy && !options.vcaParam.enableEntropy)
+    {
+        vca_log(LogLevel::Error, " Either DCT energy or entropy should be enabled ");
+        return false;
+    }
     return true;
 }
 
@@ -316,6 +325,10 @@ void logOptions(const CLIOptions &options)
             "  Enable chroma:     "s + (options.vcaParam.enableChroma ? "True"s : "False"s));
     vca_log(LogLevel::Info,
             "  Enable lowpass: "s + (options.vcaParam.enableLowpass ? "True"s : "False"s));
+    vca_log(LogLevel::Info,
+            "  Enable DCTenergy: "s + (options.vcaParam.enableDCTenergy ? "True"s : "False"s));
+    vca_log(LogLevel::Info,
+            "  Enable Entropy: "s + (options.vcaParam.enableEntropy ? "True"s : "False"s));
     vca_log(LogLevel::Info, "  Skip frames:       "s + std::to_string(options.skipFrames));
     vca_log(LogLevel::Info, "  Frames to analyze: "s + std::to_string(options.framesToBeAnalyzed));
     vca_log(LogLevel::Info, "  Segment Size:       "s + std::to_string(options.segmentSize));  
@@ -345,16 +358,26 @@ void logResult(const Result &result, const vca_frame *frame, const unsigned resu
                 + std::to_string(result.result.sad));
 }
 
-void writeComplexityStatsToFile(const Result &result, std::ofstream &file, bool enableChroma)
+void writeComplexityStatsToFile(const Result &result,
+                                std::ofstream &file,
+                                bool enableChroma,
+                                bool enableDCTenergy,
+                                bool enableEntropy)
 {
-    file << result.result.poc << ", " << result.result.averageEnergy << ", " << result.result.sad
-         << ", " << result.result.epsilon << ", " << result.result.averageBrightness << ", "
-         << result.result.averageEntropy << ", " << result.result.entropySad;
-    if (enableChroma)
-        file << ", " << result.result.averageU << ", " << result.result.energyU << ", "
-             << result.result.averageV << ", " << result.result.energyV << "\n";
-    else
-        file << "\n";
+    file << result.result.poc;
+    if (enableDCTenergy)
+    {
+        file << ", " << result.result.averageEnergy << ", " << result.result.sad << ", "
+             << result.result.epsilon << ", " << result.result.averageBrightness;
+        if (enableChroma)
+            file << ", " << result.result.averageU << ", " << result.result.energyU << ", "
+                 << result.result.averageV << ", " << result.result.energyV;
+    }
+    if (enableEntropy)
+    {
+        file << ", " << result.result.averageEntropy << ", " << result.result.entropySad;
+    }
+    file << "\n";
 }
 
 void writeShotDetectionResultsToFile(const std::vector<vca_frame_results> &shotDetectFrames,
@@ -564,11 +587,18 @@ int main(int argc, char **argv)
                     "Error opening complexity CSV file " + options.complexityCSVFilename);
             return 1;
         }
-        complexityFile << "POC,E,h,epsilon,L,entropy,entropyDiff";
-        if (options.vcaParam.enableChroma)
-            complexityFile << ",avgU,energyU,avgV,energyV\n ";
-        else
-            complexityFile << "\n";
+        complexityFile << "POC";
+        if (options.vcaParam.enableDCTenergy)
+        {
+            complexityFile << ",E,h,epsilon,L";
+            if (options.vcaParam.enableChroma) 
+                complexityFile << ",avgU,energyU,avgV,energyV";
+        }
+        if (options.vcaParam.enableEntropy)
+        {
+            complexityFile << ",entropy,entropyDiff";
+        }
+        complexityFile << "\n";
     }
     
     std::ofstream segmentFeatureFile;
@@ -711,15 +741,26 @@ int main(int argc, char **argv)
 
                 if (((result.result.poc) % Segment_size == 0) && !(result.result.poc == 0))
                 {
-                    writeComplexityStatsToFile(segment_result, segmentFeatureFile, options.vcaParam.enableChroma);
+                    writeComplexityStatsToFile(segment_result,
+                                               segmentFeatureFile,
+                                               options.vcaParam.enableChroma,
+                                               options.vcaParam.enableDCTenergy,
+                                               options.vcaParam.enableEntropy);
                     segment_result_init(&segment_result);                   
                 }
             }
 
             if (yuviewStatsFile)
-                yuviewStatsFile->write(result.result, options.vcaParam.blockSize);
+                yuviewStatsFile->write(result.result,
+                                       options.vcaParam.blockSize,
+                                       options.vcaParam.enableDCTenergy,
+                                       options.vcaParam.enableEntropy);
             if (complexityFile.is_open())
-                writeComplexityStatsToFile(result, complexityFile, options.vcaParam.enableChroma);
+                writeComplexityStatsToFile(result,
+                                           complexityFile,
+                                           options.vcaParam.enableChroma,
+                                           options.vcaParam.enableDCTenergy,
+                                           options.vcaParam.enableEntropy);
             if (!options.shotCSVFilename.empty())
                 shotDetectFrames.push_back(result.result);
 
@@ -757,14 +798,23 @@ int main(int argc, char **argv)
             {
                 writeComplexityStatsToFile(segment_result,
                                            segmentFeatureFile,
-                                           options.vcaParam.enableChroma);
+                                           options.vcaParam.enableChroma,
+                                           options.vcaParam.enableDCTenergy,
+                                           options.vcaParam.enableEntropy);
                 segment_result_init(&segment_result);
             }
         }
         if (yuviewStatsFile)
-            yuviewStatsFile->write(result.result, options.vcaParam.blockSize);
+            yuviewStatsFile->write(result.result,
+                                   options.vcaParam.blockSize,
+                                   options.vcaParam.enableDCTenergy,
+                                   options.vcaParam.enableEntropy);
         if (complexityFile.is_open())
-            writeComplexityStatsToFile(result, complexityFile, options.vcaParam.enableChroma);
+            writeComplexityStatsToFile(result,
+                                       complexityFile,
+                                       options.vcaParam.enableChroma,
+                                       options.vcaParam.enableDCTenergy,
+                                       options.vcaParam.enableEntropy);
         if (!options.shotCSVFilename.empty())
             shotDetectFrames.push_back(result.result);
 
