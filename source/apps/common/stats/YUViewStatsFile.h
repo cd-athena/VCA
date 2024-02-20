@@ -34,7 +34,10 @@ public:
                     const vca_frame_info &info);
     ~YUViewStatsFile() = default;
 
-    void write(const vca_frame_results &results, unsigned blockSize);
+    void write(const vca_frame_results &results,
+               unsigned blockSize,
+               bool enableDCTenergy,
+               bool enableEntropy);
 
 private:
     std::ofstream file;

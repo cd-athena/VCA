@@ -1,6 +1,9 @@
-/* Copyright (C) 2024 Christian Doppler Laboratory ATHENA
+/*****************************************************************************
+ * Copyright (C) 2024 Christian Doppler Laboratory ATHENA
  *
- * Authors: Christian Feldmann <christian.feldmann@bitmovin.com>
+ * Authors: Amritha Premkumar <amritha.premkumar@ieee.org>
+ *          Prajit T Rajendran <prajit.rajendran@ieee.org>
+ *          Vignesh V Menon <vignesh.menon@hhi.fraunhofer.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,24 +19,16 @@
  * along with this program.
  *****************************************************************************/
 
-#include "functions.h"
+#include <immintrin.h> // Include SIMD intrinsics header for x86 architecture
+#include <cmath>
+#include <vector>
+#include <unordered_map>
 
-#include <random>
+// x86 SIMD optimized entropy function
 
-namespace test {
-
-void fillBlockWithRandomData(int16_t *data, const unsigned blockSize, const unsigned bitDepth)
+double entropy_avx2(const std::vector<int16_t> &block)
 {
-    const auto nrPixels = blockSize * blockSize;
-    const auto maxValue = (1 << bitDepth) - 1;
-
-    static std::random_device randomDevice;
-    static std::default_random_engine randomEngine(randomDevice());
-
-    std::uniform_int_distribution<unsigned> uniform_dist(0, maxValue);
-
-    for (size_t i = 0; i < nrPixels; i++)
-        data[i] = int16_t(uniform_dist(randomEngine));
+    //TODO
+    double entropy = 0.0;
+    return entropy;
 }
-
-} // namespace test

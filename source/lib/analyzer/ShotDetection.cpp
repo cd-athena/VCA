@@ -1,4 +1,4 @@
-/* Copyright (C) 2022 Christian Doppler Laboratory ATHENA
+/* Copyright (C) 2024 Christian Doppler Laboratory ATHENA
  *
  * Authors: Christian Feldmann <christian.feldmann@bitmovin.com>
  *
@@ -54,7 +54,7 @@ void detect(const vca_shot_detection_param &param, vca_frame_results *frames, si
         else
         {
             frames[i].isNewShot = false;
-            if (frames[i].epsilon >= param.minEpsilonThresh && frames[i].sad >=param.maxSadThresh)
+            if (frames[i].epsilon >= param.minEpsilonThresh && frames[i].energyDiff >=param.maxSadThresh)
             {
                 auto previousShotDistance = i - prevShotPos;
                 unsureFrames.push_back({i, previousShotDistance});

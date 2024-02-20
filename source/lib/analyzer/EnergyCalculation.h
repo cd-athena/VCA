@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2022 Christian Doppler Laboratory ATHENA
+ * Copyright (C) 2024 Christian Doppler Laboratory ATHENA
  *
  * Authors: Vignesh V Menon <vignesh.menon@aau.at>
  *          Christian Feldmann <christian.feldmann@bitmovin.com>
@@ -29,7 +29,14 @@ void computeWeightedDCTEnergy(const Job &job,
                               const unsigned blockSize,
                               CpuSimd cpuSimd,
                               bool enableChroma,
-                              bool enableLowpassDCT);
+                              bool enableLowpass);
 void computeTextureSAD(Result &results, const Result &resultsPreviousFrame);
+void computeEntropy(const Job &job,
+                    Result &result,
+                    const unsigned blockSize,
+                    CpuSimd cpuSimd,
+                    bool enableLowpass,
+                    bool enableChroma);
+void computeEntropySAD(Result &results, const Result &resultsPreviousFrame);
 
 } // namespace vca

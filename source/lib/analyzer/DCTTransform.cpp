@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2022 Christian Doppler Laboratory ATHENA
+ * Copyright (C) 2024 Christian Doppler Laboratory ATHENA
  *
  * Authors: Mandar Gurav <mandar@multicorewareinc.com>
  *          Deepthi Devaki Akkoorath <deepthidevaki@multicorewareinc.com>
@@ -183,9 +183,9 @@ void performLowpassDCTBlockSize16(const unsigned bitDepth,
 }
 
 void performLowpassDCTBlockSize32(const unsigned bitDepth,
-                                         const int16_t *src,
-                                         int16_t *dst,
-                                         CpuSimd cpuSimd)
+                                  const int16_t *src,
+                                  int16_t *dst,
+                                  CpuSimd cpuSimd)
 {
     ALIGN_VAR_32(int16_t, coef[16 * 16]);
     ALIGN_VAR_32(int16_t, avgBlock[16 * 16]);

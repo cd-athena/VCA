@@ -11,6 +11,10 @@ add_library(vcaInternal STATIC
     DCTTransformsNative.cpp
     EnergyCalculation.h
     EnergyCalculation.cpp
+	EntropyNative.h
+	EntropyNative.cpp
+	EntropyCalculation.h
+	EntropyCalculation.cpp
     MultiThreadQueue.h
     MultiThreadQueue.cpp
     ProcessingThread.h
@@ -20,6 +24,7 @@ add_library(vcaInternal STATIC
     simd/cpu.h
     simd/cpu.cpp
     simd/dct8.h
+	simd/entropy.h
 )
 
 if(ENABLE_NASM)

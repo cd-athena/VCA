@@ -1,4 +1,4 @@
-/* Copyright (C) 2022 Christian Doppler Laboratory ATHENA
+/* Copyright (C) 2024 Christian Doppler Laboratory ATHENA
  *
  * Authors: Christian Feldmann <christian.feldmann@bitmovin.com>
  *
@@ -18,6 +18,7 @@
 
 #include <analyzer/Analyzer.h>
 #include <analyzer/EnergyCalculation.h>
+#include <analyzer/EntropyCalculation.h>
 #include <analyzer/simd/cpu.h>
 
 #include <cstring>
@@ -117,53 +118,100 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
 
     if (this->previousResult)
     {
-        computeTextureSAD(*result, *this->previousResult);
-
-        auto sadNormalized     = result->sad / result->averageEnergy;
-        auto sadNormalizedPrev = this->previousResult->sad / this->previousResult->averageEnergy;
-        if (this->previousResult->sad > 0)
-            result->epsilon = abs(sadNormalizedPrev - sadNormalized) / sadNormalizedPrev;
+        if (this->cfg.enableDCTenergy)
+        {
+            computeTextureSAD(*result, *this->previousResult);
+            auto sadNormalized     = result->energyDiff / result->averageEnergy;
+            auto sadNormalizedPrev = this->previousResult->energyDiff
+                                     / this->previousResult->averageEnergy;
+            if (this->previousResult->energyDiff > 0)
+                result->epsilon = abs(sadNormalizedPrev - sadNormalized) / sadNormalizedPrev;
+        }
+        if (this->cfg.enableEntropy)
+        {
+            computeEntropySAD(*result, *this->previousResult);
+            auto entropyDiff     = result->entropyDiff;
+            auto entropyDiffPrev = this->previousResult->entropyDiff;
+            if (this->previousResult->entropyDiff > 0)
+                result->entropyEpsilon = abs(entropyDiffPrev - entropyDiff);
+        }
     }
 
     outputResult->poc               = result->poc;
     outputResult->jobID             = result->jobID;
-    outputResult->averageBrightness = result->averageBrightness;
-    outputResult->averageEnergy     = result->averageEnergy;
-    outputResult->sad               = result->sad;
-    outputResult->epsilon           = result->epsilon;
-    if (outputResult->brightnessPerBlock)
-        std::memcpy(outputResult->brightnessPerBlock,
-                    result->brightnessPerBlock.data(),
-                    result->brightnessPerBlock.size() * sizeof(uint32_t));
-    if (outputResult->energyPerBlock)
-        std::memcpy(outputResult->energyPerBlock,
-                    result->energyPerBlock.data(),
-                    result->energyPerBlock.size() * sizeof(uint32_t));
-    if (outputResult->sadPerBlock)
-        std::memcpy(outputResult->sadPerBlock,
-                    result->sadPerBlock.data(),
-                    result->sadPerBlock.size() * sizeof(uint32_t));
 
-    outputResult->averageU = result->averageU;
-    outputResult->averageV = result->averageV;
-    outputResult->energyU  = result->energyU;
-    outputResult->energyV  = result->energyV;
-    if (outputResult->averageUPerBlock)
-        std::memcpy(outputResult->averageUPerBlock,
-                    result->averageUPerBlock.data(),
-                    result->averageUPerBlock.size() * sizeof(uint32_t));
-    if (outputResult->averageVPerBlock)
-        std::memcpy(outputResult->averageVPerBlock,
-                    result->averageVPerBlock.data(),
-                    result->averageVPerBlock.size() * sizeof(uint32_t));
-    if (outputResult->energyUPerBlock)
-        std::memcpy(outputResult->energyUPerBlock,
-                    result->energyUPerBlock.data(),
-                    result->energyUPerBlock.size() * sizeof(uint32_t));
-    if (outputResult->energyVPerBlock)
-        std::memcpy(outputResult->energyVPerBlock,
-                    result->energyVPerBlock.data(),
-                    result->energyVPerBlock.size() * sizeof(uint32_t));
+    if (this->cfg.enableDCTenergy)
+    {
+        outputResult->averageBrightness = result->averageBrightness;
+        outputResult->averageEnergy     = result->averageEnergy;
+        outputResult->energyDiff        = result->energyDiff;
+        outputResult->epsilon           = result->epsilon;
+
+        if (outputResult->brightnessPerBlock)
+            std::memcpy(outputResult->brightnessPerBlock,
+                        result->brightnessPerBlock.data(),
+                        result->brightnessPerBlock.size() * sizeof(uint32_t));
+        if (outputResult->energyPerBlock)
+            std::memcpy(outputResult->energyPerBlock,
+                        result->energyPerBlock.data(),
+                        result->energyPerBlock.size() * sizeof(uint32_t));
+        if (outputResult->energyDiffPerBlock)
+            std::memcpy(outputResult->energyDiffPerBlock,
+                        result->energyDiffPerBlock.data(),
+                        result->energyDiffPerBlock.size() * sizeof(uint32_t));
+        if (this->cfg.enableChroma)
+        {
+            outputResult->averageU = result->averageU;
+            outputResult->averageV = result->averageV;
+            outputResult->energyU  = result->energyU;
+            outputResult->energyV  = result->energyV;
+            if (outputResult->averageUPerBlock)
+                std::memcpy(outputResult->averageUPerBlock,
+                            result->averageUPerBlock.data(),
+                            result->averageUPerBlock.size() * sizeof(uint32_t));
+            if (outputResult->averageVPerBlock)
+                std::memcpy(outputResult->averageVPerBlock,
+                            result->averageVPerBlock.data(),
+                            result->averageVPerBlock.size() * sizeof(uint32_t));
+            if (outputResult->energyUPerBlock)
+                std::memcpy(outputResult->energyUPerBlock,
+                            result->energyUPerBlock.data(),
+                            result->energyUPerBlock.size() * sizeof(uint32_t));
+            if (outputResult->energyVPerBlock)
+                std::memcpy(outputResult->energyVPerBlock,
+                            result->energyVPerBlock.data(),
+                            result->energyVPerBlock.size() * sizeof(uint32_t));
+        }
+    }
+    if (this->cfg.enableEntropy)
+    {
+        outputResult->averageEntropy = result->entropyY;
+        outputResult->entropyDiff     = result->entropyDiff;
+        outputResult->entropyEpsilon = result->entropyEpsilon;
+
+        if (outputResult->entropyPerBlock)
+            std::memcpy(outputResult->entropyPerBlock,
+                        result->entropyPerBlock.data(),
+                        result->entropyPerBlock.size() * sizeof(double));
+        if (outputResult->entropyDiffPerBlock)
+            std::memcpy(outputResult->entropyDiffPerBlock,
+                        result->entropyDiffPerBlock.data(),
+                        result->entropyDiffPerBlock.size() * sizeof(double));
+        if (this->cfg.enableChroma)
+        {
+            outputResult->entropyU = result->entropyU;
+            outputResult->entropyV = result->entropyV;
+            if (outputResult->entropyUPerBlock)
+                std::memcpy(outputResult->entropyUPerBlock,
+                            result->entropyUPerBlock.data(),
+                            result->entropyUPerBlock.size() * sizeof(double));
+            if (outputResult->entropyVPerBlock)
+                std::memcpy(outputResult->entropyVPerBlock,
+                            result->entropyVPerBlock.data(),
+                            result->entropyVPerBlock.size() * sizeof(double));
+        }
+
+    }
 
     this->previousResult = result;
 

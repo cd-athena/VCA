@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2022 Christian Doppler Laboratory ATHENA
+ * Copyright (C) 2024 Christian Doppler Laboratory ATHENA
  *
  * Authors: Vignesh V Menon <vignesh.menon@aau.at>
  *          Christian Feldmann <christian.feldmann@bitmovin.com>
@@ -21,6 +21,7 @@
 #include "EnergyCalculation.h"
 
 #include <analyzer/DCTTransform.h>
+#include <analyzer/EntropyCalculation.h>
 
 #include <algorithm>
 #include <cmath>
@@ -279,7 +280,7 @@ void computeWeightedDCTEnergy(const Job &job,
                               const unsigned blockSize,
                               CpuSimd cpuSimd,
                               bool enableChroma,
-                              bool enableLowpassDCT)
+                              bool enableLowpass)
 {
     const auto frame = job.frame;
     if (frame == nullptr)
@@ -330,12 +331,17 @@ void computeWeightedDCTEnergy(const Job &job,
                                     unsigned(paddingRight),
                                     unsigned(paddingBottom));
 
-            performDCT(blockSize, bitDepth, pixelBuffer, coeffBuffer, cpuSimd, enableLowpassDCT);
+            performDCT(blockSize,
+                       bitDepth,
+                       pixelBuffer,
+                       coeffBuffer,
+                       cpuSimd,
+                       enableLowpass);
 
             result.brightnessPerBlock[blockIndex] = uint32_t(sqrt(coeffBuffer[0]));
             result.energyPerBlock[blockIndex]     = calculateWeightedCoeffSum(blockSize,
-                                                                          coeffBuffer,
-                                                                          enableLowpassDCT);
+                                                                              coeffBuffer,
+                                                                              enableLowpass);
             frameBrightness += result.brightnessPerBlock[blockIndex];
             frameTexture += result.energyPerBlock[blockIndex];
 
@@ -400,12 +406,12 @@ void computeWeightedDCTEnergy(const Job &job,
                            pixelBufferC,
                            coeffBufferC,
                            cpuSimd,
-                           enableLowpassDCT);
+                           enableLowpass);
 
                 result.averageUPerBlock[blockIndexC] = uint32_t(sqrt(coeffBufferC[0]));
                 result.energyUPerBlock[blockIndexC]  = calculateWeightedCoeffSum(blockSize,
-                                                                                coeffBufferC,
-                                                                                enableLowpassDCT);
+                                                                                 coeffBufferC,
+                                                                                 enableLowpass);
                 frameU += result.averageUPerBlock[blockIndexC];
                 frameEnergyU += result.energyUPerBlock[blockIndexC];
 
@@ -438,12 +444,12 @@ void computeWeightedDCTEnergy(const Job &job,
                            pixelBufferC,
                            coeffBufferC,
                            cpuSimd,
-                           enableLowpassDCT);
+                           enableLowpass);
 
                 result.averageVPerBlock[blockIndexC] = uint32_t(sqrt(coeffBufferC[0]));
                 result.energyVPerBlock[blockIndexC]  = calculateWeightedCoeffSum(blockSize,
                                                                                 coeffBufferC,
-                                                                                enableLowpassDCT);
+                                                                                enableLowpass);
                 frameV += result.averageVPerBlock[blockIndexC];
                 frameEnergyV += result.energyVPerBlock[blockIndexC];
 
@@ -455,24 +461,198 @@ void computeWeightedDCTEnergy(const Job &job,
     }
 }
 
+void computeEntropy(const Job &job,
+                    Result &result,
+                    const unsigned blockSize,
+                    CpuSimd cpuSimd,
+                    bool enableLowpass,
+                    bool enableChroma)
+{
+    const auto frame = job.frame;
+    if (frame == nullptr)
+        throw std::invalid_argument("Invalid frame pointer");
+
+    const auto bitDepth      = frame->info.bitDepth;
+    const auto bytesPerPixel = (bitDepth > 8) ? 2 : 1;
+
+    auto src       = frame->planes[0];
+    auto srcStride = frame->stride[0];
+
+    auto [widthInBlocks, heightInBlock] = getFrameSizeInBlocks(blockSize, frame->info);
+    auto totalNumberBlocks              = widthInBlocks * heightInBlock;
+    auto widthInPixels                  = widthInBlocks * blockSize;
+    auto heightInPixels                 = heightInBlock * blockSize;
+
+    if (result.entropyPerBlock.size() < totalNumberBlocks)
+        result.entropyPerBlock.resize(totalNumberBlocks);
+
+    // First, we will copy the source to a temporary buffer which has one int16_t value
+    // per sample.
+    //   - This may only be needed for 8 bit values. For 16 bit values we could also
+    //     perform this directly from the source buffer. However, we should check the
+    //     performance of that approach (i.e. the buffer may not be aligned)
+
+    ALIGN_VAR_32(int16_t, pixelBuffer[32 * 32]);
+
+    auto blockIndex          = 0u;
+    double frameEntropy    = 0;
+    for (unsigned blockY = 0; blockY < heightInPixels; blockY += blockSize)
+    {
+        auto paddingBottom = std::max(int(blockY + blockSize) - int(frame->info.height), 0);
+        for (unsigned blockX = 0; blockX < widthInPixels; blockX += blockSize)
+        {
+            auto paddingRight = std::max(int(blockX + blockSize) - int(frame->info.width), 0);
+            auto blockOffsetLumaBytes = blockX * bytesPerPixel + (blockY * srcStride);
+
+            copyPixelValuesToBuffer(bitDepth,
+                                    blockOffsetLumaBytes,
+                                    blockSize,
+                                    src,
+                                    srcStride,
+                                    pixelBuffer,
+                                    unsigned(paddingRight),
+                                    unsigned(paddingBottom));
+
+            result.entropyPerBlock[blockIndex] = performEntropy(blockSize,
+                                                                bitDepth,
+                                                                pixelBuffer,
+                                                                cpuSimd,
+                                                                enableLowpass);
+            frameEntropy += result.entropyPerBlock[blockIndex];
+            blockIndex++;
+        }
+    }
+
+    result.entropyY = frameEntropy / totalNumberBlocks;
+
+    if (enableChroma)
+    {
+        const auto srcU       = frame->planes[1];
+        const auto srcV       = frame->planes[2];
+        const auto srcUStride = frame->stride[1];
+        const auto srcUHeight = frame->height[1];
+        const auto srcUWidth  = srcUStride / bytesPerPixel;
+
+        auto [widthInBlocksC, heightInBlockC] = getChromaFrameSizeInBlocks(blockSize,
+                                                                           srcUWidth,
+                                                                           srcUHeight);
+        const auto totalNumberBlocksC         = widthInBlocksC * heightInBlockC;
+        const auto widthInPixelsC             = widthInBlocksC * blockSize;
+        const auto heightInPixelsC            = heightInBlockC * blockSize;
+
+        if (result.entropyUPerBlock.size() < totalNumberBlocksC)
+            result.entropyUPerBlock.resize(totalNumberBlocksC);
+        if (result.entropyVPerBlock.size() < totalNumberBlocksC)
+            result.entropyVPerBlock.resize(totalNumberBlocksC);
+
+        ALIGN_VAR_32(int16_t, pixelBufferC[32 * 32]);
+
+        auto blockIndexC      = 0u;
+        uint32_t frameU       = 0;
+        uint32_t frameV       = 0;
+        double frameEntropyU  = 0;
+        double frameEntropyV  = 0;
+        for (unsigned blockY = 0; blockY < heightInPixelsC; blockY += blockSize)
+        {
+            auto paddingBottom = std::max(int(blockY + blockSize) - int(srcUHeight), 0);
+            for (unsigned blockX = 0; blockX < widthInPixelsC; blockX += blockSize)
+            {
+                auto paddingRight = std::max(int(blockX + blockSize) - int(srcUStride), 0);
+                auto blockOffsetChromaBytes = blockX * bytesPerPixel + (blockY * srcUStride);
+
+                copyPixelValuesToBuffer(bitDepth,
+                                        blockOffsetChromaBytes,
+                                        blockSize,
+                                        srcU,
+                                        srcUStride,
+                                        pixelBufferC,
+                                        unsigned(paddingRight),
+                                        unsigned(paddingBottom));
+                result.entropyUPerBlock[blockIndexC] = performEntropy(blockSize,
+                                                                      bitDepth,
+                                                                      pixelBufferC,
+                                                                      cpuSimd,
+                                                                      enableLowpass);
+
+                frameEntropyU += result.entropyUPerBlock[blockIndexC];
+
+                blockIndexC++;
+            }
+        }
+        result.entropyU  = frameEntropyU / totalNumberBlocksC;
+
+        blockIndexC = 0u;
+        for (unsigned blockY = 0; blockY < heightInPixelsC; blockY += blockSize)
+        {
+            auto paddingBottom = std::max(int(blockY + blockSize) - int(srcUHeight), 0);
+            for (unsigned blockX = 0; blockX < widthInPixelsC; blockX += blockSize)
+            {
+                auto paddingRight = std::max(int(blockX + blockSize) - int(srcUStride), 0);
+                auto blockOffsetChromaBytes = blockX * bytesPerPixel + (blockY * srcUStride);
+
+                copyPixelValuesToBuffer(bitDepth,
+                                        blockOffsetChromaBytes,
+                                        blockSize,
+                                        srcV,
+                                        srcUStride,
+                                        pixelBufferC,
+                                        unsigned(paddingRight),
+                                        unsigned(paddingBottom));
+
+                result.entropyVPerBlock[blockIndexC] = performEntropy(blockSize,
+                                                                      bitDepth,
+                                                                      pixelBufferC,
+                                                                      cpuSimd,
+                                                                      enableLowpass);
+
+                frameEntropyV += result.entropyVPerBlock[blockIndexC];
+
+                blockIndexC++;
+            }
+        }
+        result.entropyV = frameEntropyV / totalNumberBlocksC;
+    }
+
+}
+
 void computeTextureSAD(Result &result, const Result &resultsPreviousFrame)
 {
     if (result.energyPerBlock.size() != resultsPreviousFrame.energyPerBlock.size())
         throw std::out_of_range("Size of energy result vector must match");
 
     auto totalNumberBlocks = result.energyPerBlock.size();
-    if (result.sadPerBlock.size() < totalNumberBlocks)
-        result.sadPerBlock.resize(totalNumberBlocks);
+    if (result.energyDiffPerBlock.size() < totalNumberBlocks)
+        result.energyDiffPerBlock.resize(totalNumberBlocks);
 
     double textureSad = 0.0;
     for (size_t i = 0; i < totalNumberBlocks; i++)
     {
-        result.sadPerBlock[i] = uint32_t(
+        result.energyDiffPerBlock[i] = uint32_t(
             std::abs(int(result.energyPerBlock[i]) - int(resultsPreviousFrame.energyPerBlock[i])));
-        textureSad += result.sadPerBlock[i];
+        textureSad += result.energyDiffPerBlock[i];
     }
 
-    result.sad = textureSad / (totalNumberBlocks * h_norm_factor);
+    result.energyDiff = textureSad / (totalNumberBlocks * h_norm_factor);
+}
+
+void computeEntropySAD(Result &result, const Result &resultsPreviousFrame)
+{
+    if (result.entropyPerBlock.size() != resultsPreviousFrame.entropyPerBlock.size())
+        throw std::out_of_range("Size of entropy result vector must match");
+
+    auto totalNumberBlocks = result.entropyPerBlock.size();
+    if (result.entropyDiffPerBlock.size() < totalNumberBlocks)
+        result.entropyDiffPerBlock.resize(totalNumberBlocks);
+
+    double entropyDiff = 0.0;
+    for (size_t i = 0; i < totalNumberBlocks; i++)
+    {
+        result.entropyDiffPerBlock[i] = std::abs(result.entropyPerBlock[i]
+                                                - resultsPreviousFrame.entropyPerBlock[i]);
+        entropyDiff += result.entropyDiffPerBlock[i];
+    }
+
+    result.entropyDiff = entropyDiff / totalNumberBlocks;
 }
 
 } // namespace vca

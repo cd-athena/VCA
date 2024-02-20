@@ -1,6 +1,9 @@
-/* Copyright (C) 2024 Christian Doppler Laboratory ATHENA
+/*****************************************************************************
+ * Copyright (C) 2024 Christian Doppler Laboratory ATHENA
  *
- * Authors: Christian Feldmann <christian.feldmann@bitmovin.com>
+ * Authors: Amritha Premkumar <amritha.premkumar@ieee.org>
+ *          Prajit T Rajendran <prajit.rajendran@ieee.org>
+ *          Vignesh V Menon <vignesh.menon@hhi.fraunhofer.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,24 +19,16 @@
  * along with this program.
  *****************************************************************************/
 
-#include "functions.h"
+#pragma once
 
-#include <random>
+#include <vcaLib.h>
 
-namespace test {
+namespace vca {
 
-void fillBlockWithRandomData(int16_t *data, const unsigned blockSize, const unsigned bitDepth)
-{
-    const auto nrPixels = blockSize * blockSize;
-    const auto maxValue = (1 << bitDepth) - 1;
+double performEntropy(const unsigned blockSize,
+                      const unsigned bitDepth,
+                      const int16_t *pixelBuffer,
+                      CpuSimd cpuSimd,
+                      bool enableLowpass);
 
-    static std::random_device randomDevice;
-    static std::default_random_engine randomEngine(randomDevice());
-
-    std::uniform_int_distribution<unsigned> uniform_dist(0, maxValue);
-
-    for (size_t i = 0; i < nrPixels; i++)
-        data[i] = int16_t(uniform_dist(randomEngine));
-}
-
-} // namespace test
+} // namespace vca
