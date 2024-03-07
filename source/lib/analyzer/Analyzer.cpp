@@ -121,11 +121,10 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
         if (this->cfg.enableDCTenergy)
         {
             computeTextureSAD(*result, *this->previousResult);
-            auto sadNormalized     = result->energyDiff / result->averageEnergy;
-            auto sadNormalizedPrev = this->previousResult->energyDiff
-                                     / this->previousResult->averageEnergy;
             if (this->previousResult->energyDiff > 0)
-                result->epsilon = abs(sadNormalizedPrev - sadNormalized) / sadNormalizedPrev;
+            {
+                computeTextureEpsilon(*result, *this->previousResult);
+            }
         }
         if (this->cfg.enableEntropy)
         {
@@ -145,7 +144,7 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
         outputResult->averageBrightness = result->averageBrightness;
         outputResult->averageEnergy     = result->averageEnergy;
         outputResult->energyDiff        = result->energyDiff;
-        outputResult->epsilon           = result->epsilon;
+        outputResult->energyEpsilon     = result->energyEpsilon;
 
         if (outputResult->brightnessPerBlock)
             std::memcpy(outputResult->brightnessPerBlock,

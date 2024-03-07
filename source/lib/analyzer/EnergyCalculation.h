@@ -31,6 +31,7 @@ void computeWeightedDCTEnergy(const Job &job,
                               bool enableChroma,
                               bool enableLowpass);
 void computeTextureSAD(Result &results, const Result &resultsPreviousFrame);
+void computeTextureEpsilon(Result &results, const Result &resultsPreviousFrame);
 void computeEntropy(const Job &job,
                     Result &result,
                     const unsigned blockSize,

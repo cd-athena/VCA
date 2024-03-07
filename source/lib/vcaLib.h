@@ -111,7 +111,8 @@ struct vca_frame_results
     double entropyU{};
     double entropyV{};
 
-    double epsilon{};
+    uint32_t *energyEpsilonPerBlock{};
+    double energyEpsilon{};
     double entropyEpsilon{};
 
     int poc{};

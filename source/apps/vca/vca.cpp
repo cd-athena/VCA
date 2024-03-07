@@ -367,18 +367,18 @@ void writeComplexityStatsToFile(const Result &result,
     file << result.result.poc;
     if (enableDCTenergy)
     {
-        file << ", " << result.result.averageEnergy << ", " << result.result.energyDiff << ", "
-             << result.result.epsilon << ", " << result.result.averageBrightness;
+        file << "," << result.result.averageEnergy << "," << result.result.energyDiff << ","
+             << result.result.energyEpsilon << ", " << result.result.averageBrightness;
         if (enableChroma)
-            file << ", " << result.result.averageU << ", " << result.result.energyU << ", "
-                 << result.result.averageV << ", " << result.result.energyV;
+            file << "," << result.result.averageU << "," << result.result.energyU << ","
+                 << result.result.averageV << "," << result.result.energyV;
     }
     if (enableEntropy)
     {
-        file << ", " << result.result.averageEntropy << ", " << result.result.entropyDiff << ", "
+        file << "," << result.result.averageEntropy << "," << result.result.entropyDiff << ","
             <<result.result.entropyEpsilon;
         if (enableChroma)
-            file << ", " << result.result.entropyU << ", " << result.result.entropyV;
+            file << "," << result.result.entropyU << "," << result.result.entropyV;
     }
     file << "\n";
 }
@@ -436,7 +436,7 @@ void writeShotDetectionResultsToFile(const std::vector<vca_frame_results> &shotD
         averageValuesShot->v += frame.averageV;
         averageValuesShot->energyU += frame.energyU;
         averageValuesShot->energyV += frame.energyV;
-        averageValuesShot->epsilon += frame.epsilon;
+        averageValuesShot->epsilon += frame.energyEpsilon;
         averageValuesShot->nrFramesInAverage++;
     }
 
@@ -449,7 +449,7 @@ void segment_result_init(Result *segment_result)
     segment_result->result.averageBrightness = 0;
     segment_result->result.energyDiff        = 0;
     segment_result->result.averageEnergy     = 0;
-    segment_result->result.epsilon           = 0;
+    segment_result->result.energyEpsilon     = 0;
     segment_result->result.poc               = 0;
     segment_result->result.averageU          = 0;
     segment_result->result.energyU           = 0;
@@ -467,7 +467,7 @@ void segment_complexity_function(vca_frame_results *segment_result,
     segment_result->averageBrightness += frame_result->averageBrightness;
     segment_result->energyDiff += frame_result->energyDiff;
     segment_result->averageEnergy += frame_result->averageEnergy;
-    segment_result->epsilon += frame_result->epsilon;
+    segment_result->energyEpsilon += frame_result->energyEpsilon;
     if (chroma_flag)
     {
         segment_result->averageU += frame_result->averageU;
@@ -482,7 +482,7 @@ void segment_complexity_function(vca_frame_results *segment_result,
         segment_result->averageBrightness = (segment_result->averageBrightness / Segment_size);
         segment_result->averageEnergy     = (segment_result->averageEnergy / Segment_size);
         segment_result->energyDiff        = (segment_result->energyDiff / Segment_size);
-        segment_result->epsilon           = (segment_result->epsilon / Segment_size);
+        segment_result->energyEpsilon     = (segment_result->energyEpsilon / Segment_size);
         if (resultsCounter == (pushedFrames - 1))
             segment_result->poc = pushedFrames;
         else

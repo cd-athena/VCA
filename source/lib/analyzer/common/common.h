@@ -90,6 +90,7 @@ struct Result
     std::vector<uint32_t> brightnessPerBlock;
     std::vector<uint32_t> energyPerBlock;
     std::vector<uint32_t> energyDiffPerBlock;
+    std::vector<int32_t> energyEpsilonPerBlock;
     std::vector<uint32_t> averageUPerBlock;
     std::vector<uint32_t> averageVPerBlock;
     std::vector<uint32_t> energyUPerBlock;
@@ -101,7 +102,7 @@ struct Result
     uint32_t energyU{};
     uint32_t energyV{};
     double energyDiff{};
-    double epsilon{};
+    double energyEpsilon{};
 
     std::vector<double> entropyPerBlock;
     std::vector<double> entropyDiffPerBlock;

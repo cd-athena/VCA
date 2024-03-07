@@ -655,4 +655,25 @@ void computeEntropySAD(Result &result, const Result &resultsPreviousFrame)
     result.entropyDiff = entropyDiff / totalNumberBlocks;
 }
 
+void computeTextureEpsilon(Result& result, const Result& resultsPreviousFrame)
+{
+    if (result.energyDiffPerBlock.size() != resultsPreviousFrame.energyDiffPerBlock.size())
+        throw std::out_of_range("Size of energyDiff result vector must match");
+
+    auto totalNumberBlocks = result.energyDiffPerBlock.size();
+    if (result.energyEpsilonPerBlock.size() < totalNumberBlocks)
+        result.energyEpsilonPerBlock.resize(totalNumberBlocks);
+
+    double textureEpsilon = 0.0;
+    for (size_t i = 0; i < totalNumberBlocks; i++)
+    {
+        result.energyEpsilonPerBlock[i] = uint32_t(std::abs(int(result.energyDiffPerBlock[i])
+                                                           - int(resultsPreviousFrame.energyDiffPerBlock[i])));
+        textureEpsilon += result.energyEpsilonPerBlock[i];
+    }
+
+    result.energyEpsilon = textureEpsilon / (totalNumberBlocks * h_norm_factor);
+
+}
+
 } // namespace vca
