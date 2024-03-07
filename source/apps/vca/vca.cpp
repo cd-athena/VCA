@@ -208,6 +208,8 @@ std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
             options.vcaParam.enableDCTenergy = false;
         else if (name == "no-entropy")
             options.vcaParam.enableEntropy = false;
+        else if (name == "no-edgedensity")
+            options.vcaParam.enableEdgeDensity = false;
         else if (name == "y4m")
             options.openAsY4m = true;
         else
@@ -306,9 +308,9 @@ bool checkOptions(CLIOptions options)
         return false;
     }
 
-    if (!options.vcaParam.enableDCTenergy && !options.vcaParam.enableEntropy)
+    if (!options.vcaParam.enableDCTenergy && !options.vcaParam.enableEntropy && !options.vcaParam.enableEdgeDensity)
     {
-        vca_log(LogLevel::Error, " Either DCT energy or entropy should be enabled ");
+        vca_log(LogLevel::Error, " Either DCT energy or entropy or edge density calculation should be enabled ");
         return false;
     }
     return true;
@@ -329,6 +331,8 @@ void logOptions(const CLIOptions &options)
             "  Enable DCTenergy: "s + (options.vcaParam.enableDCTenergy ? "True"s : "False"s));
     vca_log(LogLevel::Info,
             "  Enable Entropy: "s + (options.vcaParam.enableEntropy ? "True"s : "False"s));
+    vca_log(LogLevel::Info,
+            "  Enable Edge density: "s + (options.vcaParam.enableEdgeDensity ? "True"s : "False"s));
     vca_log(LogLevel::Info, "  Skip frames:       "s + std::to_string(options.skipFrames));
     vca_log(LogLevel::Info, "  Frames to analyze: "s + std::to_string(options.framesToBeAnalyzed));
     vca_log(LogLevel::Info, "  Segment Size:       "s + std::to_string(options.segmentSize));  
@@ -362,7 +366,8 @@ void writeComplexityStatsToFile(const Result &result,
                                 std::ofstream &file,
                                 bool enableChroma,
                                 bool enableDCTenergy,
-                                bool enableEntropy)
+                                bool enableEntropy,
+                                bool enableEdgeDensity)
 {
     file << result.result.poc;
     if (enableDCTenergy)
@@ -379,6 +384,10 @@ void writeComplexityStatsToFile(const Result &result,
             <<result.result.entropyEpsilon;
         if (enableChroma)
             file << "," << result.result.entropyU << "," << result.result.entropyV;
+    }
+    if (enableEdgeDensity)
+    {
+        file << "," << result.result.averageEdgeDensity;
     }
     file << "\n";
 }
@@ -603,6 +612,10 @@ int main(int argc, char **argv)
             if (options.vcaParam.enableChroma)
                 complexityFile << ",entropyU,entropyV";
         }
+        if (options.vcaParam.enableEdgeDensity)
+        {
+            complexityFile << ",edgeDensity";
+        }
         complexityFile << "\n";
     }
     
@@ -750,7 +763,8 @@ int main(int argc, char **argv)
                                                segmentFeatureFile,
                                                options.vcaParam.enableChroma,
                                                options.vcaParam.enableDCTenergy,
-                                               options.vcaParam.enableEntropy);
+                                               options.vcaParam.enableEntropy,
+                                               options.vcaParam.enableEdgeDensity);
                     segment_result_init(&segment_result);                   
                 }
             }
@@ -765,7 +779,8 @@ int main(int argc, char **argv)
                                            complexityFile,
                                            options.vcaParam.enableChroma,
                                            options.vcaParam.enableDCTenergy,
-                                           options.vcaParam.enableEntropy);
+                                           options.vcaParam.enableEntropy,
+                                           options.vcaParam.enableEdgeDensity);
             if (!options.shotCSVFilename.empty())
                 shotDetectFrames.push_back(result.result);
 
@@ -805,7 +820,8 @@ int main(int argc, char **argv)
                                            segmentFeatureFile,
                                            options.vcaParam.enableChroma,
                                            options.vcaParam.enableDCTenergy,
-                                           options.vcaParam.enableEntropy);
+                                           options.vcaParam.enableEntropy,
+                                           options.vcaParam.enableEdgeDensity);
                 segment_result_init(&segment_result);
             }
         }
@@ -819,7 +835,8 @@ int main(int argc, char **argv)
                                        complexityFile,
                                        options.vcaParam.enableChroma,
                                        options.vcaParam.enableDCTenergy,
-                                       options.vcaParam.enableEntropy);
+                                       options.vcaParam.enableEntropy,
+                                       options.vcaParam.enableEdgeDensity);
         if (!options.shotCSVFilename.empty())
             shotDetectFrames.push_back(result.result);
 

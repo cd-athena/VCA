@@ -114,6 +114,9 @@ struct Result
     double entropyDiff{};
     double entropyEpsilon{};
 
+    std::vector<double> edgeDensityPerBlock;
+    double averageEdgeDensity{};
+
     int poc{};
     unsigned jobID{};
 };

@@ -115,6 +115,9 @@ struct vca_frame_results
     double energyEpsilon{};
     double entropyEpsilon{};
 
+    double *edgeDensityPerBlock{};
+    double averageEdgeDensity{};
+
     int poc{};
     bool isNewShot{};
 
@@ -158,6 +161,7 @@ struct vca_param
 
     bool enableDCTenergy{true};
     bool enableEntropy{true};
+    bool enableEdgeDensity{true};
 
     vca_frame_info frameInfo{};
 

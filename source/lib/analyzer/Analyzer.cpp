@@ -211,6 +211,14 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
         }
 
     }
+    if (this->cfg.enableEdgeDensity)
+    {
+        outputResult->averageEdgeDensity = result->averageEdgeDensity;
+        if (outputResult->edgeDensityPerBlock)
+            std::memcpy(outputResult->edgeDensityPerBlock,
+                        result->edgeDensityPerBlock.data(),
+                        result->edgeDensityPerBlock.size() * sizeof(double));
+    }
 
     this->previousResult = result;
 

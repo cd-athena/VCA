@@ -39,5 +39,10 @@ void computeEntropy(const Job &job,
                     bool enableLowpass,
                     bool enableChroma);
 void computeEntropySAD(Result &results, const Result &resultsPreviousFrame);
+void computeEdgeDensity(const Job &job,
+                        Result &result,
+                        const unsigned blockSize,
+                        CpuSimd cpuSimd,
+                        bool enableLowpass);
 
 } // namespace vca

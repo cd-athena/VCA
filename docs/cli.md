@@ -58,7 +58,11 @@
 - `--no-entropy`
 
 	Disable analysis of entropy-based features (which is enabled by default).
-	
+
+- `--no-edgedensity`
+
+	Disable analysis of edge density (which is enabled by default).
+
 - `--threads <integer>`
 
 	Specify the number of threads to use. Default: 0 (autodetect).

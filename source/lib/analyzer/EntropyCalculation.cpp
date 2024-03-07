@@ -59,4 +59,42 @@ double performEntropy(const unsigned blockSize,
     return entropy;
 }
 
+double performEdgeDensity(const unsigned blockSize,
+                          const unsigned bitDepth,
+                          const int16_t *pixelBuffer,
+                          CpuSimd cpuSimd,
+                          bool enableLowpass)
+{
+    // Calculate the total number of pixels in the block
+    unsigned blockSizeSq = blockSize * blockSize;
+
+    // Threshold for edge detection based on bit depth
+    int threshold = (1 << (bitDepth - 1)) - 1;
+
+    // Initialize edge count to 0
+    unsigned edgeCount = 0;
+
+    // Iterate through the pixel buffer
+    for (unsigned i = 0; i < blockSizeSq; ++i)
+    {
+        // Check edge conditions for pixels in the buffer
+        if (i % blockSize < blockSize - 1 && abs(pixelBuffer[i] - pixelBuffer[i + 1]) > threshold)
+        {
+            // Horizontal edge detected
+            edgeCount++;
+        }
+        if (i / blockSize < blockSize - 1
+            && abs(pixelBuffer[i] - pixelBuffer[i + blockSize]) > threshold)
+        {
+            // Vertical edge detected
+            edgeCount++;
+        }
+    }
+
+    // Calculate edge density
+    double density = static_cast<double>(edgeCount) / (2 * blockSize * (blockSize - 1));
+
+    return density;
+}
+
 } // namespace vca
