@@ -27,7 +27,8 @@
 static const char short_options[]         = "f:h?";
 static const struct option long_options[] = {{"help", no_argument, NULL, 'h'},
                                              {"no-simd", no_argument, NULL, 0},
-                                             {"no-chroma", no_argument, NULL, 0},
+                                             {"no-dctenergy-chroma", no_argument, NULL, 0},
+                                             {"no-entropy-chroma", no_argument, NULL, 0},
                                              {"no-lowpass", no_argument, NULL, 0},
                                              {"input", required_argument, NULL, 0},
                                              {"y4m", no_argument, NULL, 0},
@@ -49,6 +50,7 @@ static const struct option long_options[] = {{"help", no_argument, NULL, 'h'},
                                              {"threads", required_argument, NULL, 0},
                                              {"no-dctenergy", no_argument, 0},
                                              {"no-entropy", no_argument, 0},
+                                             {"no-edgedensity", no_argument, 0},
                                              {0, 0, 0, 0},
                                              {0, 0, 0, 0},
                                              {0, 0, 0, 0},
@@ -90,7 +92,8 @@ static void showHelp()
     printf("                                 that can be visualized using YUView.\n");
     printf("\nOperation Options:\n");
     printf("   --no-simd                     Disable SIMD. Default: Enabled\n");
-    printf("   --no-chroma                   Disable chroma. Default: Enabled\n");
+    printf("   --no-dctenergy-chroma         Disable chroma for DCT energy. Default: Enabled\n");
+    printf("   --no-entropy-chroma           Disable chroma for entropy. Default: Enabled\n");
     printf("   --no-lowpass                  Disable lowpass DCT kernels. Default: Enabled\n");
     printf("   --max-epsthresh <float>       Maximum threshold of epsilon in shot detection\n");
     printf("   --min-epsthresh <float>       Minimum threshold of epsilon in shot detection\n");
@@ -100,4 +103,5 @@ static void showHelp()
     printf("   --threads <integer>           Nr of threads to use. (Default: 0 (autodetect))\n");
     printf("   --no-dctenergy                Disable DCT energy features. Default: Enabled\n");
     printf("   --no-entropy                  Disable entropy features. Default: Enabled\n");
+    printf("   -no-edgedensity               Disable edge density calculation. Default: Enabled\n");
 }

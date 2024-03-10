@@ -200,8 +200,10 @@ std::optional<CLIOptions> parseCLIOptions(int argc, char **argv)
             options.vcaParam.enableSIMD = false;
             options.vcaParam.cpuSimd    = CpuSimd::None;
         }
-        else if (name == "no-chroma")
-            options.vcaParam.enableChroma = false;
+        else if (name == "no-energy-chroma")
+            options.vcaParam.enableEnergyChroma = false;
+        else if (name == "no-entropy-chroma")
+            options.vcaParam.enableEntropyChroma = false;
         else if (name == "no-lowpass")
             options.vcaParam.enableLowpass = false;
         else if (name == "no-dctenergy")
@@ -324,7 +326,9 @@ void logOptions(const CLIOptions &options)
     vca_log(LogLevel::Info,
             "  Enable SIMD:       "s + (options.vcaParam.enableSIMD ? "True"s : "False"s));
     vca_log(LogLevel::Info,
-            "  Enable chroma:     "s + (options.vcaParam.enableChroma ? "True"s : "False"s));
+            "  Enable DCT energy chroma:     "s + (options.vcaParam.enableEnergyChroma ? "True"s : "False"s));
+    vca_log(LogLevel::Info,
+            "  Enable entropy chroma:     "s  + (options.vcaParam.enableEntropyChroma ? "True"s : "False"s));
     vca_log(LogLevel::Info,
             "  Enable lowpass: "s + (options.vcaParam.enableLowpass ? "True"s : "False"s));
     vca_log(LogLevel::Info,
@@ -364,7 +368,8 @@ void logResult(const Result &result, const vca_frame *frame, const unsigned resu
 
 void writeComplexityStatsToFile(const Result &result,
                                 std::ofstream &file,
-                                bool enableChroma,
+                                bool enableEnergyChroma,
+                                bool enableEntropyChroma,
                                 bool enableDCTenergy,
                                 bool enableEntropy,
                                 bool enableEdgeDensity)
@@ -374,7 +379,7 @@ void writeComplexityStatsToFile(const Result &result,
     {
         file << "," << result.result.averageEnergy << "," << result.result.energyDiff << ","
              << result.result.energyEpsilon << ", " << result.result.averageBrightness;
-        if (enableChroma)
+        if (enableEnergyChroma)
             file << "," << result.result.averageU << "," << result.result.energyU << ","
                  << result.result.averageV << "," << result.result.energyV;
     }
@@ -382,7 +387,7 @@ void writeComplexityStatsToFile(const Result &result,
     {
         file << "," << result.result.averageEntropy << "," << result.result.entropyDiff << ","
             <<result.result.entropyEpsilon;
-        if (enableChroma)
+        if (enableEntropyChroma)
             file << "," << result.result.entropyU << "," << result.result.entropyV;
     }
     if (enableEdgeDensity)
@@ -603,13 +608,13 @@ int main(int argc, char **argv)
         if (options.vcaParam.enableDCTenergy)
         {
             complexityFile << ",E,h,epsilon,L";
-            if (options.vcaParam.enableChroma) 
+            if (options.vcaParam.enableEnergyChroma) 
                 complexityFile << ",avgU,energyU,avgV,energyV";
         }
         if (options.vcaParam.enableEntropy)
         {
             complexityFile << ",entropy,entropyDiff, entropyEpsilon";
-            if (options.vcaParam.enableChroma)
+            if (options.vcaParam.enableEntropyChroma)
                 complexityFile << ",entropyU,entropyV";
         }
         if (options.vcaParam.enableEdgeDensity)
@@ -630,7 +635,7 @@ int main(int argc, char **argv)
             return 1;            
         }
         segmentFeatureFile << "POC,E,h,epsilon,L";
-        if (options.vcaParam.enableChroma) 
+        if (options.vcaParam.enableEnergyChroma) 
             segmentFeatureFile << ", avgU, energyU, avgV, energyV \n ";
         else 
             segmentFeatureFile << "\n";
@@ -753,7 +758,7 @@ int main(int argc, char **argv)
                 segment_complexity_function(&segment_result.result,
                                             &result.result,
                                             Segment_size,
-                                            options.vcaParam.enableChroma, 
+                                            options.vcaParam.enableEnergyChroma, 
                                             pushedFrames,
                                             resultsCounter);
 
@@ -761,7 +766,8 @@ int main(int argc, char **argv)
                 {
                     writeComplexityStatsToFile(segment_result,
                                                segmentFeatureFile,
-                                               options.vcaParam.enableChroma,
+                                               options.vcaParam.enableEnergyChroma,
+                                               options.vcaParam.enableEntropyChroma,
                                                options.vcaParam.enableDCTenergy,
                                                options.vcaParam.enableEntropy,
                                                options.vcaParam.enableEdgeDensity);
@@ -777,7 +783,8 @@ int main(int argc, char **argv)
             if (complexityFile.is_open())
                 writeComplexityStatsToFile(result,
                                            complexityFile,
-                                           options.vcaParam.enableChroma,
+                                           options.vcaParam.enableEnergyChroma,
+                                           options.vcaParam.enableEntropyChroma,
                                            options.vcaParam.enableDCTenergy,
                                            options.vcaParam.enableEntropy,
                                            options.vcaParam.enableEdgeDensity);
@@ -811,14 +818,15 @@ int main(int argc, char **argv)
             segment_complexity_function(&segment_result.result,
                                         &result.result,
                                         Segment_size,
-                                        options.vcaParam.enableChroma,
+                                        options.vcaParam.enableEnergyChroma,
                                         pushedFrames, resultsCounter);
             
             if (resultsCounter == (pushedFrames - 1))
             {
                 writeComplexityStatsToFile(segment_result,
                                            segmentFeatureFile,
-                                           options.vcaParam.enableChroma,
+                                           options.vcaParam.enableEnergyChroma,
+                                           options.vcaParam.enableEntropyChroma,
                                            options.vcaParam.enableDCTenergy,
                                            options.vcaParam.enableEntropy,
                                            options.vcaParam.enableEdgeDensity);
@@ -833,7 +841,8 @@ int main(int argc, char **argv)
         if (complexityFile.is_open())
             writeComplexityStatsToFile(result,
                                        complexityFile,
-                                       options.vcaParam.enableChroma,
+                                       options.vcaParam.enableEnergyChroma,
+                                       options.vcaParam.enableEntropyChroma,
                                        options.vcaParam.enableDCTenergy,
                                        options.vcaParam.enableEntropy,
                                        options.vcaParam.enableEdgeDensity);

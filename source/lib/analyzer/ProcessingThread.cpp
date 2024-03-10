@@ -59,7 +59,7 @@ void ProcessingThread::threadFunction(MultiThreadQueue<Job> &jobQueue,
                                      result,
                                      this->cfg.blockSize,
                                      this->cfg.cpuSimd,
-                                     this->cfg.enableChroma,
+                                     this->cfg.enableEnergyChroma,
                                      this->cfg.enableLowpass);
         }
         if (this->cfg.enableEntropy)
@@ -69,7 +69,7 @@ void ProcessingThread::threadFunction(MultiThreadQueue<Job> &jobQueue,
                            this->cfg.blockSize,
                            this->cfg.cpuSimd,
                            this->cfg.enableLowpass,
-                           this->cfg.enableChroma);
+                           this->cfg.enableEntropyChroma);
         }
         if (this->cfg.enableEdgeDensity)
         {

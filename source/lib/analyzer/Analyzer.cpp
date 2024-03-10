@@ -158,7 +158,7 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
             std::memcpy(outputResult->energyDiffPerBlock,
                         result->energyDiffPerBlock.data(),
                         result->energyDiffPerBlock.size() * sizeof(uint32_t));
-        if (this->cfg.enableChroma)
+        if (this->cfg.enableEnergyChroma)
         {
             outputResult->averageU = result->averageU;
             outputResult->averageV = result->averageV;
@@ -196,7 +196,7 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
             std::memcpy(outputResult->entropyDiffPerBlock,
                         result->entropyDiffPerBlock.data(),
                         result->entropyDiffPerBlock.size() * sizeof(double));
-        if (this->cfg.enableChroma)
+        if (this->cfg.enableEntropyChroma)
         {
             outputResult->entropyU = result->entropyU;
             outputResult->entropyV = result->entropyV;

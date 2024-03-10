@@ -156,7 +156,8 @@ struct vca_frame
 struct vca_param
 {
     bool enableSIMD{true};
-    bool enableChroma{true};
+    bool enableEnergyChroma{true};
+    bool enableEntropyChroma{true};
     bool enableLowpass{true};
 
     bool enableDCTenergy{true};
