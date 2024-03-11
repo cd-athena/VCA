@@ -43,9 +43,13 @@
 
 	Disable lowpass DCT analysis (which is enabled by default).
 
-- `--no-chroma`
+- `--no-energy-chroma`
 
-	Disable analysis of chroma planes (which is enabled by default).
+	Disable DCT energy analysis of chroma planes (which is enabled by default).
+
+- `--no-entropy-chroma`
+
+	Disable entropy analysis of chroma planes (which is enabled by default).
 	
 - `--no-simd`
 
