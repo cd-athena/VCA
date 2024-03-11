@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2022 Christian Doppler Laboratory ATHENA
+ * Copyright (C) 2024 Christian Doppler Laboratory ATHENA
  *
  * Authors: Vignesh V Menon <vignesh.menon@aau.at>
  *          Christian Feldmann <christian.feldmann@bitmovin.com>
@@ -89,8 +89,8 @@ struct vca_frame_results
     uint32_t *energyPerBlock{};
     uint32_t averageEnergy{};
 
-    uint32_t *sadPerBlock{};
-    double sad{};
+    uint32_t *energyDiffPerBlock{};
+    double energyDiff{};
 
     uint32_t *averageUPerBlock{};
     uint32_t *averageVPerBlock{};
@@ -102,7 +102,21 @@ struct vca_frame_results
     uint32_t energyU{};
     uint32_t energyV{};
 
-    double epsilon{};
+    double *entropyPerBlock{};
+    double averageEntropy;
+    double *entropyDiffPerBlock{};
+    double entropyDiff{};
+    double *entropyUPerBlock{};
+    double *entropyVPerBlock{};
+    double entropyU{};
+    double entropyV{};
+
+    uint32_t *energyEpsilonPerBlock{};
+    double energyEpsilon{};
+    double entropyEpsilon{};
+
+    double *edgeDensityPerBlock{};
+    double averageEdgeDensity{};
 
     int poc{};
     bool isNewShot{};
@@ -142,8 +156,13 @@ struct vca_frame
 struct vca_param
 {
     bool enableSIMD{true};
-    bool enableChroma{true};
-    bool enableLowpassDCT{true};
+    bool enableEnergyChroma{true};
+    bool enableEntropyChroma{true};
+    bool enableLowpass{true};
+
+    bool enableDCTenergy{true};
+    bool enableEntropy{true};
+    bool enableEdgeDensity{true};
 
     vca_frame_info frameInfo{};
 

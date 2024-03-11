@@ -1,4 +1,4 @@
-/* Copyright (C) 2022 Christian Doppler Laboratory ATHENA
+/* Copyright (C) 2024 Christian Doppler Laboratory ATHENA
  *
  * Authors: Christian Feldmann <christian.feldmann@bitmovin.com>
  *
@@ -19,6 +19,7 @@
 #include "ProcessingThread.h"
 
 #include <analyzer/EnergyCalculation.h>
+#include <analyzer/EntropyCalculation.h>
 
 namespace vca {
 
@@ -52,13 +53,32 @@ void ProcessingThread::threadFunction(MultiThreadQueue<Job> &jobQueue,
         Result result;
         result.poc   = job->frame->stats.poc;
         result.jobID = job->jobID;
-        computeWeightedDCTEnergy(*job,
-                                 result,
-                                 this->cfg.blockSize,
-                                 this->cfg.cpuSimd,
-                                 this->cfg.enableChroma,
-                                 this->cfg.enableLowpassDCT);
-
+        if (this->cfg.enableDCTenergy)
+        {
+            computeWeightedDCTEnergy(*job,
+                                     result,
+                                     this->cfg.blockSize,
+                                     this->cfg.cpuSimd,
+                                     this->cfg.enableEnergyChroma,
+                                     this->cfg.enableLowpass);
+        }
+        if (this->cfg.enableEntropy)
+        {
+            computeEntropy(*job,
+                           result,
+                           this->cfg.blockSize,
+                           this->cfg.cpuSimd,
+                           this->cfg.enableLowpass,
+                           this->cfg.enableEntropyChroma);
+        }
+        if (this->cfg.enableEdgeDensity)
+        {
+            computeEdgeDensity(*job,
+                               result,
+                               this->cfg.blockSize,
+                               this->cfg.cpuSimd,
+                               this->cfg.enableLowpass);
+        }
         log(this->cfg,
             LogLevel::Debug,
             "Thread " + std::to_string(this->id) + ": Finished work on job " + job->infoString());

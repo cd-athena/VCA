@@ -48,31 +48,54 @@ YUViewStatsFile::YUViewStatsFile(const std::string &filename,
     this->file << "%;defaultRange;0;3000;heat\n"s;
 }
 
-void YUViewStatsFile::write(const vca_frame_results &results, unsigned blockSize)
+void YUViewStatsFile::write(const vca_frame_results &results,
+                            unsigned blockSize,
+                            bool enableDCTenergy,
+                            bool enableEntropy)
 {
     auto widthInBlocks = (info.width + blockSize - 1) / blockSize;
     auto heightInBlock = (info.height + blockSize - 1) / blockSize;
 
-    if (auto data = results.brightnessPerBlock)
+    if (enableDCTenergy)
     {
-        for (unsigned y = 0; y < heightInBlock; y++)
-            for (unsigned x = 0; x < widthInBlocks; x++)
-                this->file << results.poc << ";" << x * blockSize << ";" << y * blockSize << ";"
-                           << blockSize << ";" << blockSize << ";0;" << *(data++) << "\n";
+        if (auto data = results.brightnessPerBlock)
+        {
+            for (unsigned y = 0; y < heightInBlock; y++)
+                for (unsigned x = 0; x < widthInBlocks; x++)
+                    this->file << results.poc << ";" << x * blockSize << ";" << y * blockSize << ";"
+                               << blockSize << ";" << blockSize << ";0;" << *(data++) << "\n";
+        }
+        if (auto data = results.energyPerBlock)
+        {
+            for (unsigned y = 0; y < heightInBlock; y++)
+                for (unsigned x = 0; x < widthInBlocks; x++)
+                    this->file << results.poc << ";" << x * blockSize << ";" << y * blockSize << ";"
+                               << blockSize << ";" << blockSize << ";1;" << *(data++) << "\n";
+        }
+        if (auto data = results.energyDiffPerBlock)
+        {
+            for (unsigned y = 0; y < heightInBlock; y++)
+                for (unsigned x = 0; x < widthInBlocks; x++)
+                    this->file << results.poc << ";" << x * blockSize << ";" << y * blockSize << ";"
+                               << blockSize << ";" << blockSize << ";2;" << *(data++) << "\n";
+        }
     }
-    if (auto data = results.energyPerBlock)
+    if (enableEntropy)
     {
-        for (unsigned y = 0; y < heightInBlock; y++)
-            for (unsigned x = 0; x < widthInBlocks; x++)
-                this->file << results.poc << ";" << x * blockSize << ";" << y * blockSize << ";"
-                           << blockSize << ";" << blockSize << ";1;" << *(data++) << "\n";
-    }
-    if (auto data = results.sadPerBlock)
-    {
-        for (unsigned y = 0; y < heightInBlock; y++)
-            for (unsigned x = 0; x < widthInBlocks; x++)
-                this->file << results.poc << ";" << x * blockSize << ";" << y * blockSize << ";"
-                           << blockSize << ";" << blockSize << ";2;" << *(data++) << "\n";
+        if (auto data = results.entropyPerBlock)
+        {
+            for (unsigned y = 0; y < heightInBlock; y++)
+                for (unsigned x = 0; x < widthInBlocks; x++)
+                    this->file << results.poc << ";" << x * blockSize << ";" << y * blockSize << ";"
+                               << blockSize << ";" << blockSize << ";1;" << *(data++) << "\n";
+        }
+        if (auto data = results.entropyDiffPerBlock)
+        {
+            for (unsigned y = 0; y < heightInBlock; y++)
+                for (unsigned x = 0; x < widthInBlocks; x++)
+                    this->file << results.poc << ";" << x * blockSize << ";" << y * blockSize << ";"
+                               << blockSize << ";" << blockSize << ";2;" << *(data++) << "\n";
+        }
     }
 }
 

@@ -50,7 +50,19 @@
 - `--no-simd`
 
 	VCA will use all detected CPU SIMD architectures by default. This will disable that detection.
-	
+
+- `--no-dctenergy`
+
+	Disable analysis of DCT-energy-based features (which is enabled by default).
+
+- `--no-entropy`
+
+	Disable analysis of entropy-based features (which is enabled by default).
+
+- `--no-edgedensity`
+
+	Disable analysis of edge density (which is enabled by default).
+
 - `--threads <integer>`
 
 	Specify the number of threads to use. Default: 0 (autodetect).

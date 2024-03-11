@@ -1,13 +1,9 @@
 /*****************************************************************************
  * Copyright (C) 2024 Christian Doppler Laboratory ATHENA
  *
- * Authors: Mandar Gurav <mandar@multicorewareinc.com>
- *          Deepthi Devaki Akkoorath <deepthidevaki@multicorewareinc.com>
- *          Mahesh Pittala <mahesh@multicorewareinc.com>
- *          Rajesh Paulraj <rajesh@multicorewareinc.com>
- *          Min Chen <min.chen@multicorewareinc.com>
- *          Praveen Kumar Tiwari <praveen@multicorewareinc.com>
- *          Nabajit Deka <nabajit@multicorewareinc.com>
+ * Authors: Amritha Premkumar <amritha.premkumar@ieee.org>
+ *          Prajit T Rajendran <prajit.rajendran@ieee.org>
+ *          Vignesh V Menon <vignesh.menon@hhi.fraunhofer.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,14 +21,20 @@
 
 #pragma once
 
-#include <cstdint>
+#include <vcaLib.h>
 
 namespace vca {
 
-typedef void (*dct_t)(const int16_t *src, int16_t *dst, intptr_t srcStride);
+double performEntropy(const unsigned blockSize,
+                      const unsigned bitDepth,
+                      const int16_t *pixelBuffer,
+                      CpuSimd cpuSimd,
+                      bool enableLowpass);
 
-void dct8_c(const int16_t *src, int16_t *dst, intptr_t srcStride, const unsigned bitDepth);
-void dct16_c(const int16_t *src, int16_t *dst, intptr_t srcStride, const unsigned bitDepth);
-void dct32_c(const int16_t *src, int16_t *dst, intptr_t srcStride, const unsigned bitDepth);
+double performEdgeDensity(const unsigned blockSize,
+                          const unsigned bitDepth,
+                          const int16_t *pixelBuffer,
+                          CpuSimd cpuSimd,
+                          bool enableLowpass);
 
 } // namespace vca
