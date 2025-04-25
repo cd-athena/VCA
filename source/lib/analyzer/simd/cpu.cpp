@@ -151,7 +151,14 @@ CpuSimd cpuDetectMaxSimd()
     return cpu;
 }
 
-#else
+#else  // If not x86 architecture
+
+bool isSimdSupported(CpuSimd)
+{
+    // For non-x86 architectures (like ARM), we don't support any x86 SIMD instructions
+    return false;
+}
+
 CpuSimd cpuDetectMaxSimd()
 {
     return CpuSimd::None;
