@@ -54,5 +54,13 @@ void vca_dct32_8bit_avx2(const int16_t *src, int16_t *dst, intptr_t srcStride)
 {
     assert(false);
 }
+}
 
+void vca_dct16_8bit_ssse3(const int16_t *src, int16_t *dst, intptr_t srcStride)
+{
+    assert(false);
+}
+void vca_dct32_8bit_ssse3(const int16_t *src, int16_t *dst, intptr_t srcStride)
+{
+    assert(false);
 }

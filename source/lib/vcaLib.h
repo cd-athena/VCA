@@ -56,7 +56,8 @@ enum class CpuSimd
     SSE2,
     SSSE3,
     SSE4,
-    AVX2
+    AVX2,
+    NEON  // ARM64 NEON SIMD
 };
 
 enum class vca_colorSpace

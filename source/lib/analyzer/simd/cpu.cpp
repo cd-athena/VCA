@@ -151,10 +151,46 @@ CpuSimd cpuDetectMaxSimd()
     return cpu;
 }
 
-#else
+#elif VCA_ARCH_ARM  // ARM64 architecture
+
+#if defined(__APPLE__)
+#include <sys/sysctl.h>
+#elif defined(__linux__)
+#include <sys/auxv.h>
+#ifndef HWCAP_ASIMD
+#define HWCAP_ASIMD (1 << 1)
+#endif
+#endif
+
+bool isSimdSupported(CpuSimd simd)
+{
+    if (simd == CpuSimd::NEON)
+    {
+        // NEON is mandatory on ARMv8/AArch64
+        return true;
+    }
+    // x86 SIMD instructions are not supported on ARM
+    return false;
+}
+
+CpuSimd cpuDetectMaxSimd()
+{
+    // NEON is mandatory on ARMv8 (AArch64), so we always return NEON
+    // In the future, we could detect optional extensions like DotProd here
+    return CpuSimd::NEON;
+}
+
+#else  // Unknown architecture
+
+bool isSimdSupported(CpuSimd)
+{
+    return false;
+}
+
 CpuSimd cpuDetectMaxSimd()
 {
     return CpuSimd::None;
 }
-#endif // if VCA_ARCH_X86
+
+#endif // VCA_ARCH_X86
 } // namespace vca
