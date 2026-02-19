@@ -10,7 +10,7 @@ target_include_directories(vcaLibSimd8bit PRIVATE ${LIB_SOURCE_DIR})
 target_include_directories(vcaLibSimd10bit PRIVATE ${LIB_SOURCE_DIR})
 target_include_directories(vcaLibSimd12bit PRIVATE ${LIB_SOURCE_DIR})
 
-if(DEFINED VCA_ARCH_X86 AND BUILD_WITH_NASM)
+if(DEFINED VCA_ARCH_X86 AND DEFINED BUILD_WITH_NASM)
     enable_language(ASM_NASM)
 
     target_sources(vcaLibSimd8bit
@@ -52,7 +52,33 @@ if(DEFINED VCA_ARCH_X86 AND BUILD_WITH_NASM)
         set_source_files_properties(dct-ssse3.cpp PROPERTIES COMPILE_FLAGS "-mssse3")
         set_source_files_properties(entropy.cpp PROPERTIES COMPILE_FLAGS "-mssse3")
     endif(GCC)
+elseif(DEFINED VCA_ARCH_ARM)
+    # ARM64 NEON implementation
+    message(STATUS "Building ARM64 NEON SIMD support")
+
+    target_sources(vcaLibSimd8bit
+        PRIVATE
+        arm/dct-neon.cpp
+        arm/entropy-neon.cpp
+    )
+    target_sources(vcaLibSimd10bit
+        PRIVATE
+        arm/dct-neon.cpp
+        arm/entropy-neon.cpp
+    )
+    target_sources(vcaLibSimd12bit
+        PRIVATE
+        arm/dct-neon.cpp
+        arm/entropy-neon.cpp
+    )
+
+    # Set bit depth defines for each target
+    target_compile_definitions(vcaLibSimd8bit PRIVATE BIT_DEPTH=8)
+    target_compile_definitions(vcaLibSimd10bit PRIVATE BIT_DEPTH=10)
+    target_compile_definitions(vcaLibSimd12bit PRIVATE BIT_DEPTH=12)
+
 else()
+    # Fallback: No SIMD support
     target_sources(vcaLibSimd8bit
         PRIVATE
         noAsmImpl8bit.cpp

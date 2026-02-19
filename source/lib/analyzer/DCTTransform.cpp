@@ -27,8 +27,13 @@
 
 #include <analyzer/DCTTransformsNative.h>
 #include <analyzer/common/common.h>
+#if defined(VCA_ARCH_X86)
 #include <analyzer/simd/dct-ssse3.h>
 #include <analyzer/simd/dct8.h>
+#endif
+#if defined(VCA_ARCH_ARM)
+#include <analyzer/simd/arm/dct-neon.h>
+#endif
 
 #include <cstring>
 
@@ -39,6 +44,7 @@ void performDCTBlockSize32(const unsigned bitDepth,
                            int16_t *coeffBuffer,
                            CpuSimd cpuSimd)
 {
+#if defined(VCA_ARCH_X86)
     if (cpuSimd == CpuSimd::AVX2)
     {
         if (bitDepth == 8)
@@ -58,6 +64,19 @@ void performDCTBlockSize32(const unsigned bitDepth,
             vca_dct32_12bit_ssse3(pixelBuffer, coeffBuffer, 32);
     }
     else
+#endif
+#if defined(VCA_ARCH_ARM)
+    if (cpuSimd == CpuSimd::NEON)
+    {
+        if (bitDepth == 8)
+            vca_dct32_8bit_neon(pixelBuffer, coeffBuffer, 32);
+        else if (bitDepth == 10)
+            vca_dct32_10bit_neon(pixelBuffer, coeffBuffer, 32);
+        else if (bitDepth == 12)
+            vca_dct32_12bit_neon(pixelBuffer, coeffBuffer, 32);
+    }
+    else
+#endif
         vca::dct32_c(pixelBuffer, coeffBuffer, 32, bitDepth);
 }
 
@@ -66,6 +85,7 @@ void performDCTBlockSize16(const unsigned bitDepth,
                            int16_t *coeffBuffer,
                            CpuSimd cpuSimd)
 {
+#if defined(VCA_ARCH_X86)
     if (cpuSimd == CpuSimd::AVX2)
     {
         if (bitDepth == 8)
@@ -85,6 +105,19 @@ void performDCTBlockSize16(const unsigned bitDepth,
             vca_dct16_12bit_ssse3(pixelBuffer, coeffBuffer, 16);
     }
     else
+#endif
+#if defined(VCA_ARCH_ARM)
+    if (cpuSimd == CpuSimd::NEON)
+    {
+        if (bitDepth == 8)
+            vca_dct16_8bit_neon(pixelBuffer, coeffBuffer, 16);
+        else if (bitDepth == 10)
+            vca_dct16_10bit_neon(pixelBuffer, coeffBuffer, 16);
+        else if (bitDepth == 12)
+            vca_dct16_12bit_neon(pixelBuffer, coeffBuffer, 16);
+    }
+    else
+#endif
         vca::dct16_c(pixelBuffer, coeffBuffer, 16, bitDepth);
 }
 
@@ -93,6 +126,7 @@ void performDCTBlockSize8(const unsigned bitDepth,
                           int16_t *coeffBuffer,
                           CpuSimd cpuSimd)
 {
+#if defined(VCA_ARCH_X86)
     if (cpuSimd == CpuSimd::AVX2)
     {
         if (bitDepth == 8)
@@ -121,6 +155,19 @@ void performDCTBlockSize8(const unsigned bitDepth,
             vca_dct8_12bit_sse2(pixelBuffer, coeffBuffer, 8);
     }
     else
+#endif
+#if defined(VCA_ARCH_ARM)
+    if (cpuSimd == CpuSimd::NEON)
+    {
+        if (bitDepth == 8)
+            vca_dct8_8bit_neon(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 10)
+            vca_dct8_10bit_neon(pixelBuffer, coeffBuffer, 8);
+        else if (bitDepth == 12)
+            vca_dct8_12bit_neon(pixelBuffer, coeffBuffer, 8);
+    }
+    else
+#endif
         vca::dct8_c(pixelBuffer, coeffBuffer, 8, bitDepth);
 }
 
@@ -144,6 +191,7 @@ void performLowpassDCTBlockSize16(const unsigned bitDepth,
         }
     }
 
+#if defined(VCA_ARCH_X86)
     if (cpuSimd == CpuSimd::AVX2)
     {
         if (bitDepth == 8)
@@ -172,6 +220,19 @@ void performLowpassDCTBlockSize16(const unsigned bitDepth,
             vca_dct8_12bit_sse2(avgBlock, coef, 8);
     }
     else
+#endif
+#if defined(VCA_ARCH_ARM)
+    if (cpuSimd == CpuSimd::NEON)
+    {
+        if (bitDepth == 8)
+            vca_dct8_8bit_neon(avgBlock, coef, 8);
+        else if (bitDepth == 10)
+            vca_dct8_10bit_neon(avgBlock, coef, 8);
+        else if (bitDepth == 12)
+            vca_dct8_12bit_neon(avgBlock, coef, 8);
+    }
+    else
+#endif
         vca::dct8_c(avgBlock, coef, 8, bitDepth);
 
     std::memset(dst, 0, 256 * sizeof(int16_t));
@@ -200,6 +261,7 @@ void performLowpassDCTBlockSize32(const unsigned bitDepth,
             totalSum += sum;
         }
 
+#if defined(VCA_ARCH_X86)
     if (cpuSimd == CpuSimd::AVX2)
     {
         if (bitDepth == 8)
@@ -219,6 +281,19 @@ void performLowpassDCTBlockSize32(const unsigned bitDepth,
             vca_dct16_12bit_ssse3(avgBlock, coef, 16);
     }
     else
+#endif
+#if defined(VCA_ARCH_ARM)
+    if (cpuSimd == CpuSimd::NEON)
+    {
+        if (bitDepth == 8)
+            vca_dct16_8bit_neon(avgBlock, coef, 16);
+        else if (bitDepth == 10)
+            vca_dct16_10bit_neon(avgBlock, coef, 16);
+        else if (bitDepth == 12)
+            vca_dct16_12bit_neon(avgBlock, coef, 16);
+    }
+    else
+#endif
         vca::dct16_c(avgBlock, coef, 16, bitDepth);
     std::memset(dst, 0, 1024 * sizeof(int16_t));
     for (int i = 0; i < 16; i++)
