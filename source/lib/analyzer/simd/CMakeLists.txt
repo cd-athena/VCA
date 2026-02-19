@@ -2,93 +2,75 @@
 # Each compilation will create functions with different names that we can
 # then all link to the library
 
-add_library(vcaLibSimd8bit STATIC "")
-add_library(vcaLibSimd10bit STATIC "")
-add_library(vcaLibSimd12bit STATIC "")
-
-target_include_directories(vcaLibSimd8bit PRIVATE ${LIB_SOURCE_DIR})
-target_include_directories(vcaLibSimd10bit PRIVATE ${LIB_SOURCE_DIR})
-target_include_directories(vcaLibSimd12bit PRIVATE ${LIB_SOURCE_DIR})
-
-if(DEFINED VCA_ARCH_X86 AND DEFINED BUILD_WITH_NASM)
-    enable_language(ASM_NASM)
-
-    target_sources(vcaLibSimd8bit
-        PRIVATE
-        dct8.asm
-        const-a.asm
-        cpu-a.asm
-        dct-ssse3.cpp
-        entropy.cpp
-    )
-    target_sources(vcaLibSimd10bit
-        PRIVATE
-        dct8.asm
-        const-a.asm
-        cpu-a.asm
-        dct-ssse3.cpp
-        entropy.cpp
-    )
-    target_sources(vcaLibSimd12bit
-        PRIVATE
-        dct8.asm
-        const-a.asm
-        cpu-a.asm
-        dct-ssse3.cpp
-        entropy.cpp
-    )
-
-    set_property(TARGET vcaLibSimd8bit PROPERTY COMPILE_FLAGS -DBIT_DEPTH=8)
-    set_property(TARGET vcaLibSimd10bit PROPERTY COMPILE_FLAGS -DBIT_DEPTH=10)
-    set_property(TARGET vcaLibSimd12bit PROPERTY COMPILE_FLAGS -DBIT_DEPTH=12)
-
-    if(APPLE)
-        set(CMAKE_ASM_NASM_FLAGS "-I\"${CMAKE_CURRENT_SOURCE_DIR}/\" -DPIC -DARCH_X86_64=1 -DPREFIX -DVCA_NS=vca")
-    else()
-        set(CMAKE_ASM_NASM_FLAGS "-I\"${CMAKE_CURRENT_SOURCE_DIR}/\" -DPIC -DARCH_X86_64=1 -DVCA_NS=vca")
-    endif()
-
-    if(GCC)
-        set_source_files_properties(dct-ssse3.cpp PROPERTIES COMPILE_FLAGS "-mssse3")
-        set_source_files_properties(entropy.cpp PROPERTIES COMPILE_FLAGS "-mssse3")
-    endif(GCC)
-elseif(DEFINED VCA_ARCH_ARM)
-    # ARM64 NEON implementation
-    message(STATUS "Building ARM64 NEON SIMD support")
-
-    target_sources(vcaLibSimd8bit
-        PRIVATE
-        arm/dct-neon.cpp
-        arm/entropy-neon.cpp
-    )
-    target_sources(vcaLibSimd10bit
-        PRIVATE
-        arm/dct-neon.cpp
-        arm/entropy-neon.cpp
-    )
-    target_sources(vcaLibSimd12bit
-        PRIVATE
-        arm/dct-neon.cpp
-        arm/entropy-neon.cpp
-    )
-
-    # Set bit depth defines for each target
-    target_compile_definitions(vcaLibSimd8bit PRIVATE BIT_DEPTH=8)
-    target_compile_definitions(vcaLibSimd10bit PRIVATE BIT_DEPTH=10)
-    target_compile_definitions(vcaLibSimd12bit PRIVATE BIT_DEPTH=12)
-
-else()
-    # Fallback: No SIMD support
-    target_sources(vcaLibSimd8bit
-        PRIVATE
-        noAsmImpl8bit.cpp
-    )
-    target_sources(vcaLibSimd10bit
-        PRIVATE
-        noAsmImpl10bit.cpp
-    )
-    target_sources(vcaLibSimd12bit
-        PRIVATE
-        noAsmImpl12bit.cpp
-    )
+if (NOT SIMD_ENABLED)
+    message(STATUS "SIMD: disabled: Skipping simd library targets")
+    return()
 endif()
+
+# Helper to avoid repetition
+function(vca_add_simd_lib target_name bitdepth)
+    add_library(${target_name} STATIC "")
+    set_target_properties(${target_name} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    target_include_directories(${target_name} PRIVATE ${LIB_SOURCE_DIR})
+    target_compile_definitions(${target_name} PRIVATE BIT_DEPTH=${bitdepth})
+
+    if (VCA_ARCH_X86 AND NASM_ENABLED)
+        # x86 + NASM path
+        # (ASM_NASM should already be enabled by the parent; do not error if called again)
+        enable_language(ASM_NASM)
+
+        # Common NASM flags
+        if (APPLE)
+            # Prefix is required on macOS; keep ARCH and namespace defines
+            set(CMAKE_ASM_NASM_FLAGS
+                "${CMAKE_ASM_NASM_FLAGS} -I\"${CMAKE_CURRENT_SOURCE_DIR}/\" -DPIC -DARCH_X86_64=1 -DPREFIX -DVCA_NS=vca")
+        else()
+            set(CMAKE_ASM_NASM_FLAGS
+                "${CMAKE_ASM_NASM_FLAGS} -I\"${CMAKE_CURRENT_SOURCE_DIR}/\" -DPIC -DARCH_X86_64=1 -DVCA_NS=vca")
+        endif()
+
+        target_sources(${target_name}
+            PRIVATE
+                dct8.asm
+                const-a.asm
+                cpu-a.asm
+                dct-ssse3.cpp
+                entropy.cpp
+        )
+
+        # GCC/Clang need -mssse3 for the .cpp sources; MSVC does not understand this flag
+        if (GCC)
+            set_source_files_properties(dct-ssse3.cpp PROPERTIES COMPILE_FLAGS "-mssse3")
+            set_source_files_properties(entropy.cpp   PROPERTIES COMPILE_FLAGS "-mssse3")
+        endif()
+
+    elseif (VCA_ARCH_ARM)
+        # ARM NEON intrinsics path (no assembler required if your code is intrinsics-only)
+        message(STATUS "SIMD: ${target_name} -> building ARM NEON intrinsics")
+        target_sources(${target_name}
+            PRIVATE
+                arm/dct-neon.cpp
+                arm/entropy-neon.cpp
+        )
+
+        # If you need extra NEON flags for GCC/Clang, you can add them here:
+        # target_compile_options(${target_name} PRIVATE -mfpu=neon)
+
+    else()
+        # Defensive fallback (should not normally happen because parent only adds this dir when SIMD_ENABLED=ON)
+        message(WARNING "SIMD: unknown arch or assembler missing; using scalar no-ASM fallback for ${target_name}")
+        if (bitdepth EQUAL 8)
+            target_sources(${target_name} PRIVATE noAsmImpl8bit.cpp)
+        elseif (bitdepth EQUAL 10)
+            target_sources(${target_name} PRIVATE noAsmImpl10bit.cpp)
+        elseif (bitdepth EQUAL 12)
+            target_sources(${target_name} PRIVATE noAsmImpl12bit.cpp)
+        endif()
+    endif()
+endfunction()
+
+# Create the three bit-depth variants
+vca_add_simd_lib(vcaLibSimd8bit  8)
+vca_add_simd_lib(vcaLibSimd10bit 10)
+vca_add_simd_lib(vcaLibSimd12bit 12)
+
