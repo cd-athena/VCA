@@ -65,8 +65,8 @@ Analyzer::Analyzer(vca_param cfg)
             const auto requested = std::string(CpuSimdMapper.getName(this->cfg.cpuSimd));
             this->cfg.cpuSimd    = cpuDetectMaxSimd();
             log(cfg, LogLevel::Warning,
-                "The selected SIMD '" + requested + "' is not available on this CPU. "
-                "Lowering to '" + std::string(CpuSimdMapper.getName(this->cfg.cpuSimd))
+                "The selected SIMD '" + requested + "' is not available on this CPU. " +
+                "Lowering to '" + std::string(CpuSimdMapper.getName(this->cfg.cpuSimd)) +
                 "'.");
         }
     }
