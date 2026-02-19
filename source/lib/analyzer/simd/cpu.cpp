@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2024 Christian Doppler Laboratory ATHENA
+ * Copyright (C) 2026 Christian Doppler Laboratory ATHENA
  *
  * Authors: Loren Merritt <lorenm@u.washington.edu>
  *          Laurent Aimar <fenrir@via.ecp.fr>
@@ -87,14 +87,14 @@ void vca_intel_cpu_indicator_init(void) {}
 #endif // ifdef __INTEL_COMPILER
 }
 
-#if ENABLE_NASM
+#if NASM_ENABLED
 extern "C" {
 /* cpu-a.asm */
 int vca_cpu_cpuid_test(void);
 void vca_cpu_cpuid(uint32_t op, uint32_t *eax, uint32_t *ebx, uint32_t *ecx, uint32_t *edx);
 uint64_t vca_cpu_xgetbv(int xcr);
 }
-#endif
+#endif // NASM_ENABLED
 
 #if defined(_MSC_VER)
 #pragma warning(disable : 4309) // truncation of constant value
@@ -102,15 +102,25 @@ uint64_t vca_cpu_xgetbv(int xcr);
 
 bool isSimdSupported(CpuSimd simd)
 {
+#if defined(VCA_DISABLE_SIMD) && VCA_DISABLE_SIMD
+    // SIMD globally disabled by build; only scalar is considered supported.
+    return (simd == CpuSimd::None);
+#else
     const auto simdLevelIndex             = CpuSimdMapper.indexOf(simd);
     const auto maxSupportedSimdLevelIndex = CpuSimdMapper.indexOf(cpuDetectMaxSimd());
     return maxSupportedSimdLevelIndex >= simdLevelIndex;
+#endif
 }
 
 CpuSimd cpuDetectMaxSimd()
 {
+#if defined(VCA_DISABLE_SIMD) && VCA_DISABLE_SIMD
+    return CpuSimd::None;
+#endif
+
     auto cpu = CpuSimd::SSSE3;
-#if ENABLE_NASM
+
+#if NASM_ENABLED
     uint32_t eax, ebx, ecx, edx;
     uint32_t vendor[4] = {0};
     uint32_t max_basic_cap;
@@ -118,7 +128,7 @@ CpuSimd cpuDetectMaxSimd()
 
 #if !X86_64
     if (!vca_cpu_cpuid_test())
-        return 0;
+        return CpuSimd::None;
 #endif
 
     vca_cpu_cpuid(0, &max_basic_cap, vendor + 0, vendor + 2, vendor + 1);
@@ -130,11 +140,11 @@ CpuSimd cpuDetectMaxSimd()
         // Not even mmx supported
         return cpu;
     if (edx & 0x04000000)
-        cpu = CpuSimd::SSE2;
+        cpu = CpuSimd::SSE2; // SSE2
     if (ecx & 0x00000200)
-        cpu = CpuSimd::SSSE3;
+        cpu = CpuSimd::SSSE3; // SSEE3
     if (ecx & 0x00080000)
-        cpu = CpuSimd::SSE4;
+        cpu = CpuSimd::SSE4; // SSE4.1
 
     if (max_basic_cap >= 7)
     {
@@ -184,13 +194,22 @@ CpuSimd cpuDetectMaxSimd()
 
 bool isSimdSupported(CpuSimd)
 {
+#if defined(VCA_DISABLE_SIMD) && VCA_DISABLE_SIMD
     return false;
+#else
+    return false;
+#endif
 }
 
 CpuSimd cpuDetectMaxSimd()
 {
+#if defined(VCA_DISABLE_SIMD) && VCA_DISABLE_SIMD
     return CpuSimd::None;
+#else
+    return CpuSimd::None;
+#endif
 }
+
 
 #endif // VCA_ARCH_X86
 } // namespace vca

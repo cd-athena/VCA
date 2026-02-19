@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2022 Christian Doppler Laboratory ATHENA
+ * Copyright (C) 2026 Christian Doppler Laboratory ATHENA
  *
  * Authors: Steve Borho <steve@borho.org>
  *          Christian Feldmann  <christian.feldmann@bitmovin.com>

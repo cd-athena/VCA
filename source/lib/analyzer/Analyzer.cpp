@@ -1,4 +1,5 @@
-/* Copyright (C) 2024 Christian Doppler Laboratory ATHENA
+/*****************************************************************************
+ * Copyright (C) 2026 Christian Doppler Laboratory ATHENA
  *
  * Authors: Christian Feldmann <christian.feldmann@bitmovin.com>
  *
@@ -47,30 +48,42 @@ Analyzer::Analyzer(vca_param cfg)
         throw std::invalid_argument("Invalid bit depth");
     }
 
+#if defined (VCA_DISABLE_SIMD) && VCA_DISABLE_SIMD // Build-time scalar-only: force None, ignore user request
+     this->cfg.cpuSimd = CpuSimd::None;
+     log(cfg, LogLevel::Info, "SIMD is disabled at build time. Using scalar implementations.");
+#else
     if (this->cfg.cpuSimd == CpuSimd::Autodetect)
     {
         this->cfg.cpuSimd = cpuDetectMaxSimd();
-        log(cfg, LogLevel::Info, "Autodetected SIMD.");
+        log(cfg, LogLevel::Info,
+             "Autodetected SIMD: " + std::string(CpuSimdMapper.getName(this->cfg.cpuSimd)));
     }
     else if (this->cfg.cpuSimd != CpuSimd::None)
     {
         if (!isSimdSupported(this->cfg.cpuSimd))
         {
-            this->cfg.cpuSimd = cpuDetectMaxSimd();
-            log(cfg,
-                LogLevel::Warning,
-                "The selected SIMD is not available on this CPU (). Lowering it.");
+            const auto requested = std::string(CpuSimdMapper.getName(this->cfg.cpuSimd));
+            this->cfg.cpuSimd    = cpuDetectMaxSimd();
+            log(cfg, LogLevel::Warning,
+                "The selected SIMD '" + requested + "' is not available on this CPU. "
+                "Lowering to '" + std::string(CpuSimdMapper.getName(this->cfg.cpuSimd))
+                "'.");
         }
     }
+#endif
     log(cfg, LogLevel::Info, "Using SIMD " + CpuSimdMapper.getName(this->cfg.cpuSimd));
 
     if (cfg.nrFrameThreads == 0)
     {
-        cfg.nrFrameThreads = std::thread::hardware_concurrency();
-        log(cfg, LogLevel::Info, "Autodetect nr threads " + std::to_string(cfg.nrFrameThreads));
+        auto hc            = std::thread::hardware_concurrency();
+        cfg.nrFrameThreads = hc ? hc : 1;
+        log(cfg, LogLevel::Info, "Autodetected nr threads " + std::to_string(cfg.nrFrameThreads));
+
     }
 
-    auto nrThreads = cfg.nrFrameThreads;
+    // Keep internal cfg in sync with the effective value
+    this->cfg.nrFrameThreads = cfg.nrFrameThreads;
+    auto nrThreads = this->cfg.nrFrameThreads;
     log(cfg, LogLevel::Info, "Starting " + std::to_string(nrThreads) + " threads");
     for (unsigned i = 0; i < nrThreads; i++)
     {
@@ -132,7 +145,7 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
             auto entropyDiff     = result->entropyDiff;
             auto entropyDiffPrev = this->previousResult->entropyDiff;
             if (this->previousResult->entropyDiff > 0)
-                result->entropyEpsilon = abs(entropyDiffPrev - entropyDiff);
+                result->entropyEpsilon = std::abs(entropyDiffPrev - entropyDiff);
         }
     }
 
@@ -185,7 +198,7 @@ vca_result Analyzer::pullResult(vca_frame_results *outputResult)
     if (this->cfg.enableEntropy)
     {
         outputResult->averageEntropy = result->entropyY;
-        outputResult->entropyDiff     = result->entropyDiff;
+        outputResult->entropyDiff    = result->entropyDiff;
         outputResult->entropyEpsilon = result->entropyEpsilon;
 
         if (outputResult->entropyPerBlock)
@@ -245,16 +258,14 @@ bool Analyzer::checkFrame(const vca_frame *frame)
     {
         if (info.bitDepth != 8 && info.bitDepth != 10 && info.bitDepth != 12)
         {
-            log(this->cfg,
-                LogLevel::Error,
+            log(this->cfg, LogLevel::Error,
                 "Frame with invalid bit " + std::to_string(info.bitDepth)
                     + " depth provided. Must be 8, 10, or 12.");
             return false;
         }
         if (info.width == 0 || info.width % 2 != 0 || info.height == 0 || info.height % 2 != 0)
         {
-            log(this->cfg,
-                LogLevel::Error,
+            log(this->cfg, LogLevel::Error,
                 "Frame with invalid size " + std::to_string(info.width) + "x"
                     + std::to_string(info.height) + " depth provided");
             return false;
@@ -265,8 +276,7 @@ bool Analyzer::checkFrame(const vca_frame *frame)
     if (info.bitDepth != this->frameInfo->bitDepth || info.width != this->frameInfo->width
         || info.height != this->frameInfo->height || info.colorspace != this->frameInfo->colorspace)
     {
-        log(this->cfg,
-            LogLevel::Error,
+        log(this->cfg, LogLevel::Error,
             "Frame settings differ from the settings that the library was configured with");
         return false;
     }

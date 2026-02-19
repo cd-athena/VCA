@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2024 Christian Doppler Laboratory ATHENA
+ * Copyright (C) 2026 Christian Doppler Laboratory ATHENA
  *
  * Authors: Mandar Gurav <mandar@multicorewareinc.com>
  *          Deepthi Devaki Akkoorath <deepthidevaki@multicorewareinc.com>
@@ -27,12 +27,15 @@
 
 #include <analyzer/DCTTransformsNative.h>
 #include <analyzer/common/common.h>
-#if defined(VCA_ARCH_X86)
-#include <analyzer/simd/dct-ssse3.h>
-#include <analyzer/simd/dct8.h>
+
+#if !defined(VCA_DISABLE_SIMD)
+#if defined (VCA_ARCH_X86)
+    #include<analyzer/simd/dct-ssse3.h>
+    #include<analyzer/simd/dct8.h>
 #endif
-#if defined(VCA_ARCH_ARM)
-#include <analyzer/simd/arm/dct-neon.h>
+#if defined (VCA_ARCH_ARM)
+    #include<analyzer/simd/arm/dct-neon.h>
+#endif
 #endif
 
 #include <cstring>
@@ -44,6 +47,7 @@ void performDCTBlockSize32(const unsigned bitDepth,
                            int16_t *coeffBuffer,
                            CpuSimd cpuSimd)
 {
+#if !defined(VCA_DISABLE_SIMD)
 #if defined(VCA_ARCH_X86)
     if (cpuSimd == CpuSimd::AVX2)
     {
@@ -77,6 +81,7 @@ void performDCTBlockSize32(const unsigned bitDepth,
     }
     else
 #endif
+#endif
         vca::dct32_c(pixelBuffer, coeffBuffer, 32, bitDepth);
 }
 
@@ -85,6 +90,7 @@ void performDCTBlockSize16(const unsigned bitDepth,
                            int16_t *coeffBuffer,
                            CpuSimd cpuSimd)
 {
+#if !defined(VCA_DISABLE_SIMD)
 #if defined(VCA_ARCH_X86)
     if (cpuSimd == CpuSimd::AVX2)
     {
@@ -118,6 +124,7 @@ void performDCTBlockSize16(const unsigned bitDepth,
     }
     else
 #endif
+#endif
         vca::dct16_c(pixelBuffer, coeffBuffer, 16, bitDepth);
 }
 
@@ -126,6 +133,7 @@ void performDCTBlockSize8(const unsigned bitDepth,
                           int16_t *coeffBuffer,
                           CpuSimd cpuSimd)
 {
+#if !defined(VCA_DISABLE_SIMD)
 #if defined(VCA_ARCH_X86)
     if (cpuSimd == CpuSimd::AVX2)
     {
@@ -168,6 +176,7 @@ void performDCTBlockSize8(const unsigned bitDepth,
     }
     else
 #endif
+#endif
         vca::dct8_c(pixelBuffer, coeffBuffer, 8, bitDepth);
 }
 
@@ -191,6 +200,7 @@ void performLowpassDCTBlockSize16(const unsigned bitDepth,
         }
     }
 
+#if !defined(VCA_DISABLE_SIMD)
 #if defined(VCA_ARCH_X86)
     if (cpuSimd == CpuSimd::AVX2)
     {
@@ -233,6 +243,7 @@ void performLowpassDCTBlockSize16(const unsigned bitDepth,
     }
     else
 #endif
+#endif
         vca::dct8_c(avgBlock, coef, 8, bitDepth);
 
     std::memset(dst, 0, 256 * sizeof(int16_t));
@@ -261,6 +272,7 @@ void performLowpassDCTBlockSize32(const unsigned bitDepth,
             totalSum += sum;
         }
 
+#if !defined(VCA_DISABLE_SIMD)
 #if defined(VCA_ARCH_X86)
     if (cpuSimd == CpuSimd::AVX2)
     {
@@ -293,6 +305,7 @@ void performLowpassDCTBlockSize32(const unsigned bitDepth,
             vca_dct16_12bit_neon(avgBlock, coef, 16);
     }
     else
+#endif
 #endif
         vca::dct16_c(avgBlock, coef, 16, bitDepth);
     std::memset(dst, 0, 1024 * sizeof(int16_t));

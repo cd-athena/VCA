@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2024 Christian Doppler Laboratory ATHENA
+ * Copyright (C) 2026 Christian Doppler Laboratory ATHENA
  *
  * Authors: Loren Merritt <lorenm@u.washington.edu>
  *          Steve Borho <steve@borho.org>
@@ -22,28 +22,43 @@
 
 #include <vcaLib.h>
 
-#define VCA_CPU_SSE2 (1 << 0)
-#define VCA_CPU_SSSE3 (1 << 1)
-#define VCA_CPU_SSE4 (1 << 2)
-#define VCA_CPU_AVX2 (1 << 3)
-#define VCA_CPU_NEON (1 << 4)
+#define VCA_CPU_SSE2         (1 << 0)
+#define VCA_CPU_SSSE3        (1 << 1)
+#define VCA_CPU_SSE4         (1 << 2)
+#define VCA_CPU_AVX2         (1 << 3)
+#define VCA_CPU_NEON         (1 << 4)
 #define VCA_CPU_NEON_DOTPROD (1 << 5)
 
+
 // from primitives.cpp
-#if ENABLE_NASM
-extern "C" void vca_cpu_emms(void);
+#if defined(NASM_ENABLED) && NASM_ENABLED
+extern "C" void vca_cpu_emms(void); // provided by primitives/asm when NASM is enabled
 #endif
 
-#if _MSC_VER
-#include <mmintrin.h>
-#define vca_emms() _mm_empty()
-#elif __GNUC__
-// Cannot use _mm_empty() directly without compiling all the source with
-// a fixed CPU arch, which we would like to avoid at the moment
-#define vca_emms() vca_cpu_emms()
+#if defined(VCA_DISABLE_SIMD) && VCA_DISABLE_SIMD
+// SIMD is disabled at build time -> no-op
+#define vca_emms() ((void) 0)
 #else
-#define vca_emms() vca_cpu_emms()
-#endif
+    #if defined(_MSC_VER)
+        #include <mmintrin.h>
+        #define vca_emms() _mm_empty()
+    #elif defined(__GNUC__) || defined(__clang__)
+        #if defined(NASM_ENABLED) && NASM_ENABLED
+            // GCC/Clang with NASM path available -> call the asm emms
+            #define vca_emms() vca_cpu_emms()
+        #else
+            // No assembler available -> nothing to clear explicitly
+            #define vca_emms() ((void) 0)
+        #endif
+    #else
+    // Fallback: if assembler path is present, call it; otherwise no-op
+        #if defined(NASM_ENABLED) && NASM_ENABLED
+            #define vca_emms() vca_cpu_emms()
+        #else
+            #define vca_emms() ((void) 0)
+        #endif
+    #endif
+#endif // VCA_DISABLE_SIMD
 
 namespace vca {
 

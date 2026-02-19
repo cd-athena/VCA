@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2024 Christian Doppler Laboratory ATHENA
+ * Copyright (C) 2026 Christian Doppler Laboratory ATHENA
  *
  * Authors: Amritha Premkumar <amritha.premkumar@ieee.org>
  *          Prajit T Rajendran <prajit.rajendran@ieee.org>
