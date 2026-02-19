@@ -188,12 +188,19 @@ void copyPixelValuesToBufferWithPadding8Bit(unsigned blockSize,
     {
         unsigned x     = 0;
         bufferLastLine = buffer;
+
+        // Copy valid pixels
         for (; x < blockSize - paddingRight; x++)
             *(buffer++) = static_cast<int16_t>(src[x]);
-        const auto lastValue = static_cast<int16_t>(src[x]);
+
+        // Replicate the last valid pixel to the right
+        const auto lastValue = static_cast<int16_t>(src[x - 1]);
+
         for (; x < blockSize; x++)
             *(buffer++) = lastValue;
     }
+
+    // Bottom padding: replicate the last valid line
     for (; y < blockSize; y++)
     {
         for (unsigned x = 0; x < blockSize; x++)
