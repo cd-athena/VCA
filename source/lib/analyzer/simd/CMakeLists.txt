@@ -10,7 +10,7 @@ target_include_directories(vcaLibSimd8bit PRIVATE ${LIB_SOURCE_DIR})
 target_include_directories(vcaLibSimd10bit PRIVATE ${LIB_SOURCE_DIR})
 target_include_directories(vcaLibSimd12bit PRIVATE ${LIB_SOURCE_DIR})
 
-if(BUILD_WITH_NASM)
+if(DEFINED VCA_ARCH_X86 AND DEFINED BUILD_WITH_NASM)
     enable_language(ASM_NASM)
 
     target_sources(vcaLibSimd8bit
@@ -19,7 +19,7 @@ if(BUILD_WITH_NASM)
         const-a.asm
         cpu-a.asm
         dct-ssse3.cpp
-		entropy.cpp
+        entropy.cpp
     )
     target_sources(vcaLibSimd10bit
         PRIVATE
@@ -27,7 +27,7 @@ if(BUILD_WITH_NASM)
         const-a.asm
         cpu-a.asm
         dct-ssse3.cpp
-		entropy.cpp
+        entropy.cpp
     )
     target_sources(vcaLibSimd12bit
         PRIVATE
@@ -35,7 +35,7 @@ if(BUILD_WITH_NASM)
         const-a.asm
         cpu-a.asm
         dct-ssse3.cpp
-		entropy.cpp
+        entropy.cpp
     )
 
     set_property(TARGET vcaLibSimd8bit PROPERTY COMPILE_FLAGS -DBIT_DEPTH=8)
@@ -50,9 +50,35 @@ if(BUILD_WITH_NASM)
 
     if(GCC)
         set_source_files_properties(dct-ssse3.cpp PROPERTIES COMPILE_FLAGS "-mssse3")
-		set_source_files_properties(entropy.cpp PROPERTIES COMPILE_FLAGS "-mssse3")
+        set_source_files_properties(entropy.cpp PROPERTIES COMPILE_FLAGS "-mssse3")
     endif(GCC)
+elseif(DEFINED VCA_ARCH_ARM)
+    # ARM64 NEON implementation
+    message(STATUS "Building ARM64 NEON SIMD support")
+
+    target_sources(vcaLibSimd8bit
+        PRIVATE
+        arm/dct-neon.cpp
+        arm/entropy-neon.cpp
+    )
+    target_sources(vcaLibSimd10bit
+        PRIVATE
+        arm/dct-neon.cpp
+        arm/entropy-neon.cpp
+    )
+    target_sources(vcaLibSimd12bit
+        PRIVATE
+        arm/dct-neon.cpp
+        arm/entropy-neon.cpp
+    )
+
+    # Set bit depth defines for each target
+    target_compile_definitions(vcaLibSimd8bit PRIVATE BIT_DEPTH=8)
+    target_compile_definitions(vcaLibSimd10bit PRIVATE BIT_DEPTH=10)
+    target_compile_definitions(vcaLibSimd12bit PRIVATE BIT_DEPTH=12)
+
 else()
+    # Fallback: No SIMD support
     target_sources(vcaLibSimd8bit
         PRIVATE
         noAsmImpl8bit.cpp
@@ -65,4 +91,4 @@ else()
         PRIVATE
         noAsmImpl12bit.cpp
     )
-endif(BUILD_WITH_NASM)
+endif()

@@ -26,6 +26,8 @@
 #define VCA_CPU_SSSE3 (1 << 1)
 #define VCA_CPU_SSE4 (1 << 2)
 #define VCA_CPU_AVX2 (1 << 3)
+#define VCA_CPU_NEON (1 << 4)
+#define VCA_CPU_NEON_DOTPROD (1 << 5)
 
 // from primitives.cpp
 #if ENABLE_NASM
