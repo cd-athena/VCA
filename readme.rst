@@ -5,15 +5,25 @@ VCA — Video Complexity Analyzer
 .. raw:: html
 
    <p align="center">
+
+     <!-- Pretty platform badges (Shields.io) -->
+     <img src="https://img.shields.io/badge/Ubuntu-Build-success?logo=ubuntu&logoColor=white" alt="Ubuntu Label">
+     <img src="https://img.shields.io/badge/macOS-Build-success?logo=apple&logoColor=white&color=black" alt="macOS Label">
+     <img src="https://img.shields.io/badge/Windows-Build-success?logo=windows&logoColor=white&color=0078D6" alt="Windows Label">
+
+     <br>
+
+     <!-- REAL CI STATUS badges -->
      <a href="https://github.com/cd-athena/VCA/actions/workflows/Build.yml?query=matrix.os:ubuntu*">
-       <img src="https://img.shields.io/badge/Ubuntu-Build-success?logo=ubuntu&logoColor=white" alt="Ubuntu Build">
+       <img src="https://github.com/cd-athena/VCA/actions/workflows/Build.yml/badge.svg?query=matrix.os:ubuntu*" alt="Ubuntu CI Status">
      </a>
      <a href="https://github.com/cd-athena/VCA/actions/workflows/Build.yml?query=matrix.os:macos*">
-       <img src="https://img.shields.io/badge/macOS-Build-success?logo=apple&logoColor=white&color=black" alt="macOS Build">
+       <img src="https://github.com/cd-athena/VCA/actions/workflows/Build.yml/badge.svg?query=matrix.os:macos*" alt="macOS CI Status">
      </a>
      <a href="https://github.com/cd-athena/VCA/actions/workflows/Build.yml?query=matrix.os:windows*">
-       <img src="https://img.shields.io/badge/Windows-Build-success?logo=windows&logoColor=white&color=0078D6" alt="Windows Build">
+       <img src="https://github.com/cd-athena/VCA/actions/workflows/Build.yml/badge.svg?query=matrix.os:windows*" alt="Windows CI Status">
      </a>
+
    </p>
 
 
