@@ -87,4 +87,7 @@ VCA_API vca_result vca_shot_detection(const vca_shot_detection_param &param,
     return vca::shot_detection(param, frames, num_frames);
 }
 
-const char *vca_version_str = XSTR(VCA_VERSION);
+#ifndef VCA_VERSION_STR
+#define VCA_VERSION_STR "unknown"
+#endif
+VCA_API const char *vca_version_str = VCA_VERSION_STR;

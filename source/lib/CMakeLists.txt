@@ -71,8 +71,6 @@ else()
 endif()
 
 message(STATUS "VCA version: ${VCA_VERSION}")
-list(APPEND VFLAG "-DVCA_VERSION=${VCA_VERSION}")
-set_source_files_properties(vcaLib.cpp PROPERTIES COMPILE_FLAGS ${VFLAG})
 
 find_package(Threads REQUIRED)
 
@@ -202,20 +200,12 @@ set(VCA_LIB_PUBLIC_HEADERS
 set(VCA_LIB_SOURCES
     vcaLib.cpp
 )
-# Carry version define into both variants
-list(APPEND VFLAG "-DVCA_VERSION=${VCA_VERSION}")
-set_source_files_properties(${VCA_LIB_SOURCES} PROPERTIES COMPILE_FLAGS "${VFLAG}")
 
 function(vca_configure_lib tgt)
-    # Headers visible to consumers
     target_include_directories(${tgt} PUBLIC ${LIB_SOURCE_DIR})
-
-    # If SIMD is not enabled, let sources choose scalar paths
     if (NOT SIMD_ENABLED)
         target_compile_definitions(${tgt} PRIVATE VCA_DISABLE_SIMD=1)
     endif()
-
-    # Link core and optional SIMD libs; PUBLIC so static variant propagates
     target_link_libraries(${tgt} PUBLIC vcaInternal)
     if (SIMD_ENABLED)
         if (TARGET vcaLibSimd8bit OR TARGET vcaLibSimd10bit OR TARGET vcaLibSimd12bit)
@@ -226,7 +216,6 @@ function(vca_configure_lib tgt)
             )
         endif()
     endif()
-    # Consistent output basename for both variants
     set_target_properties(${tgt} PROPERTIES OUTPUT_NAME vcaLib)
 endfunction()
 
@@ -245,6 +234,16 @@ if (ENABLE_SHARED_BUILD)
     # On Windows we define export macro
     target_compile_definitions(vcaLib_shared PRIVATE VCA_LIB_SHARED=1 VCA_LIB_EXPORTS=1)
 endif()
+
+# Ensure the string is quoted for the compiler, regardless of special chars
+if (TARGET vcaLib_shared)
+  target_compile_definitions(vcaLib_shared PRIVATE VCA_VERSION_STR="${VCA_VERSION}")
+endif()
+
+if (TARGET vcaLib_static)
+  target_compile_definitions(vcaLib_static PRIVATE VCA_VERSION_STR="${VCA_VERSION}")
+endif()
+
 
 # Backward-compatible logical target that existing code links to
 if (ENABLE_SHARED_BUILD)
