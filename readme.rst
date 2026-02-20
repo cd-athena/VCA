@@ -1,6 +1,21 @@
-=================
-VCA
-=================
+=========================================
+VCA — Video Complexity Analyzer
+=========================================
+
+.. raw:: html
+
+   <p align="center">
+     <a href="https://github.com/cd-athena/VCA/actions/workflows/Build.yml?query=matrix.os:ubuntu*">
+       <img src="https://img.shields.io/badge/Ubuntu-Build-success?logo=ubuntu&logoColor=white" alt="Ubuntu Build">
+     </a>
+     <a href="https://github.com/cd-athena/VCA/actions/workflows/Build.yml?query=matrix.os:macos*">
+       <img src="https://img.shields.io/badge/macOS-Build-success?logo=apple&logoColor=white&color=black" alt="macOS Build">
+     </a>
+     <a href="https://github.com/cd-athena/VCA/actions/workflows/Build.yml?query=matrix.os:windows*">
+       <img src="https://img.shields.io/badge/Windows-Build-success?logo=windows&logoColor=white&color=0078D6" alt="Windows Build">
+     </a>
+   </p>
+
 
 | **Read:** | `Online documentation <https://cd-athena.github.io/VCA/>`_
 | **Interact:** | `Report an issue <https://github.com/cd-athena/VCA/issues/new>`_
