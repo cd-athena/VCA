@@ -25,7 +25,7 @@
 #define XSTR(x) STR(x)
 #define STR(x) #x
 
-DLL_PUBLIC vca_analyzer *vca_analyzer_open(vca_param param)
+VCA_API vca_analyzer *vca_analyzer_open(vca_param param)
 {
     try
     {
@@ -38,7 +38,7 @@ DLL_PUBLIC vca_analyzer *vca_analyzer_open(vca_param param)
     }
 }
 
-DLL_PUBLIC vca_result vca_analyzer_push(vca_analyzer *enc, vca_frame *frame)
+VCA_API vca_result vca_analyzer_push(vca_analyzer *enc, vca_frame *frame)
 {
     if (enc == nullptr)
         return vca_result::VCA_ERROR;
@@ -50,13 +50,13 @@ DLL_PUBLIC vca_result vca_analyzer_push(vca_analyzer *enc, vca_frame *frame)
     return analyzer->pushFrame(frame);
 }
 
-DLL_PUBLIC bool vca_result_available(vca_analyzer *enc)
+VCA_API bool vca_result_available(vca_analyzer *enc)
 {
     auto analyzer = (vca::Analyzer *) (enc);
     return analyzer->resultAvailable();
 }
 
-DLL_PUBLIC vca_result vca_analyzer_pull_frame_result(vca_analyzer *enc, vca_frame_results *result)
+VCA_API vca_result vca_analyzer_pull_frame_result(vca_analyzer *enc, vca_frame_results *result)
 {
     if (enc == nullptr || result == nullptr)
         return vca_result::VCA_ERROR;
@@ -68,13 +68,13 @@ DLL_PUBLIC vca_result vca_analyzer_pull_frame_result(vca_analyzer *enc, vca_fram
     return analyzer->pullResult(result);
 }
 
-DLL_PUBLIC void vca_analyzer_close(vca_analyzer *enc)
+VCA_API void vca_analyzer_close(vca_analyzer *enc)
 {
     auto analyzer = (vca::Analyzer *) enc;
     delete analyzer;
 }
 
-DLL_PUBLIC vca_result vca_shot_detection(const vca_shot_detection_param &param,
+VCA_API vca_result vca_shot_detection(const vca_shot_detection_param &param,
                                          vca_frame_results *frames,
                                          size_t num_frames)
 {

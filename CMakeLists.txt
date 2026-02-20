@@ -45,6 +45,8 @@ option(ENABLE_NASM                 "Enable use of nasm assembly on x86 if availa
 option(VCA_ARM_INTRINSICS_ONLY     "On ARM, use NEON intrinsics only (no ARM assembler files)" ON)
 option(ENABLE_TEST                 "Enable build of Tests" OFF)
 option(ENABLE_PERFORMANCE_TEST     "Enable Performance Test" OFF)
+option(ENABLE_SHARED_BUILD         "Build shared library variant of vcaLib" ON)
+option(ENABLE_STATIC_BUILD         "Build static library variant of vcaLib" ON)
 
 # FetchContent settings (silence CMP0135 warning from gtest etc.)
 set(FETCHCONTENT_DOWNLOAD_EXTRACT_TIMESTAMP TRUE)

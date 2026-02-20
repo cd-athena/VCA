@@ -1,5 +1,5 @@
 /*****************************************************************************
- * Copyright (C) 2024 Christian Doppler Laboratory ATHENA
+ * Copyright (C) 2026 Christian Doppler Laboratory ATHENA
  *
  * Authors: Vignesh V Menon <vignesh.menon@aau.at>
  *          Christian Feldmann <christian.feldmann@bitmovin.com>
@@ -25,10 +25,28 @@
 #include <cstddef>
 #include <stdint.h>
 
-#if defined(_MSC_VER) && !defined(VCA_STATIC_BUILD)
-#define DLL_PUBLIC __declspec(dllexport)
+#if defined(_WIN32)
+// Building/using a shared library on Windows
+#if defined(VCA_LIB_SHARED)
+#if defined(VCA_LIB_EXPORTS)
+// When building the DLL
+#define VCA_API __declspec(dllexport)
 #else
-#define DLL_PUBLIC __attribute__((__visibility__("default")))
+// When consuming the DLL
+#define VCA_API __declspec(dllimport)
+#endif
+#else
+// Static build on Windows: no decorations needed
+#define VCA_API
+#endif
+#else
+// Non-Windows (GCC/Clang): use ELF visibility if available
+#if defined(__GNUC__) || defined(__clang__)
+#define VCA_API __attribute__((visibility("default")))
+#else
+// Fallback for other compilers
+#define VCA_API
+#endif
 #endif
 
 extern "C" {
@@ -181,7 +199,7 @@ struct vca_param
 
 /* Create a new analyzer or nullptr if the config is invalid.
  */
-DLL_PUBLIC vca_analyzer *vca_analyzer_open(vca_param cfg);
+VCA_API vca_analyzer *vca_analyzer_open(vca_param cfg);
 
 typedef enum
 {
@@ -197,18 +215,18 @@ typedef enum
  * This may block until there is a slot available to work on. The number of
  * frames that will be processed in parallel can be set using nrFrameThreads.
  */
-DLL_PUBLIC vca_result vca_analyzer_push(vca_analyzer *enc, vca_frame *pic_in);
+VCA_API vca_result vca_analyzer_push(vca_analyzer *enc, vca_frame *pic_in);
 
 /* Check if a result is available to pull.
  */
-DLL_PUBLIC bool vca_result_available(vca_analyzer *enc);
+VCA_API bool vca_result_available(vca_analyzer *enc);
 
 /* Pull a result from the analyzer. This may block until a result is available.
  * Use vca_result_available if you want to only check if a result is ready.
  */
-DLL_PUBLIC vca_result vca_analyzer_pull_frame_result(vca_analyzer *enc, vca_frame_results *result);
+VCA_API vca_result vca_analyzer_pull_frame_result(vca_analyzer *enc, vca_frame_results *result);
 
-DLL_PUBLIC void vca_analyzer_close(vca_analyzer *enc);
+VCA_API void vca_analyzer_close(vca_analyzer *enc);
 
 struct vca_shot_detection_param
 {
@@ -222,10 +240,10 @@ struct vca_shot_detection_param
     void *logFunctionPrivateData{};
 };
 
-DLL_PUBLIC vca_result vca_shot_detection(const vca_shot_detection_param &param,
+VCA_API vca_result vca_shot_detection(const vca_shot_detection_param &param,
                                          vca_frame_results *frames,
                                          size_t num_frames);
 
-DLL_PUBLIC extern const char *vca_version_str;
+VCA_API extern const char *vca_version_str;
 
 } // extern "C"

@@ -176,20 +176,7 @@ set(NASM_ENABLED ${NASM_ENABLED} PARENT_SCOPE)
 set(SIMD_ENABLED ${SIMD_ENABLED} CACHE INTERNAL "SIMD enabled after toolchain detection")
 set(NASM_ENABLED ${NASM_ENABLED} CACHE INTERNAL "NASM (or equivalent) enabled on x86")
 
-# Libraries in this directory
-add_library(vcaLib "")
-target_sources(vcaLib
-    PRIVATE
-        vcaLib.cpp
-    PUBLIC
-        vcaLib.h
-)
-
-if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-    set(GCC 1)
-endif()
-
-# Add analyzer (it will conditionally add simd/ and SIMD targets)
+# Analyzer (it will conditionally add simd/ and SIMD targets)
 add_subdirectory(analyzer)
 
 # Tests
@@ -200,40 +187,89 @@ else()
     message(STATUS "Not building unit tests")
 endif()
 
-# Includes & compile definitions
+# Ensure core has includes and scalar define
 target_include_directories(vcaInternal PRIVATE ${LIB_SOURCE_DIR})
-target_include_directories(vcaLib PRIVATE ${LIB_SOURCE_DIR})
-
-# If SIMD is not enabled, let sources choose scalar paths
 if (NOT SIMD_ENABLED)
     target_compile_definitions(vcaInternal PRIVATE VCA_DISABLE_SIMD=1)
-    target_compile_definitions(vcaLib       PRIVATE VCA_DISABLE_SIMD=1)
 endif()
 
-# Linking (safe: only link SIMD libs if they exist)
-# analyzer/simd creates vcaLibSimd{8,10,12} only when SIMD_ENABLED=ON
-target_link_libraries(vcaLib
-    vcaInternal
-)
+# --- vcaLib variants (shared/static) ---
+include(GNUInstallDirs)
 
-# If you want vcaLib to link SIMD libs directly (optional), guard with TARGET_EXISTS:
-if (SIMD_ENABLED)
-    if (TARGET vcaLibSimd8bit OR TARGET vcaLibSimd10bit OR TARGET vcaLibSimd12bit)
-        target_link_libraries(vcaLib
-            $<$<TARGET_EXISTS:vcaLibSimd8bit>:vcaLibSimd8bit>
-            $<$<TARGET_EXISTS:vcaLibSimd10bit>:vcaLibSimd10bit>
-            $<$<TARGET_EXISTS:vcaLibSimd12bit>:vcaLibSimd12bit>
-        )
+set(VCA_LIB_PUBLIC_HEADERS
+    vcaLib.h
+)
+set(VCA_LIB_SOURCES
+    vcaLib.cpp
+)
+# Carry version define into both variants
+list(APPEND VFLAG "-DVCA_VERSION=${VCA_VERSION}")
+set_source_files_properties(${VCA_LIB_SOURCES} PROPERTIES COMPILE_FLAGS "${VFLAG}")
+
+function(vca_configure_lib tgt)
+    # Headers visible to consumers
+    target_include_directories(${tgt} PUBLIC ${LIB_SOURCE_DIR})
+
+    # If SIMD is not enabled, let sources choose scalar paths
+    if (NOT SIMD_ENABLED)
+        target_compile_definitions(${tgt} PRIVATE VCA_DISABLE_SIMD=1)
     endif()
+
+    # Link core and optional SIMD libs; PUBLIC so static variant propagates
+    target_link_libraries(${tgt} PUBLIC vcaInternal)
+    if (SIMD_ENABLED)
+        if (TARGET vcaLibSimd8bit OR TARGET vcaLibSimd10bit OR TARGET vcaLibSimd12bit)
+            target_link_libraries(${tgt} PUBLIC
+                $<$<TARGET_EXISTS:vcaLibSimd8bit>:vcaLibSimd8bit>
+                $<$<TARGET_EXISTS:vcaLibSimd10bit>:vcaLibSimd10bit>
+                $<$<TARGET_EXISTS:vcaLibSimd12bit>:vcaLibSimd12bit>
+            )
+        endif()
+    endif()
+    # Consistent output basename for both variants
+    set_target_properties(${tgt} PROPERTIES OUTPUT_NAME vcaLib)
+endfunction()
+
+# Static build
+if (ENABLE_STATIC_BUILD)
+    add_library(vcaLib_static STATIC ${VCA_LIB_SOURCES} ${VCA_LIB_PUBLIC_HEADERS})
+    vca_configure_lib(vcaLib_static)
+    add_library(vcaLib::static ALIAS vcaLib_static)
 endif()
 
-set_target_properties(vcaLib PROPERTIES OUTPUT_NAME vcaLib)
-set_target_properties(vcaLib PROPERTIES PUBLIC_HEADER "vcaLib.h")
+# Shared build
+if (ENABLE_SHARED_BUILD)
+    add_library(vcaLib_shared SHARED ${VCA_LIB_SOURCES} ${VCA_LIB_PUBLIC_HEADERS})
+    vca_configure_lib(vcaLib_shared)
+    add_library(vcaLib::shared ALIAS vcaLib_shared)
+    # On Windows we define export macro
+    target_compile_definitions(vcaLib_shared PRIVATE VCA_LIB_SHARED=1 VCA_LIB_EXPORTS=1)
+endif()
 
-install(
-    TARGETS vcaLib
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    COMPONENT libraries
-    PUBLIC_HEADER DESTINATION include
-)
+# Backward-compatible logical target that existing code links to
+if (ENABLE_SHARED_BUILD)
+    add_library(vcaLib INTERFACE)
+    target_link_libraries(vcaLib INTERFACE vcaLib_shared)
+elseif(ENABLE_STATIC_BUILD)
+    add_library(vcaLib INTERFACE)
+    target_link_libraries(vcaLib INTERFACE vcaLib_static)
+else()
+    message(FATAL_ERROR "Both ENABLE_SHARED_BUILD and ENABLE_STATIC_BUILD are OFF - nothing to build.")
+endif()
+
+# Install: put both libs (if built) into standard dirs; install headers once
+if (TARGET vcaLib_shared)
+    install(TARGETS vcaLib_shared
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT libraries
+    )
+endif()
+if (TARGET vcaLib_static)
+    install(TARGETS vcaLib_static
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT libraries
+    )
+endif()
+install(FILES ${VCA_LIB_PUBLIC_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} COMPONENT libraries)
