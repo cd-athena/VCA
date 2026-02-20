@@ -1,5 +1,5 @@
 ;*****************************************************************************
-;* Copyright (C) 2024 Christian Doppler Laboratory ATHENA
+;* Copyright (C) 2026 Christian Doppler Laboratory ATHENA
 ;*
 ;* Authors: Nabajit Deka <nabajit@multicorewareinc.com>
 ;*          Min Chen <chenm003@163.com>

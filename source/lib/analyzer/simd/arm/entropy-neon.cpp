@@ -1,5 +1,6 @@
 /*****************************************************************************
  * Copyright (C) 2025 Werner Robitza
+ * Copyright (C) 2026 Christian Doppler Laboratory ATHENA
  *
  * Authors: Werner Robitza <werner.robitza@gmail.com>
  *

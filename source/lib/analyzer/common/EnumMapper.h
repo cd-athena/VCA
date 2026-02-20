@@ -1,4 +1,5 @@
-/* Copyright (C) 2026 Christian Doppler Laboratory ATHENA
+/*****************************************************************************
+ * Copyright (C) 2026 Christian Doppler Laboratory ATHENA
  *
  * Authors: Christian Feldmann <christian.feldmann@bitmovin.com>
  *
