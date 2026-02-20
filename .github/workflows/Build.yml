@@ -7,25 +7,27 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        include: 
-          - os: ubuntu-20.04
-          - os: ubuntu-22.04
-          - os: macos-11
-          - os: macos-12
-          - os: windows-2019
-          - os: windows-2022
-    steps:
-    - uses: actions/checkout@v3
-    - uses: ilammy/setup-nasm@v1
-    - run: git fetch --prune --unshallow
-    - name: Build
-      run: |
-        mkdir build
-        cd build
-        cmake -DENABLE_TEST=1 ..
-        cmake --build .
-    - name: Unit test
-      run: |
-        cd build/source/lib/test
-        ctest
+        os:
+          - ubuntu-22.04
+          - ubuntu-24.04
+          - macos-13
+          - macos-14
+          - windows-2019
+          - windows-2022
 
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ilammy/setup-nasm@v1
+      - run: git fetch --prune --unshallow
+
+      - name: Build
+        run: |
+          mkdir build
+          cd build
+          cmake -DENABLE_TEST=1 ..
+          cmake --build .
+
+      - name: Unit test
+        run: |
+          cd build/source/lib/test
+          ctest
